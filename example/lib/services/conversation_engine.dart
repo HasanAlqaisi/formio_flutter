@@ -7,7 +7,7 @@ library;
 import 'package:flutter/foundation.dart';
 import 'package:formio_api/formio_api.dart';
 
-import '../models/prompt_dictionary.dart';
+import '../models/turkish_prompts.dart';
 
 /// Callback when all visible questions have been answered.
 typedef OnFormComplete = void Function(Map<String, dynamic> formData);

@@ -8,7 +8,7 @@ import 'package:formio_api/formio_api.dart';
 
 import 'config/app_secrets.dart';
 import 'models/form_compatibility_checker.dart';
-import 'models/prompt_dictionary.dart';
+import 'models/turkish_prompts.dart';
 import 'screens/chat_screen.dart';
 import 'screens/welcome_screen.dart';
 import 'services/ai_service.dart';

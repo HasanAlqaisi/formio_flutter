@@ -11,7 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:formio_api/formio_api.dart';
 
 import '../models/conversation_message.dart';
-import '../models/prompt_dictionary.dart';
+import '../models/turkish_prompts.dart';
 import '../services/ai_service.dart';
 import '../services/conversation_engine.dart';
 import '../services/geocoding_service.dart';

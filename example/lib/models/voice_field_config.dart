@@ -7,7 +7,7 @@ library;
 
 import 'package:formio_api/formio_api.dart';
 
-import 'prompt_dictionary.dart';
+import 'turkish_prompts.dart';
 
 /// The voice input strategy for a component type.
 enum VoiceInputStrategy {

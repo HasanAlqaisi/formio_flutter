@@ -12,7 +12,7 @@ import 'package:flutter/foundation.dart';
 import 'package:formio_api/formio_api.dart';
 import 'package:openai_dart/openai_dart.dart';
 
-import '../models/prompt_dictionary.dart';
+import '../models/turkish_prompts.dart';
 import '../models/voice_field_config.dart';
 
 class AIService extends ChangeNotifier {

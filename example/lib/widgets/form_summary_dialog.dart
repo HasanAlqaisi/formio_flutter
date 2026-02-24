@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:formio_api/formio_api.dart';
 
-import '../models/prompt_dictionary.dart';
+import '../models/turkish_prompts.dart';
 import '../services/ai_service.dart';
 
 class FormSummaryDialog extends StatefulWidget {

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:speech2form/models/english_prompts.dart';
-import 'package:speech2form/models/prompt_dictionary.dart';
+import 'package:speech2form/models/turkish_prompts.dart';
 
 void main() {
   group('EnglishPrompts', () {

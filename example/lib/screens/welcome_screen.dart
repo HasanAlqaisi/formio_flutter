@@ -7,7 +7,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../models/prompt_dictionary.dart';
+import '../models/turkish_prompts.dart';
 
 class WelcomeScreen extends StatefulWidget {
   final String formTitle;

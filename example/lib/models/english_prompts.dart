@@ -6,7 +6,7 @@
 /// ```
 library;
 
-import 'prompt_dictionary.dart';
+import 'turkish_prompts.dart';
 
 class EnglishPrompts extends PromptDictionary {
   @override
