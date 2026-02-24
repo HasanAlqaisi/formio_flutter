@@ -4,6 +4,8 @@
 /// a simple API for speaking questions and listening for answers.
 library;
 
+import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
@@ -22,6 +24,7 @@ class VoiceService extends ChangeNotifier {
   double _soundLevel = 0.0;
   String _selectedLocaleId = 'tr_TR';
   bool _offlineMode = false;
+  bool _ttsEnabled = true;
   VoidCallback? _onSilence;
 
   /// Current voice state.
@@ -57,57 +60,77 @@ class VoiceService extends ChangeNotifier {
 
   /// Initialize TTS and STT engines.
   Future<void> initialize() async {
-    // ── TTS Setup ──
-    await _tts.setLanguage(_selectedLocaleId);
-    await _tts.setSpeechRate(0.5);
-    await _tts.setVolume(1.0);
-    await _tts.setPitch(1.0);
+    // ── TTS Setup (disabled on macOS — native crash) ──
+    if (Platform.isMacOS || Platform.isLinux) {
+      _ttsEnabled = false;
+      if (kDebugMode) print('🔊 TTS disabled on ${Platform.operatingSystem}');
+    } else {
+      try {
+        await _tts.setLanguage(_selectedLocaleId);
+        await _tts.setSpeechRate(0.5);
+        await _tts.setVolume(1.0);
+        await _tts.setPitch(1.0);
 
-    _tts.setCompletionHandler(() {
-      _state = VoiceState.idle;
-      notifyListeners();
-    });
+        _tts.setCompletionHandler(() {
+          _state = VoiceState.idle;
+          notifyListeners();
+        });
 
-    _tts.setErrorHandler((msg) {
-      if (kDebugMode) print('🔊 TTS Error: $msg');
-      _state = VoiceState.idle;
-      notifyListeners();
-    });
+        _tts.setErrorHandler((msg) {
+          if (kDebugMode) print('🔊 TTS Error: $msg');
+          _state = VoiceState.idle;
+          notifyListeners();
+        });
+      } catch (e) {
+        _ttsEnabled = false;
+        if (kDebugMode) print('🔊 TTS initialization failed: $e');
+      }
+    }
 
-    // ── STT Setup ──
-    _sttAvailable = await _stt.initialize(
-      onError: (errorNotification) {
-        if (kDebugMode) print('🎤 STT Error: ${errorNotification.errorMsg}');
-        _state = VoiceState.idle;
-        notifyListeners();
-      },
-      onStatus: (status) {
-        if (kDebugMode) print('🎤 STT Status: $status');
-        if (status == 'done' || status == 'notListening') {
-          if (_state == VoiceState.listening) {
-            // Listening ended — check if anything was recognized
-            if (_lastRecognizedText.trim().isEmpty) {
-              // No speech detected → silence timeout
-              if (kDebugMode) print('🎤 Silence detected, no speech');
-              _onSilence?.call();
-            }
+    // ── STT Setup (may crash on desktop) ──
+    if (Platform.isMacOS || Platform.isLinux) {
+      _sttAvailable = false;
+      if (kDebugMode) print('🎤 STT disabled on ${Platform.operatingSystem}');
+    } else {
+      try {
+        _sttAvailable = await _stt.initialize(
+          onError: (errorNotification) {
+            if (kDebugMode) print('🎤 STT Error: ${errorNotification.errorMsg}');
             _state = VoiceState.idle;
             notifyListeners();
-          }
-        }
-      },
-    );
+          },
+          onStatus: (status) {
+            if (kDebugMode) print('🎤 STT Status: $status');
+            if (status == 'done' || status == 'notListening') {
+              if (_state == VoiceState.listening) {
+                if (_lastRecognizedText.trim().isEmpty) {
+                  if (kDebugMode) print('🎤 Silence detected, no speech');
+                  _onSilence?.call();
+                }
+                _state = VoiceState.idle;
+                notifyListeners();
+              }
+            }
+          },
+        );
+      } catch (e) {
+        _sttAvailable = false;
+        if (kDebugMode) print('🎤 STT initialization failed: $e');
+      }
+    }
 
     if (kDebugMode) {
-      print('🔊 TTS initialized');
+      print('🔊 TTS enabled: $_ttsEnabled');
       print('🎤 STT available: $_sttAvailable');
 
-      // List available locales for debugging
-      final locales = await _stt.locales();
-      for (final locale in locales) {
-        if (locale.localeId.startsWith('tr')) {
-          print('🎤 Found Turkish locale: ${locale.localeId} - ${locale.name}');
-          _selectedLocaleId = locale.localeId;
+      if (_sttAvailable) {
+        // List available locales for debugging
+        final locales = await _stt.locales();
+        for (final locale in locales) {
+          if (locale.localeId.startsWith('tr')) {
+            print('🎤 Found Turkish locale: ${locale.localeId} - ${locale.name}');
+            _selectedLocaleId = locale.localeId;
+          }
         }
       }
     }
@@ -115,6 +138,11 @@ class VoiceService extends ChangeNotifier {
 
   /// Speak the given text using TTS.
   Future<void> speak(String text) async {
+    if (!_ttsEnabled) {
+      if (kDebugMode) print('🔊 TTS disabled, skipping speak');
+      return;
+    }
+
     if (_state == VoiceState.listening) {
       await stopListening();
     }
@@ -122,7 +150,13 @@ class VoiceService extends ChangeNotifier {
     _state = VoiceState.speaking;
     notifyListeners();
 
-    await _tts.speak(text);
+    try {
+      await _tts.speak(text);
+    } catch (e) {
+      if (kDebugMode) print('🔊 TTS speak error: $e');
+      _state = VoiceState.idle;
+      notifyListeners();
+    }
   }
 
   /// Stop TTS if currently speaking.

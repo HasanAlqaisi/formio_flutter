@@ -313,25 +313,32 @@ Kurallar:
       'veya klavye ikonuna basarak yazılı cevap verebilirsiniz.';
 
   String get sttUnavailable =>
-      '⚠️ Konuşma tanıma kullanılamıyor. Yazılı giriş aktif edildi.';
+      'Konuşma tanıma kullanılamıyor. Yazılı giriş aktif edildi.';
   String get aiFailedFallback =>
-      '⚠️ Yapay zeka değerlendirmesi başarısız, cevap doğrudan kaydedildi.';
-  String get formComplete => '🎉 Tüm sorular cevaplandı! Form özeti aşağıda.';
-  String answerUndone(String label) => '↩️ "$label" cevabı geri alındı.';
-  String answerRecorded(String value) => '✅ Kayıt: $value';
-  String get questionRequired => '⚠️ Bu soru zorunludur, atlanamıyor.';
-  String questionSkipped(String label) => '⏭️ "$label" atlandı.';
+      'Yapay zeka değerlendirmesi başarısız, cevap doğrudan kaydedildi.';
+  String get formComplete => 'Tüm sorular cevaplandı! Form özeti aşağıda.';
+  String answerUndone(String label) => '"$label" cevabı geri alındı.';
+  String answerRecorded(String value) => 'Kayıt: $value';
+  String get questionRequired => 'Bu soru zorunludur, atlanamıyor.';
+  String questionSkipped(String label) => '"$label" atlandı.';
   String get silenceSkipped =>
-      '🔇 Cevap algılanamadı, soru atlandı.';
+      'Cevap algılanamadı, soru atlandı.';
   String get silenceRequiredWarning =>
-      '⚠️ Bu alan zorunludur ve boş bırakılamaz. Lütfen cevaplayın.';
+      'Bu alan zorunludur ve boş bırakılamaz. Lütfen cevaplayın.';
   String get emptyAnswerSkipped =>
-      '🔇 Boş cevap, soru atlandı.';
+      'Boş cevap, soru atlandı.';
   String get emptyAnswerRequiredWarning =>
-      '⚠️ Bu alan zorunludur, boş bırakılamaz. Lütfen bir cevap girin.';
+      'Bu alan zorunludur, boş bırakılamaz. Lütfen bir cevap girin.';
 
   // ── Tooltips & Labels ──
   String get tooltipUndo => 'Son cevabı geri al';
+  String get tooltipReset => 'Formu sıfırla';
+  String get resetConfirmTitle => 'Formu Sıfırla';
+  String get resetConfirmMessage =>
+      'Tüm cevaplar silinecek ve form baştan başlayacak. Emin misiniz?';
+  String get resetConfirmYes => 'Evet, Sıfırla';
+  String get resetConfirmNo => 'Vazgeç';
+  String get formResetDone => 'Form sıfırlandı. Baştan başlıyoruz.';
   String get tooltipRepeat => 'Soruyu tekrarla';
   String get tooltipHideKeyboard => 'Klavyeyi gizle';
   String get tooltipShowKeyboard => 'Klavyeyle yaz';
@@ -349,14 +356,14 @@ Kurallar:
   String get summarySubmit => 'Gönder';
   String get summaryNotAnswered => 'Cevaplanmadı';
   String summaryEditField(String label) =>
-      '✏️ "$label" alanını düzenliyorsunuz. Yeni cevabınızı söyleyin veya yazın.';
+      '"$label" alanını düzenliyorsunuz. Yeni cevabınızı söyleyin veya yazın.';
 
   // ── Confirmation Flow ──
   String confirmationAsk(String value) =>
-      '🔍 "$value" olarak kaydedeyim mi? (Evet / Hayır)';
-  String get confirmationAccepted => '✅ Cevap kaydedildi.';
+      '"$value" olarak kaydedeyim mi? (Evet / Hayır)';
+  String get confirmationAccepted => 'Cevap kaydedildi.';
   String get confirmationRejected =>
-      '↩️ Cevap reddedildi. Lütfen tekrar cevaplayın.';
+      'Cevap reddedildi. Lütfen tekrar cevaplayın.';
 
   // ── Welcome Animation ──
   String get welcomeAnimTitle => 'Speech2Form';
@@ -365,13 +372,13 @@ Kurallar:
 
   // ── Session Persistence ──
   String get sessionResumed =>
-      '💾 Önceki oturum geri yüklendi. Kaldığınız yerden devam edebilirsiniz.';
+      'Önceki oturum geri yüklendi. Kaldığınız yerden devam edebilirsiniz.';
   String get sessionResumeContinue => 'Devam Et';
   String get sessionResumeRestart => 'Baştan Başla';
 
   // ── AI Fallback ──
   String get aiFallbackActivated =>
-      '⚠️ Yapay zeka çok fazla hata verdi. Yerel işleme moduna geçildi.';
+      'Yapay zeka çok fazla hata verdi. Yerel işleme moduna geçildi.';
   String get aiFallbackLabel => 'Yapay Zeka (AI)';
   String get aiFallbackDescription =>
       'AI devre dışı, cevaplar yerel olarak işleniyor.';
@@ -396,14 +403,14 @@ Kurallar:
   String get configSkipOptionalDesc =>
       'Zorunlu olmayan alanları otomatik geç';
   String optionalFieldSkipped(String label) =>
-      '⏭ "$label" opsiyonel — atlandı.';
+      '"$label" opsiyonel — atlandı.';
 
   // ── Offline Mode ──
   String get configOfflineMode => 'Çevrimdışı Mod';
   String get configOfflineModeDesc =>
       'Cihaz üzerinde konuşma tanıma kullan (internet gerekmez)';
   String get offlineModeActivated =>
-      '📱 Çevrimdışı mod etkin. Cihaz üzerinde konuşma tanıma kullanılıyor.';
+      'Çevrimdışı mod etkin. Cihaz üzerinde konuşma tanıma kullanılıyor.';
 
   // ── Language ──
   String get configLanguage => 'Dil';

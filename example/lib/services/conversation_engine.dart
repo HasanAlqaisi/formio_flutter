@@ -159,6 +159,14 @@ class ConversationEngine extends ChangeNotifier {
   /// Get a snapshot of all current form data (for persistence).
   Map<String, dynamic> get formDataSnapshot => Map.from(_formData);
 
+  /// Reset all answers and start from scratch.
+  void resetAll() {
+    _formData.clear();
+    _answeredKeys.clear();
+    _answerHistory.clear();
+    notifyListeners();
+  }
+
   /// Undo the last answered question.
   ///
   /// Returns the undone component key, or null if nothing to undo.

@@ -40,7 +40,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   late Animation<Offset> _contentSlide;
 
   // Config state
-  bool _confirmationEnabled = true;
+  bool _confirmationEnabled = false;
   bool _aiEnabled = true;
   bool _skipOptional = false;
   bool _offlineMode = false;
@@ -229,17 +229,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                             color: theme.colorScheme.outline,
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        // Confirmation toggle
-                        _buildConfigTile(
-                          theme: theme,
-                          icon: Icons.verified_rounded,
-                          title: d.configConfirmation,
-                          subtitle: d.configConfirmationDesc,
-                          value: _confirmationEnabled,
-                          onChanged: (v) =>
-                              setState(() => _confirmationEnabled = v),
-                        ),
+
                         const SizedBox(height: 8),
                         // AI mode toggle
                         _buildConfigTile(
@@ -252,6 +242,18 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           value: _aiEnabled,
                           onChanged: (v) =>
                               setState(() => _aiEnabled = v),
+                        ),
+
+                        const SizedBox(height: 16),
+                        // Confirmation toggle
+                        _buildConfigTile(
+                          theme: theme,
+                          icon: Icons.verified_rounded,
+                          title: d.configConfirmation,
+                          subtitle: d.configConfirmationDesc,
+                          value: _confirmationEnabled,
+                          onChanged: (v) =>
+                              setState(() => _confirmationEnabled = v),
                         ),
                         const SizedBox(height: 8),
                         // Skip optional toggle

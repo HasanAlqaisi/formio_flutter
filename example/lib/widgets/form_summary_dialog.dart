@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:formio_api/formio_api.dart';
 
 import '../models/prompt_dictionary.dart';
+import '../services/ai_service.dart';
 
 class FormSummaryDialog extends StatefulWidget {
   final Map<String, dynamic> formData;
@@ -273,7 +274,17 @@ class _FormSummaryDialogState extends State<FormSummaryDialog>
       return _parseBoolDisplay(value, d);
     }
 
-    // Selectboxes: Map<String, bool> → show only selected keys
+    // Radio / Select — resolve raw value to human label
+    if (question.type == 'radio' || question.type == 'select') {
+      final label = _resolveLabel(value.toString(), question);
+      // If couldn't resolve (label == raw value), try bool-like display
+      if (label == value.toString()) {
+        return _parseBoolDisplay(value, d);
+      }
+      return label;
+    }
+
+    // Selectboxes: Map<String, bool> → show only selected keys as LABELS
     if (value is Map) {
       if (question.type == 'selectboxes') {
         final selected = value.entries
@@ -286,6 +297,16 @@ class _FormSummaryDialogState extends State<FormSummaryDialog>
       return value.entries
           .map((e) => '${e.key}: ${e.value}')
           .join(', ');
+    }
+
+    // Selectboxes: String "opt1, opt3" → resolve each key to label
+    if (question.type == 'selectboxes' && value is String) {
+      final keys = value.split(RegExp(r'[,\s]+')).where((k) => k.isNotEmpty);
+      final options = AIService.extractOptions(question.raw);
+      if (options.isNotEmpty) {
+        final resolved = keys.map((k) => _resolveLabel(k, question));
+        return resolved.join(', ');
+      }
     }
 
     // List
@@ -335,24 +356,14 @@ class _FormSummaryDialogState extends State<FormSummaryDialog>
   }
 
   /// Look up the human label for a value from component options.
+  ///
+  /// Uses [AIService.extractOptions] which handles all Form.io
+  /// component structures (select, radio, selectboxes).
   String _resolveLabel(String valueKey, ComponentModel question) {
-    // Try data.values (select)
-    final data = question.raw['data'] as Map<String, dynamic>?;
-    final values = data?['values'] as List?;
-    if (values != null) {
-      for (final opt in values) {
-        if (opt is Map && opt['value']?.toString() == valueKey) {
-          return opt['label']?.toString() ?? valueKey;
-        }
-      }
-    }
-    // Try values (radio/selectboxes)
-    final radioValues = question.raw['values'] as List?;
-    if (radioValues != null) {
-      for (final opt in radioValues) {
-        if (opt is Map && opt['value']?.toString() == valueKey) {
-          return opt['label']?.toString() ?? valueKey;
-        }
+    final options = AIService.extractOptions(question.raw);
+    for (final opt in options) {
+      if (opt['value'] == valueKey) {
+        return opt['label'] ?? valueKey;
       }
     }
     return valueKey;

@@ -319,38 +319,51 @@ Rules:
 
   @override
   String get sttUnavailable =>
-      '⚠️ Speech recognition is unavailable. Text input has been enabled.';
+      'Speech recognition is unavailable. Text input has been enabled.';
   @override
   String get aiFailedFallback =>
-      '⚠️ AI evaluation failed, the answer was saved directly.';
+      'AI evaluation failed, the answer was saved directly.';
   @override
   String get formComplete =>
-      '🎉 All questions have been answered! Form summary is below.';
+      'All questions have been answered! Form summary is below.';
   @override
-  String answerUndone(String label) => '↩️ "$label" answer has been undone.';
+  String answerUndone(String label) => '"$label" answer has been undone.';
   @override
-  String answerRecorded(String value) => '✅ Recorded: $value';
+  String answerRecorded(String value) => 'Recorded: $value';
   @override
   String get questionRequired =>
-      '⚠️ This question is required and cannot be skipped.';
+      'This question is required and cannot be skipped.';
   @override
-  String questionSkipped(String label) => '⏭️ "$label" skipped.';
+  String questionSkipped(String label) => '"$label" skipped.';
   @override
   String get silenceSkipped =>
-      '🔇 No answer detected, question skipped.';
+      'No answer detected, question skipped.';
   @override
   String get silenceRequiredWarning =>
-      '⚠️ This field is required and cannot be left blank. Please answer.';
+      'This field is required and cannot be left blank. Please answer.';
   @override
   String get emptyAnswerSkipped =>
-      '🔇 Empty answer, question skipped.';
+      'Empty answer, question skipped.';
   @override
   String get emptyAnswerRequiredWarning =>
-      '⚠️ This field is required and cannot be empty. Please enter an answer.';
+      'This field is required and cannot be empty. Please enter an answer.';
 
   // ── Tooltips & Labels ──
   @override
   String get tooltipUndo => 'Undo last answer';
+  @override
+  String get tooltipReset => 'Reset form';
+  @override
+  String get resetConfirmTitle => 'Reset Form';
+  @override
+  String get resetConfirmMessage =>
+      'All answers will be cleared and the form will start over. Are you sure?';
+  @override
+  String get resetConfirmYes => 'Yes, Reset';
+  @override
+  String get resetConfirmNo => 'Cancel';
+  @override
+  String get formResetDone => 'Form has been reset. Starting from the beginning.';
   @override
   String get tooltipRepeat => 'Repeat question';
   @override
@@ -383,17 +396,17 @@ Rules:
   String get summaryNotAnswered => 'Not answered';
   @override
   String summaryEditField(String label) =>
-      '✏️ Editing "$label". Say or type your new answer.';
+      'Editing "$label". Say or type your new answer.';
 
   // ── Confirmation Flow ──
   @override
   String confirmationAsk(String value) =>
-      '🔍 Should I save it as "$value"? (Yes / No)';
+      'Should I save it as "$value"? (Yes / No)';
   @override
-  String get confirmationAccepted => '✅ Answer saved.';
+  String get confirmationAccepted => 'Answer saved.';
   @override
   String get confirmationRejected =>
-      '↩️ Answer rejected. Please answer again.';
+      'Answer rejected. Please answer again.';
 
   // ── Welcome Animation ──
   @override
@@ -406,7 +419,7 @@ Rules:
   // ── Session Persistence ──
   @override
   String get sessionResumed =>
-      '💾 Previous session restored. You can continue where you left off.';
+      'Previous session restored. You can continue where you left off.';
   @override
   String get sessionResumeContinue => 'Continue';
   @override
@@ -415,7 +428,7 @@ Rules:
   // ── AI Fallback ──
   @override
   String get aiFallbackActivated =>
-      '⚠️ AI encountered too many errors. Switched to local processing mode.';
+      'AI encountered too many errors. Switched to local processing mode.';
   @override
   String get aiFallbackLabel => 'Artificial Intelligence (AI)';
   @override
@@ -454,7 +467,7 @@ Rules:
       'Automatically skip non-required fields';
   @override
   String optionalFieldSkipped(String label) =>
-      '⏭ "$label" is optional — skipped.';
+      '"$label" is optional — skipped.';
 
   // ── Offline Mode (Feature 4) ──
   @override
@@ -464,7 +477,7 @@ Rules:
       'Use on-device speech recognition (no internet required)';
   @override
   String get offlineModeActivated =>
-      '📱 Offline mode enabled. Using on-device speech recognition.';
+      'Offline mode enabled. Using on-device speech recognition.';
 
   // ── Language ──
   @override

@@ -367,44 +367,88 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   }
 
   String _formatValueForDisplay(ComponentModel component, dynamic value) {
-    if (value is bool) {
-      return value
-          ? PromptDictionary.current.labelYes
-          : PromptDictionary.current.labelNo;
-    }
-    // Bool-like values for checkbox/toggle
+    final d = PromptDictionary.current;
+
+    if (value == null) return '-';
+
+    // Native bool
+    if (value is bool) return value ? d.labelYes : d.labelNo;
+
+    // Bool-like values for checkbox/toggle/radio-as-bool
     if (component.type == 'checkbox' || component.type == 'toggle') {
-      if (value is int) {
-        return value != 0
-            ? PromptDictionary.current.labelYes
-            : PromptDictionary.current.labelNo;
-      }
-      final str = value.toString().toLowerCase().trim();
-      if (str == 'true' || str == '1' || str == 'evet') {
-        return PromptDictionary.current.labelYes;
-      }
-      if (str == 'false' || str == '0' || str == 'hayır') {
-        return PromptDictionary.current.labelNo;
-      }
+      return _parseBoolLikeValue(value, d);
     }
+
+    // Radio / Select — resolve raw value to human label
+    if (component.type == 'radio' || component.type == 'select') {
+      final label = _resolveOptionLabel(value.toString(), component);
+      // If the resolved label is "1"/"0" for a yes/no radio, show Evet/Hayır
+      if (label == value.toString()) {
+        // Couldn't resolve — try bool-like
+        return _parseBoolLikeValue(value, d);
+      }
+      return label;
+    }
+
+    // Selectboxes: Map<String, bool> → show selected option LABELS
     if (value is Map) {
-      // For selectboxes, show only selected keys
       if (component.type == 'selectboxes') {
         final selected = value.entries
             .where((e) =>
                 e.value == true ||
                 e.value == 1 ||
                 e.value.toString().toLowerCase() == 'true')
-            .map((e) => e.key.toString())
+            .map((e) => _resolveOptionLabel(e.key.toString(), component))
             .toList();
         return selected.isEmpty ? '-' : selected.join(', ');
       }
       return const JsonEncoder.withIndent('  ').convert(value);
     }
+
+    // Selectboxes: String "opt1, opt3" → resolve each key to label
+    if (component.type == 'selectboxes' && value is String) {
+      final keys = value.split(RegExp(r'[,\s]+')).where((k) => k.isNotEmpty);
+      final options = AIService.extractOptions(component.raw);
+      if (options.isNotEmpty) {
+        final resolved = keys.map((k) => _resolveOptionLabel(k, component));
+        return resolved.join(', ');
+      }
+    }
+
     if (value is num && value == value.toInt()) {
       return value.toInt().toString();
     }
     return value.toString();
+  }
+
+  /// Parse a bool-like value (1/0/true/false/evet/hayır) for display.
+  String _parseBoolLikeValue(dynamic value, PromptDictionary d) {
+    if (value is bool) return value ? d.labelYes : d.labelNo;
+    if (value is int) return value != 0 ? d.labelYes : d.labelNo;
+    if (value is double) return value != 0 ? d.labelYes : d.labelNo;
+    final str = value.toString().toLowerCase().trim();
+    if (str == 'true' || str == '1' || str == 'evet' || str == 'yes') {
+      return d.labelYes;
+    }
+    if (str == 'false' || str == '0' || str == 'hayır' || str == 'no') {
+      return d.labelNo;
+    }
+    return value.toString();
+  }
+
+  /// Resolve a raw option value to its human-readable label
+  /// by looking up the component's values/data.values array.
+  ///
+  /// Uses [AIService.extractOptions] which handles all Form.io
+  /// component structures (select, radio, selectboxes).
+  String _resolveOptionLabel(String rawValue, ComponentModel component) {
+    final options = AIService.extractOptions(component.raw);
+    for (final opt in options) {
+      if (opt['value'] == rawValue) {
+        return opt['label'] ?? rawValue;
+      }
+    }
+    return rawValue;
   }
 
   void _onFormComplete(Map<String, dynamic> formData) {
@@ -449,22 +493,46 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     });
   }
 
-  /// Undo the last answered question.
-  void _undoLastAnswer() {
-    final undoneKey = _engine.undoLastAnswer();
-    if (undoneKey == null) return;
-
-    // Find the question label
-    final question =
-        _engine.allQuestions.where((q) => q.key == undoneKey).firstOrNull;
-    final label = question?.label ?? undoneKey;
-
-    _addMessage(ConversationMessage.system(
-      text: PromptDictionary.current.answerUndone(label),
-    ));
-
-    // Re-ask the question
-    _askNextQuestion();
+  /// Reset the entire form after confirmation.
+  void _resetForm() {
+    final d = PromptDictionary.current;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(d.resetConfirmTitle),
+        content: Text(d.resetConfirmMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(d.resetConfirmNo),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _engine.resetAll();
+              _clearConfirmation();
+              setState(() {
+                _messages.clear();
+                _isProcessingAnswer = false;
+              });
+              // Clear saved session
+              if (widget.formId != null) {
+                SessionService.clear(widget.formId!);
+              }
+              // Re-add welcome + start fresh
+              _addMessage(ConversationMessage.system(
+                text: d.formResetDone,
+              ));
+              _askNextQuestion();
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: Text(d.resetConfirmYes),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Called when the microphone listener times out with no speech.
@@ -710,17 +778,17 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       ),
       child: Row(
         children: [
-          // Undo button
+          // Reset form button
           IconButton(
             onPressed:
-                (_isProcessingAnswer || !_engine.canUndo) ? null : _undoLastAnswer,
+                _isProcessingAnswer ? null : _resetForm,
             icon: Icon(
-              Icons.undo_rounded,
+              Icons.restart_alt_rounded,
               color: _engine.canUndo
                   ? theme.colorScheme.error
                   : theme.colorScheme.outline,
             ),
-            tooltip: PromptDictionary.current.tooltipUndo,
+            tooltip: PromptDictionary.current.tooltipReset,
           ),
           // Repeat question button
           IconButton(

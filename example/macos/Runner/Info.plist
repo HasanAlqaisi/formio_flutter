@@ -28,5 +28,9 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Sesli form doldurma için mikrofon erişimi gereklidir.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Sesli yanıtlarınızı metne dönüştürmek için konuşma tanıma gereklidir.</string>
 </dict>
 </plist>

@@ -91,6 +91,15 @@ class VoiceFieldConfig {
     'alert', 'content', 'htmlelement',
   };
 
+  /// Safely parse a value that may be [int], [String], or null.
+  static int? _toInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
   /// Build a [VoiceFieldConfig] from a Form.io [ComponentModel].
   factory VoiceFieldConfig.fromComponent(ComponentModel component) {
     final type = component.type;
@@ -135,8 +144,8 @@ class VoiceFieldConfig {
           isVoiceCompatible: true,
           strategy: VoiceInputStrategy.freeText,
           promptTemplate: d.textFieldPrompt(
-            maxLength: constraints['maxLength'] as int?,
-            minLength: constraints['minLength'] as int?,
+            maxLength: _toInt(constraints['maxLength']),
+            minLength: _toInt(constraints['minLength']),
           ),
           constraints: constraints,
         );
@@ -146,7 +155,7 @@ class VoiceFieldConfig {
           isVoiceCompatible: true,
           strategy: VoiceInputStrategy.freeText,
           promptTemplate: d.textAreaPrompt(
-            maxLength: constraints['maxLength'] as int?,
+            maxLength: _toInt(constraints['maxLength']),
           ),
           constraints: constraints,
         );
@@ -203,7 +212,7 @@ class VoiceFieldConfig {
             currency:
                 constraints['currency']?.toString() ?? 'TRY',
             decimalLimit:
-                (constraints['decimalLimit'] as int?) ?? 2,
+                _toInt(constraints['decimalLimit']) ?? 2,
           ),
           constraints: constraints,
         );
