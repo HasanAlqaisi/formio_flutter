@@ -7,6 +7,8 @@ import 'package:flutter/services.dart';
 import 'package:formio_api/formio_api.dart';
 
 import 'config/app_secrets.dart';
+import 'models/form_compatibility_checker.dart';
+import 'models/prompt_dictionary.dart';
 import 'screens/chat_screen.dart';
 import 'screens/welcome_screen.dart';
 import 'services/ai_service.dart';
@@ -249,6 +251,13 @@ class _FormSelectionPageState extends State<FormSelectionPage> {
     // Use form path or id as the persistence key
     final formId = form.path.isNotEmpty ? form.path : form.title;
 
+    // ── Compatibility check ────────────────────────────────
+    final result = FormCompatibilityChecker.check(form);
+    if (!result.isCompatible) {
+      _showIncompatibleFormDialog(result);
+      return;
+    }
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -258,9 +267,16 @@ class _FormSelectionPageState extends State<FormSelectionPage> {
             required bool confirmationEnabled,
             required bool aiEnabled,
             required bool skipOptional,
+            required bool offlineMode,
+            required String locale,
           }) {
             // Apply AI mode from config
             _aiService.fallbackMode = !aiEnabled;
+
+            // Apply offline mode — force local AI when offline
+            if (offlineMode) {
+              _aiService.fallbackMode = true;
+            }
 
             Navigator.pushReplacement(
               context,
@@ -271,12 +287,101 @@ class _FormSelectionPageState extends State<FormSelectionPage> {
                   formId: formId,
                   confirmationEnabled: confirmationEnabled,
                   skipOptional: skipOptional,
+                  offlineMode: offlineMode,
+                  locale: locale,
                   onSubmit: (formData) => _submitForm(form, formData),
                 ),
               ),
             );
           },
         ),
+      ),
+    );
+  }
+  /// Show a blocking dialog when the form has required fields
+  /// that cannot be filled by voice input.
+  void _showIncompatibleFormDialog(FormCompatibilityResult result) {
+    final d = PromptDictionary.current;
+    final theme = Theme.of(context);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        icon: Icon(
+          Icons.warning_amber_rounded,
+          color: theme.colorScheme.error,
+          size: 48,
+        ),
+        title: Text(
+          d.incompatibleFormTitle,
+          style: TextStyle(
+            color: theme.colorScheme.error,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                d.incompatibleFormMessage,
+                style: theme.textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                d.incompatibleFieldsHeader,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...result.unsupportedRequiredFields.map(
+                (field) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.block_rounded,
+                        size: 18,
+                        color: theme.colorScheme.error.withAlpha(180),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              field.label,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              '${field.type} — ${field.reason}',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          FilledButton.icon(
+            onPressed: () => Navigator.of(ctx).pop(),
+            icon: const Icon(Icons.arrow_back_rounded),
+            label: Text(d.incompatibleGoBack),
+          ),
+        ],
       ),
     );
   }

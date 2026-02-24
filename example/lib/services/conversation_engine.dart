@@ -56,7 +56,6 @@ class ConversationEngine extends ChangeNotifier {
     'sketchpad',
     'tagpad',
     'container',
-    'datagrid',
     'editgrid',
     'nestedform',
     'form',
@@ -65,7 +64,6 @@ class ConversationEngine extends ChangeNotifier {
     'datamap',
     'reviewpage',
     'custom',
-    'survey',
   };
 
   ConversationEngine({required this.form, this.onComplete}) {
@@ -243,6 +241,23 @@ class ConversationEngine extends ChangeNotifier {
       case 'time':
         return PromptDictionary.current.questionTime(label);
 
+      case 'address':
+        return label;
+
+      case 'survey':
+        // Survey sub-questions have synthetic keys like surveyKey__qValue
+        // They carry the question label and survey values in raw JSON
+        final surveyValues = _getSurveyValues(component);
+        if (surveyValues.isNotEmpty) {
+          return PromptDictionary.current
+              .surveyQuestionPrompt(label, surveyValues);
+        }
+        return label;
+
+      case 'datagrid':
+        // DataGrid uses sub-questions expanded from columns
+        return label;
+
       default:
         return label;
     }
@@ -282,6 +297,18 @@ class ConversationEngine extends ChangeNotifier {
     final result = <ComponentModel>[];
     for (final component in components) {
       final type = component.type;
+
+      // Expand survey into sub-questions
+      if (type == 'survey') {
+        result.addAll(_expandSurvey(component));
+        continue;
+      }
+
+      // Expand datagrid into row/column sub-questions
+      if (type == 'datagrid') {
+        result.addAll(_expandDatagrid(component));
+        continue;
+      }
 
       // Skip layout containers and non-question types
       if (_layoutTypes.contains(type) || _nonQuestionTypes.contains(type)) {
@@ -424,5 +451,195 @@ class ConversationEngine extends ChangeNotifier {
       }
     }
     return text;
+  }
+
+  // ─── Survey Expansion ───────────────────────────────────
+
+  /// Extract survey value labels for TTS.
+  List<String> _getSurveyValues(ComponentModel component) {
+    final values = component.raw['values'] as List?;
+    if (values == null) return [];
+    return values
+        .map((v) => (v as Map<String, dynamic>)['label']?.toString() ?? '')
+        .where((l) => l.isNotEmpty)
+        .toList();
+  }
+
+  /// Expand a survey component into one synthetic question per row.
+  ///
+  /// Each synthetic question uses key: `surveyKey__questionValue`
+  /// so answers can be merged back into `{q1: rating, q2: rating}`.
+  List<ComponentModel> _expandSurvey(ComponentModel survey) {
+    final questions = survey.raw['questions'] as List?;
+    final values = survey.raw['values'] as List?;
+    if (questions == null || values == null) return [];
+
+    final result = <ComponentModel>[];
+    for (final q in questions) {
+      final qMap = q as Map<String, dynamic>;
+      final qLabel = qMap['label']?.toString() ?? '';
+      final qValue = qMap['value']?.toString() ?? '';
+
+      result.add(ComponentModel.fromJson({
+        'type': 'survey',
+        'key': '${survey.key}__$qValue',
+        'label': qLabel,
+        'required': survey.required,
+        'values': values,
+        '_surveyParentKey': survey.key,
+        '_surveyQuestionValue': qValue,
+      }));
+    }
+    return result;
+  }
+
+  // ─── DataGrid Expansion ─────────────────────────────────
+
+  /// Expand a datagrid into sub-questions for the first row.
+  ///
+  /// Each column becomes a question with key: `gridKey__row0__colKey`.
+  /// A sentinel "add row?" question is appended with key: `gridKey__addrow`.
+  List<ComponentModel> _expandDatagrid(ComponentModel datagrid) {
+    final columns = datagrid.raw['components'] as List?;
+    if (columns == null || columns.isEmpty) return [];
+
+    final result = <ComponentModel>[];
+    final columnLabels =
+        columns.map((c) => (c as Map<String, dynamic>)['label']?.toString() ?? '').toList();
+
+    // Notify the user about the table
+    // (This info is available via buildQuestionText for the first sub-question)
+    // Add first row columns
+    for (final col in columns) {
+      final colMap = col as Map<String, dynamic>;
+      result.add(ComponentModel.fromJson({
+        ...colMap,
+        'key': '${datagrid.key}__row0__${colMap['key']}',
+        'label': '${datagrid.label} — '
+            '${PromptDictionary.current.datagridRowPrompt(1)}: ${colMap['label']}',
+        'required': datagrid.required,
+        '_datagridParentKey': datagrid.key,
+        '_datagridRow': 0,
+        '_datagridColumn': colMap['key'],
+        '_datagridColumnLabels': columnLabels,
+      }));
+    }
+
+    // Add sentinel "add more rows?" question
+    result.add(ComponentModel.fromJson({
+      'type': 'checkbox',
+      'key': '${datagrid.key}__addrow',
+      'label': PromptDictionary.current.datagridAddMorePrompt,
+      'required': false,
+      '_datagridParentKey': datagrid.key,
+      '_datagridSentinel': true,
+      '_datagridColumns': columns.map((c) => c as Map<String, dynamic>).toList(),
+      '_datagridColumnLabels': columnLabels,
+      '_datagridNextRow': 1,
+    }));
+
+    return result;
+  }
+
+  /// After a datagrid "add row?" answer of true, insert more row questions.
+  void expandDatagridRow(String addRowKey) {
+    final sentinel = _allQuestions.where((q) => q.key == addRowKey).firstOrNull;
+    if (sentinel == null) return;
+
+    final parentKey = sentinel.raw['_datagridParentKey']?.toString() ?? '';
+    final nextRow = sentinel.raw['_datagridNextRow'] as int? ?? 1;
+    final columns = sentinel.raw['_datagridColumns'] as List? ?? [];
+    final columnLabels = (sentinel.raw['_datagridColumnLabels'] as List?)?.cast<String>() ?? [];
+
+    final sentinelIndex = _allQuestions.indexOf(sentinel);
+    if (sentinelIndex < 0) return;
+
+    // Insert new row columns before the sentinel
+    final newQuestions = <ComponentModel>[];
+    for (final col in columns) {
+      final colMap = col as Map<String, dynamic>;
+      newQuestions.add(ComponentModel.fromJson({
+        ...colMap,
+        'key': '${parentKey}__row${nextRow}__${colMap['key']}',
+        'label': '${sentinel.label.split(' — ').first} — '
+            '${PromptDictionary.current.datagridRowPrompt(nextRow + 1)}: ${colMap['label']}',
+        'required': false,
+        '_datagridParentKey': parentKey,
+        '_datagridRow': nextRow,
+        '_datagridColumn': colMap['key'],
+        '_datagridColumnLabels': columnLabels,
+      }));
+    }
+
+    // Update sentinel for next potential row
+    _allQuestions[sentinelIndex] = ComponentModel.fromJson({
+      ...sentinel.raw,
+      '_datagridNextRow': nextRow + 1,
+    });
+
+    // Remove "add row" answer so it can be re-asked
+    _answeredKeys.remove(addRowKey);
+    _formData.remove(addRowKey);
+    _answerHistory.remove(addRowKey);
+
+    // Insert new questions before the sentinel
+    _allQuestions.insertAll(sentinelIndex, newQuestions);
+    notifyListeners();
+  }
+
+  /// Merge datagrid sub-answers into the final `[{col1: val, col2: val}, ...]` format.
+  Map<String, dynamic> get mergedFormData {
+    final merged = Map<String, dynamic>.from(_formData);
+
+    // Group survey sub-answers
+    final surveyGroups = <String, Map<String, dynamic>>{};
+    // Group datagrid sub-answers
+    final datagridGroups = <String, List<Map<String, dynamic>>>{};
+
+    for (final entry in _formData.entries) {
+      final key = entry.key;
+
+      // Survey: parentKey__questionValue
+      if (key.contains('__') && !key.contains('__row') && !key.contains('__addrow')) {
+        // Check if this is a survey key by looking up the component
+        final component = _allQuestions.where((q) => q.key == key).firstOrNull;
+        if (component != null && component.raw['_surveyParentKey'] != null) {
+          final parentKey = component.raw['_surveyParentKey'].toString();
+          final qValue = component.raw['_surveyQuestionValue'].toString();
+          surveyGroups.putIfAbsent(parentKey, () => {});
+          surveyGroups[parentKey]![qValue] = entry.value;
+          merged.remove(key);
+        }
+      }
+
+      // DataGrid: parentKey__rowN__colKey
+      final dgMatch = RegExp(r'^(.+)__row(\d+)__(.+)$').firstMatch(key);
+      if (dgMatch != null) {
+        final parentKey = dgMatch.group(1)!;
+        final rowNum = int.parse(dgMatch.group(2)!);
+        final colKey = dgMatch.group(3)!;
+        datagridGroups.putIfAbsent(parentKey, () => []);
+        while (datagridGroups[parentKey]!.length <= rowNum) {
+          datagridGroups[parentKey]!.add({});
+        }
+        datagridGroups[parentKey]![rowNum][colKey] = entry.value;
+        merged.remove(key);
+      }
+
+      // Remove sentinel keys
+      if (key.endsWith('__addrow')) {
+        merged.remove(key);
+      }
+    }
+
+    // Merge grouped data
+    for (final entry in surveyGroups.entries) {
+      merged[entry.key] = entry.value;
+    }
+    for (final entry in datagridGroups.entries) {
+      merged[entry.key] = entry.value;
+    }
+
+    return merged;
   }
 }

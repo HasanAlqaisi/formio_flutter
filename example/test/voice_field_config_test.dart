@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:formio_api/formio_api.dart';
-
 import 'package:speech2form/models/voice_field_config.dart';
 
 ComponentModel _component(String type, {Map<String, dynamic>? extra}) {
@@ -101,14 +100,32 @@ void main() {
       expect(config.strategy, VoiceInputStrategy.numeric);
       expect(config.promptTemplate, contains('para'));
     });
+
+    test('address is voice-compatible with address strategy', () {
+      final config = VoiceFieldConfig.fromComponent(_component('address'));
+      expect(config.isVoiceCompatible, isTrue);
+      expect(config.strategy, VoiceInputStrategy.address);
+    });
+
+    test('survey is voice-compatible with survey strategy', () {
+      final config = VoiceFieldConfig.fromComponent(_component('survey'));
+      expect(config.isVoiceCompatible, isTrue);
+      expect(config.strategy, VoiceInputStrategy.survey);
+    });
+
+    test('datagrid is voice-compatible with datagrid strategy', () {
+      final config = VoiceFieldConfig.fromComponent(_component('datagrid'));
+      expect(config.isVoiceCompatible, isTrue);
+      expect(config.strategy, VoiceInputStrategy.datagrid);
+    });
   });
 
   group('VoiceFieldConfig - Skipped Types', () {
     for (final type in [
       'signature', 'file', 'captcha', 'sketchpad', 'tagpad',
-      'hidden', 'button', 'datasource', 'container', 'datagrid',
+      'hidden', 'button', 'datasource', 'container',
       'editgrid', 'nestedform', 'form', 'dynamicwizard',
-      'datatable', 'datamap', 'reviewpage', 'custom', 'survey',
+      'datatable', 'datamap', 'reviewpage', 'custom',
     ]) {
       test('$type is NOT voice-compatible', () {
         final config = VoiceFieldConfig.fromComponent(_component(type));

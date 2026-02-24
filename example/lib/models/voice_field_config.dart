@@ -44,6 +44,15 @@ enum VoiceInputStrategy {
   /// Tags / comma-separated values
   tags,
 
+  /// Address with optional geocoding
+  address,
+
+  /// Survey — row-by-row rating
+  survey,
+
+  /// DataGrid — row-by-row table input
+  datagrid,
+
   /// Not compatible with voice input — should be skipped
   skip,
 }
@@ -76,7 +85,7 @@ class VoiceFieldConfig {
   /// Component types that cannot be filled by voice.
   static const _skipTypes = {
     'signature', 'file', 'captcha', 'sketchpad', 'tagpad',
-    'hidden', 'button', 'datasource', 'container', 'datagrid',
+    'hidden', 'button', 'datasource', 'container',
     'editgrid', 'nestedform', 'form', 'dynamicwizard',
     'datatable', 'datamap', 'reviewpage', 'custom',
     'alert', 'content', 'htmlelement',
@@ -260,17 +269,25 @@ class VoiceFieldConfig {
       case 'address':
         return VoiceFieldConfig(
           isVoiceCompatible: true,
-          strategy: VoiceInputStrategy.freeText,
+          strategy: VoiceInputStrategy.address,
           promptTemplate: d.addressPrompt,
           constraints: constraints,
         );
 
       case 'survey':
         return VoiceFieldConfig(
-          isVoiceCompatible: false,
-          strategy: VoiceInputStrategy.skip,
-          promptTemplate: '',
-          skipReason: d.skipSurvey,
+          isVoiceCompatible: true,
+          strategy: VoiceInputStrategy.survey,
+          promptTemplate: d.surveyPrompt,
+          constraints: constraints,
+        );
+
+      case 'datagrid':
+        return VoiceFieldConfig(
+          isVoiceCompatible: true,
+          strategy: VoiceInputStrategy.datagrid,
+          promptTemplate: d.datagridPrompt,
+          constraints: constraints,
         );
 
       default:

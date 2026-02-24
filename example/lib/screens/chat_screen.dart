@@ -14,6 +14,7 @@ import '../models/conversation_message.dart';
 import '../models/prompt_dictionary.dart';
 import '../services/ai_service.dart';
 import '../services/conversation_engine.dart';
+import '../services/geocoding_service.dart';
 import '../services/session_service.dart';
 import '../services/voice_service.dart';
 import '../widgets/chat_bubble.dart';
@@ -35,6 +36,12 @@ class ChatScreen extends StatefulWidget {
   /// Auto-skip optional (not required) fields.
   final bool skipOptional;
 
+  /// Use on-device STT (no internet).
+  final bool offlineMode;
+
+  /// Locale for TTS/STT (e.g. 'tr', 'en').
+  final String locale;
+
   const ChatScreen({
     super.key,
     required this.form,
@@ -43,6 +50,8 @@ class ChatScreen extends StatefulWidget {
     this.confirmationEnabled = false,
     this.formId,
     this.skipOptional = false,
+    this.offlineMode = false,
+    this.locale = 'tr',
   });
 
   @override
@@ -79,7 +88,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _initializeServices() async {
+    // Apply locale and offline mode
+    _voiceService.offlineMode = widget.offlineMode;
     await _voiceService.initialize();
+    await _voiceService.setLocale(
+      PromptDictionary.current.sttLocaleId,
+    );
     setState(() => _isInitialized = true);
 
     // Send welcome message
@@ -241,6 +255,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       ));
     }
 
+    // Geocode address answers
+    if (currentQuestion.type == 'address' && processedValue is String) {
+      final geocoded = await GeocodingService.resolveAddress(processedValue);
+      processedValue = geocoded;
+    }
+
     // --- Confirmation mode: ask before saving ---
     if (widget.confirmationEnabled) {
       _pendingQuestion = currentQuestion;
@@ -324,6 +344,16 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     // Update form data
     _engine.updateAnswer(question.key, processedValue);
 
+    // Handle datagrid add-row sentinel
+    if (question.key.endsWith('__addrow')) {
+      final isYes = processedValue == true ||
+          processedValue.toString().toLowerCase().contains('evet') ||
+          processedValue.toString().toLowerCase().contains('yes');
+      if (isYes) {
+        _engine.expandDatagridRow(question.key);
+      }
+    }
+
     // Auto-save session
     _saveSession();
 
@@ -378,6 +408,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   }
 
   void _onFormComplete(Map<String, dynamic> formData) {
+    // Use merged form data that reconstructs survey/datagrid structures
+    final mergedData = _engine.mergedFormData;
     _addMessage(ConversationMessage.system(
       text: PromptDictionary.current.formComplete,
     ));
@@ -389,14 +421,14 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         context: context,
         barrierDismissible: false,
         builder: (ctx) => FormSummaryDialog(
-          formData: formData,
+          formData: mergedData,
           questions: _engine.allQuestions,
           onSubmit: () {
             // Clear session on successful submit
             if (widget.formId != null) {
               SessionService.clear(widget.formId!);
             }
-            widget.onSubmit?.call(formData);
+            widget.onSubmit?.call(mergedData);
           },
           onEditField: (key) {
             // Clear that answer and re-ask

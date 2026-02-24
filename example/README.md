@@ -307,11 +307,11 @@ Add to `android/app/src/main/AndroidManifest.xml`:
 
 ## 🗺️ Roadmap
 
-- [ ] Full English prompt dictionary
-- [ ] Address component with geocoding
-- [ ] Survey component voice support
-- [ ] Offline mode with local STT
-- [ ] DataGrid voice input (row-by-row)
+- [x] Full English prompt dictionary
+- [x] Address component with geocoding
+- [x] Survey component voice support
+- [x] Offline mode with local STT
+- [x] DataGrid voice input (row-by-row)
 
 ---
 

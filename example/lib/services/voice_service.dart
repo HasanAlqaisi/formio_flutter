@@ -21,6 +21,7 @@ class VoiceService extends ChangeNotifier {
   String _lastRecognizedText = '';
   double _soundLevel = 0.0;
   String _selectedLocaleId = 'tr_TR';
+  bool _offlineMode = false;
   VoidCallback? _onSilence;
 
   /// Current voice state.
@@ -37,6 +38,22 @@ class VoiceService extends ChangeNotifier {
 
   /// Whether the service is currently busy (speaking or listening).
   bool get isBusy => _state != VoiceState.idle;
+
+  /// Whether offline (on-device) mode is active.
+  bool get offlineMode => _offlineMode;
+
+  /// Enable or disable offline (on-device) STT mode.
+  set offlineMode(bool value) {
+    _offlineMode = value;
+    if (kDebugMode) print('🎤 Offline mode: $value');
+  }
+
+  /// Change the STT/TTS locale at runtime.
+  Future<void> setLocale(String localeId) async {
+    _selectedLocaleId = localeId;
+    await _tts.setLanguage(localeId);
+    if (kDebugMode) print('🌍 Locale changed to: $localeId');
+  }
 
   /// Initialize TTS and STT engines.
   Future<void> initialize() async {
@@ -163,6 +180,7 @@ class VoiceService extends ChangeNotifier {
         partialResults: true,
         cancelOnError: false,
         autoPunctuation: true,
+        onDevice: _offlineMode,
       ),
     );
   }

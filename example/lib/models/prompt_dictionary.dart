@@ -18,9 +18,30 @@
 /// ```
 library;
 
+import 'english_prompts.dart';
+
 class PromptDictionary {
   /// Singleton — switch to a different subclass for another language.
   static PromptDictionary current = PromptDictionary();
+
+  /// Current locale identifier ('tr' or 'en').
+  static String currentLocale = 'tr';
+
+  /// Factory to get a dictionary for a given locale.
+  static PromptDictionary forLocale(String locale) {
+    switch (locale) {
+      case 'en':
+        return EnglishPrompts();
+      default:
+        return PromptDictionary();
+    }
+  }
+
+  /// STT/TTS locale ID for the current language.
+  String get sttLocaleId => 'tr_TR';
+
+  /// TTS language code.
+  String get ttsLanguage => 'tr-TR';
 
   // ═══════════════════════════════════════════════════════════
   //  AI SYSTEM PROMPT
@@ -184,6 +205,42 @@ Kurallar:
 - Çıktı: {"value": "düzenlenmiş adres metni"}''';
 
   // ═══════════════════════════════════════════════════════════
+  //  SURVEY PROMPTS
+  // ═══════════════════════════════════════════════════════════
+
+  String get surveyPrompt =>
+      '''Kullanıcının sesli cevabını verilen anket derecelendirme seçeneklerinden biriyle eşleştir.
+Kurallar:
+- Kullanıcının söylediği metni mevcut derecelendirme etiketleriyle karşılaştır.
+- En yakın eşleşmenin VALUE değerini döndür.
+- Büyük/küçük harf ve Türkçe karakter farklarını yoksay.
+- Hiçbir seçenekle eşleşmezse {"value": ""} döndür.
+- Çıktı: {"value": "eşleşen_derecelendirme_value"}''';
+
+  String surveyQuestionPrompt(String questionLabel, List<String> options) =>
+      '$questionLabel. Şu seçeneklerden birini söyleyin: ${options.join(", ")}';  
+
+  // ═══════════════════════════════════════════════════════════
+  //  DATAGRID PROMPTS
+  // ═══════════════════════════════════════════════════════════
+
+  String datagridStartPrompt(String label, List<String> columns) =>
+      '"$label" tablosunu satır satır dolduracağız. '
+      'Sütunlar: ${columns.join(", ")}. 1. satırla başlayalım.';
+
+  String datagridRowPrompt(int rowNum) => '$rowNum. satır';
+
+  String get datagridAddMorePrompt =>
+      'Başka bir satır eklemek ister misiniz? (Evet / Hayır)';
+
+  String get datagridPrompt =>
+      '''Kullanıcının bu tablo hücresi için sesli cevabını dönüştür.
+Kurallar:
+- Mevcut sütun için uygun değeri çıkar.
+- Konuşma hatalarını temizle.
+- Çıktı: {"value": "hücre değeri"}''';
+
+  // ═══════════════════════════════════════════════════════════
   //  SKIP REASONS (non-voice-compatible components)
   // ═══════════════════════════════════════════════════════════
 
@@ -340,4 +397,23 @@ Kurallar:
       'Zorunlu olmayan alanları otomatik geç';
   String optionalFieldSkipped(String label) =>
       '⏭ "$label" opsiyonel — atlandı.';
+
+  // ── Offline Mode ──
+  String get configOfflineMode => 'Çevrimdışı Mod';
+  String get configOfflineModeDesc =>
+      'Cihaz üzerinde konuşma tanıma kullan (internet gerekmez)';
+  String get offlineModeActivated =>
+      '📱 Çevrimdışı mod etkin. Cihaz üzerinde konuşma tanıma kullanılıyor.';
+
+  // ── Language ──
+  String get configLanguage => 'Dil';
+  String get configLanguageDesc => 'Arayüz ve yapay zeka dilini değiştir';
+
+  // ── Form Compatibility ──
+  String get incompatibleFormTitle => 'Form Uyumsuz';
+  String get incompatibleFormMessage =>
+      'Bu form, sesli doldurulamayan zorunlu alan(lar) içeriyor. '
+      'Bu alanlar sesle doldurulamadığı için form tamamlanamaz.';
+  String get incompatibleFieldsHeader => 'Desteklenmeyen zorunlu alanlar:';
+  String get incompatibleGoBack => 'Geri Dön';
 }

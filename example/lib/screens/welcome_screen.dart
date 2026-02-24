@@ -17,6 +17,8 @@ class WelcomeScreen extends StatefulWidget {
     required bool confirmationEnabled,
     required bool aiEnabled,
     required bool skipOptional,
+    required bool offlineMode,
+    required String locale,
   }) onStart;
 
   const WelcomeScreen({
@@ -41,6 +43,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   bool _confirmationEnabled = true;
   bool _aiEnabled = true;
   bool _skipOptional = false;
+  bool _offlineMode = false;
+  String _selectedLocale = PromptDictionary.currentLocale;
 
   @override
   void initState() {
@@ -260,6 +264,20 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           onChanged: (v) =>
                               setState(() => _skipOptional = v),
                         ),
+                        const SizedBox(height: 8),
+                        // Offline mode toggle
+                        _buildConfigTile(
+                          theme: theme,
+                          icon: Icons.wifi_off_rounded,
+                          title: d.configOfflineMode,
+                          subtitle: d.configOfflineModeDesc,
+                          value: _offlineMode,
+                          onChanged: (v) =>
+                              setState(() => _offlineMode = v),
+                        ),
+                        const SizedBox(height: 8),
+                        // Language selector
+                        _buildLanguageTile(theme, d),
                       ],
                     ),
                   ),
@@ -280,6 +298,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                             confirmationEnabled: _confirmationEnabled,
                             aiEnabled: _aiEnabled,
                             skipOptional: _skipOptional,
+                            offlineMode: _offlineMode,
+                            locale: _selectedLocale,
                           );
                         },
                         icon: const Icon(Icons.arrow_forward_rounded),
@@ -359,6 +379,65 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         ),
         value: value,
         onChanged: onChanged,
+      ),
+    );
+  }
+
+  Widget _buildLanguageTile(ThemeData theme, PromptDictionary d) {
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withAlpha(80),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withAlpha(60),
+        ),
+      ),
+      child: ListTile(
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withAlpha(25),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            Icons.language_rounded,
+            color: theme.colorScheme.primary,
+            size: 22,
+          ),
+        ),
+        title: Text(
+          d.configLanguage,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        subtitle: Text(
+          d.configLanguageDesc,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        trailing: SegmentedButton<String>(
+          segments: const [
+            ButtonSegment(value: 'tr', label: Text('TR')),
+            ButtonSegment(value: 'en', label: Text('EN')),
+          ],
+          selected: {_selectedLocale},
+          onSelectionChanged: (selected) {
+            setState(() {
+              _selectedLocale = selected.first;
+              PromptDictionary.currentLocale = _selectedLocale;
+              PromptDictionary.current =
+                  PromptDictionary.forLocale(_selectedLocale);
+            });
+          },
+          style: ButtonStyle(
+            visualDensity: VisualDensity.compact,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+        ),
       ),
     );
   }
