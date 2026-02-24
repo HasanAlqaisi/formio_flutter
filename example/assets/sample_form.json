@@ -1,0 +1,149 @@
+[
+  {
+    "_id": "voice_chat_demo_form",
+    "path": "voice-chat-demo",
+    "title": "Hasta Kayıt Formu",
+    "components": [
+      {
+        "type": "textfield",
+        "key": "adSoyad",
+        "label": "Ad Soyad",
+        "placeholder": "Adınız ve soyadınız",
+        "validate": { "required": true }
+      },
+      {
+        "type": "number",
+        "key": "yas",
+        "label": "Yaş",
+        "validate": { "required": true }
+      },
+      {
+        "type": "select",
+        "key": "cinsiyet",
+        "label": "Cinsiyet",
+        "data": {
+          "values": [
+            { "label": "Erkek", "value": "erkek" },
+            { "label": "Kadın", "value": "kadin" }
+          ]
+        },
+        "validate": { "required": true }
+      },
+      {
+        "type": "phoneNumber",
+        "key": "telefon",
+        "label": "Telefon Numarası",
+        "validate": { "required": true }
+      },
+      {
+        "type": "email",
+        "key": "email",
+        "label": "E-posta Adresi",
+        "validate": { "required": false }
+      },
+      {
+        "type": "radio",
+        "key": "sigortaTuru",
+        "label": "Sigorta Türü",
+        "values": [
+          { "label": "SGK", "value": "sgk" },
+          { "label": "Özel Sigorta", "value": "ozel" },
+          { "label": "Sigortasız", "value": "yok" }
+        ],
+        "validate": { "required": true }
+      },
+      {
+        "type": "textfield",
+        "key": "sigortaNo",
+        "label": "Sigorta Numarası",
+        "conditional": {
+          "show": true,
+          "when": "sigortaTuru",
+          "eq": "sgk"
+        },
+        "validate": { "required": true }
+      },
+      {
+        "type": "textfield",
+        "key": "ozelSigortaFirma",
+        "label": "Özel Sigorta Firma Adı",
+        "conditional": {
+          "show": true,
+          "when": "sigortaTuru",
+          "eq": "ozel"
+        },
+        "validate": { "required": true }
+      },
+      {
+        "type": "textfield",
+        "key": "ozelSigortaPoliceNo",
+        "label": "Poliçe Numarası",
+        "conditional": {
+          "show": true,
+          "when": "sigortaTuru",
+          "eq": "ozel"
+        },
+        "validate": { "required": true }
+      },
+      {
+        "type": "checkbox",
+        "key": "kronikHastalik",
+        "label": "Kronik hastalığınız var mı?"
+      },
+      {
+        "type": "textarea",
+        "key": "kronikDetay",
+        "label": "Kronik hastalık detayları",
+        "placeholder": "Hastalık detaylarınızı belirtin",
+        "conditional": {
+          "show": true,
+          "when": "kronikHastalik",
+          "eq": true
+        },
+        "validate": { "required": true }
+      },
+      {
+        "type": "checkbox",
+        "key": "ilaçKullanimi",
+        "label": "Düzenli ilaç kullanıyor musunuz?"
+      },
+      {
+        "type": "textarea",
+        "key": "ilacDetay",
+        "label": "Kullandığınız ilaçlar",
+        "conditional": {
+          "show": true,
+          "when": "ilaçKullanimi",
+          "eq": true
+        },
+        "validate": { "required": true }
+      },
+      {
+        "type": "select",
+        "key": "randevuTuru",
+        "label": "Randevu Türü",
+        "data": {
+          "values": [
+            { "label": "Genel Muayene", "value": "genel" },
+            { "label": "Uzman Muayene", "value": "uzman" },
+            { "label": "Kontrol", "value": "kontrol" },
+            { "label": "Acil", "value": "acil" }
+          ]
+        },
+        "validate": { "required": true }
+      },
+      {
+        "type": "textarea",
+        "key": "sikayetDetay",
+        "label": "Şikayetinizi kısaca anlatır mısınız?",
+        "validate": { "required": true }
+      },
+      {
+        "type": "button",
+        "key": "submit",
+        "label": "Formu Gönder",
+        "action": "submit"
+      }
+    ]
+  }
+]
