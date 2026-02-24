@@ -159,7 +159,9 @@ Kurallar:
 - Bahsedilen seçenekleri true, bahsedilmeyenleri false yap.
 - "hepsi" veya "tümü" denirse hepsini true yap.
 - "hiçbiri" denirse hepsini false yap.
-- Çıktı: {"value": {"opt1": true, "opt2": false, "opt3": true}}''';
+- ZORUNLU: Seçenek anahtarları olarak Seçenekler listesindeki "value" değerlerini aynen kullan.
+- Çıktı formatı: {"value": {"<gerçek_value>": true, "<gerçek_value>": false}}
+- Örnek: seçenekler a1, a2, a3 ise → {"value": {"a1": true, "a2": false, "a3": true}}''';
 
   String get checkboxPrompt =>
       '''Kullanıcının sesli cevabını evet/hayır değerine dönüştür.
@@ -298,10 +300,32 @@ Kurallar:
       '$label. Evet veya hayır olarak cevaplayın.';
   String questionDate(String label) => '$label. Lütfen bir tarih belirtin.';
   String questionTime(String label) => '$label. Lütfen bir saat belirtin.';
+  /// Maximum number of options to read aloud via TTS.
+  /// Lists longer than this are shown in the chat bubble but not spoken.
+  static const int ttsListThreshold = 3;
+
   String questionSelectOne(String label, List<String> options) =>
       '$label. Şu seçeneklerden birini söyleyin: ${options.join(", ")}';
   String questionSelectMulti(String label, List<String> options) =>
       '$label. Şu seçeneklerden bir veya daha fazlasını söyleyin: ${options.join(", ")}';
+
+  // ── TTS-short variants (omit list when options > threshold) ──
+
+  String questionSelectOneTts(String label, List<String> options) =>
+      options.length > ttsListThreshold
+          ? '$label. Lütfen seçeneklerden birini söyleyin.'
+          : questionSelectOne(label, options);
+
+  String questionSelectMultiTts(String label, List<String> options) =>
+      options.length > ttsListThreshold
+          ? '$label. Lütfen seçeneklerden bir veya daha fazlasını söyleyin.'
+          : questionSelectMulti(label, options);
+
+  String surveyQuestionPromptTts(
+          String questionLabel, List<String> options) =>
+      options.length > ttsListThreshold
+          ? '$questionLabel. Lütfen bir derecelendirme söyleyin.'
+          : surveyQuestionPrompt(questionLabel, options);
 
   // ═══════════════════════════════════════════════════════════
   //  CHAT SCREEN UI STRINGS

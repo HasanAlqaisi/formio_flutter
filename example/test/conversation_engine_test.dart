@@ -415,4 +415,143 @@ void main() {
       expect(text, contains('Mavi'));
     });
   });
+
+  group('ConversationEngine - TTS Text Truncation', () {
+    test('buildTtsText returns full text when options <= threshold', () {
+      final form = _buildForm([
+        {
+          'type': 'select',
+          'key': 'color',
+          'label': 'Renk seçin',
+          'data': {
+            'values': [
+              {'label': 'Kırmızı', 'value': 'red'},
+              {'label': 'Mavi', 'value': 'blue'},
+            ],
+          },
+        },
+      ]);
+
+      final engine = ConversationEngine(form: form);
+      final question = engine.allQuestions.first;
+
+      final displayText = engine.buildQuestionText(question);
+      final ttsText = engine.buildTtsText(question);
+
+      // 2 options <= threshold (3), so TTS text == display text
+      expect(ttsText, equals(displayText));
+      expect(ttsText, contains('Kırmızı'));
+      expect(ttsText, contains('Mavi'));
+    });
+
+    test('buildTtsText truncates when options > threshold', () {
+      final form = _buildForm([
+        {
+          'type': 'select',
+          'key': 'city',
+          'label': 'Şehir seçin',
+          'data': {
+            'values': [
+              {'label': 'İstanbul', 'value': 'ist'},
+              {'label': 'Ankara', 'value': 'ank'},
+              {'label': 'İzmir', 'value': 'izm'},
+              {'label': 'Bursa', 'value': 'brs'},
+              {'label': 'Antalya', 'value': 'ant'},
+            ],
+          },
+        },
+      ]);
+
+      final engine = ConversationEngine(form: form);
+      final question = engine.allQuestions.first;
+
+      final displayText = engine.buildQuestionText(question);
+      final ttsText = engine.buildTtsText(question);
+
+      // Display text should contain all options
+      expect(displayText, contains('İstanbul'));
+      expect(displayText, contains('Antalya'));
+
+      // TTS text should NOT contain option names
+      expect(ttsText, isNot(contains('İstanbul')));
+      expect(ttsText, isNot(contains('Antalya')));
+      expect(ttsText, contains('Şehir seçin'));
+      expect(ttsText, contains('seçeneklerden'));
+    });
+
+    test('buildTtsText truncates selectboxes with many options', () {
+      final form = _buildForm([
+        {
+          'type': 'selectboxes',
+          'key': 'hobbies',
+          'label': 'Hobileriniz',
+          'values': [
+            {'label': 'Yüzme', 'value': 'swim'},
+            {'label': 'Koşu', 'value': 'run'},
+            {'label': 'Bisiklet', 'value': 'bike'},
+            {'label': 'Yoga', 'value': 'yoga'},
+          ],
+        },
+      ]);
+
+      final engine = ConversationEngine(form: form);
+      final question = engine.allQuestions.first;
+
+      final displayText = engine.buildQuestionText(question);
+      final ttsText = engine.buildTtsText(question);
+
+      // Display text has full list
+      expect(displayText, contains('Yüzme'));
+      expect(displayText, contains('Yoga'));
+
+      // TTS text is short
+      expect(ttsText, isNot(contains('Yüzme')));
+      expect(ttsText, contains('Hobileriniz'));
+    });
+
+    test('buildTtsText falls back to buildQuestionText for non-list types',
+        () {
+      final form = _buildForm([
+        {'type': 'textfield', 'key': 'name', 'label': 'Adınız'},
+        {'type': 'number', 'key': 'age', 'label': 'Yaşınız'},
+      ]);
+
+      final engine = ConversationEngine(form: form);
+
+      for (final q in engine.allQuestions) {
+        expect(engine.buildTtsText(q), equals(engine.buildQuestionText(q)));
+      }
+    });
+
+    test('buildTtsText truncates radio with many options', () {
+      final form = _buildForm([
+        {
+          'type': 'radio',
+          'key': 'rating',
+          'label': 'Değerlendirme',
+          'values': [
+            {'label': 'Çok Kötü', 'value': '1'},
+            {'label': 'Kötü', 'value': '2'},
+            {'label': 'Orta', 'value': '3'},
+            {'label': 'İyi', 'value': '4'},
+            {'label': 'Çok İyi', 'value': '5'},
+          ],
+        },
+      ]);
+
+      final engine = ConversationEngine(form: form);
+      final question = engine.allQuestions.first;
+
+      final displayText = engine.buildQuestionText(question);
+      final ttsText = engine.buildTtsText(question);
+
+      // Display text has all 5 options
+      expect(displayText, contains('Çok Kötü'));
+      expect(displayText, contains('Çok İyi'));
+
+      // TTS text is short
+      expect(ttsText, isNot(contains('Çok Kötü')));
+      expect(ttsText, contains('Değerlendirme'));
+    });
+  });
 }

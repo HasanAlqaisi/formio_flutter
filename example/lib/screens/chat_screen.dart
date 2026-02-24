@@ -182,16 +182,18 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       return;
     }
 
-    final questionText = _engine.buildQuestionText(question);
+    final displayText = _engine.buildQuestionText(question);
+    final ttsText = _engine.buildTtsText(question);
 
     _addMessage(ConversationMessage.botQuestion(
-      text: questionText,
+      text: displayText,
+      ttsText: ttsText != displayText ? ttsText : null,
       componentKey: question.key,
       componentType: question.type,
     ));
 
-    // Speak the question
-    await _voiceService.speak(questionText);
+    // Speak the question (uses short TTS text when list is long)
+    await _voiceService.speak(ttsText);
   }
 
   Future<void> _startListening() async {
@@ -441,11 +443,23 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   ///
   /// Uses [AIService.extractOptions] which handles all Form.io
   /// component structures (select, radio, selectboxes).
+  ///
+  /// Falls back to index-based matching for generic keys like
+  /// `opt1, opt2` that the AI may generate instead of real values.
   String _resolveOptionLabel(String rawValue, ComponentModel component) {
     final options = AIService.extractOptions(component.raw);
+    // Direct value match
     for (final opt in options) {
       if (opt['value'] == rawValue) {
         return opt['label'] ?? rawValue;
+      }
+    }
+    // Fallback: match generic opt-N keys by index (1-based → 0-based)
+    final indexMatch = RegExp(r'^opt(\d+)$').firstMatch(rawValue);
+    if (indexMatch != null) {
+      final idx = int.parse(indexMatch.group(1)!) - 1;
+      if (idx >= 0 && idx < options.length) {
+        return options[idx]['label'] ?? rawValue;
       }
     }
     return rawValue;
@@ -790,15 +804,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             ),
             tooltip: PromptDictionary.current.tooltipReset,
           ),
-          // Repeat question button
-          IconButton(
-            onPressed: _isProcessingAnswer ? null : _repeatLastQuestion,
-            icon: Icon(
-              Icons.replay_rounded,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            tooltip: PromptDictionary.current.tooltipRepeat,
-          ),
+
           const Spacer(),
           // Main mic button
           _buildMicButton(theme),
@@ -820,15 +826,6 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                   : theme.colorScheme.onSurfaceVariant,
             ),
             tooltip: _showTextInput ? PromptDictionary.current.tooltipHideKeyboard : PromptDictionary.current.tooltipShowKeyboard,
-          ),
-          // Skip button
-          IconButton(
-            onPressed: _isProcessingAnswer ? null : _skipQuestion,
-            icon: Icon(
-              Icons.skip_next_rounded,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            tooltip: PromptDictionary.current.tooltipSkip,
           ),
         ],
       ),
@@ -885,8 +882,11 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   void _repeatLastQuestion() {
     final question = _engine.getNextQuestion();
     if (question != null) {
-      final text = _engine.buildQuestionText(question);
-      _voiceService.speak(text);
+      // Use buildTtsText so repeating also uses the short version
+      // for long option lists — the full list is already visible
+      // in the chat bubble.
+      final ttsText = _engine.buildTtsText(question);
+      _voiceService.speak(ttsText);
     }
   }
 

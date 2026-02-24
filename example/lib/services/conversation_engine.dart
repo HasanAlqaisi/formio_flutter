@@ -271,6 +271,55 @@ class ConversationEngine extends ChangeNotifier {
     }
   }
 
+  /// Build TTS-specific question text.
+  ///
+  /// For list-based components (select, radio, selectboxes, survey) with
+  /// more than [PromptDictionary.ttsListThreshold] options, returns a
+  /// short instruction without the full option list. The full list is
+  /// still shown in the chat bubble via [buildQuestionText].
+  ///
+  /// For all other types, returns the same text as [buildQuestionText].
+  String buildTtsText(ComponentModel component) {
+    final label = component.label.isNotEmpty ? component.label : component.key;
+
+    switch (component.type) {
+      case 'select':
+        final options = _getSelectOptions(component);
+        if (options.isNotEmpty) {
+          return PromptDictionary.current
+              .questionSelectOneTts(label, options);
+        }
+        return label;
+
+      case 'radio':
+        final options = _getRadioOptions(component);
+        if (options.isNotEmpty) {
+          return PromptDictionary.current
+              .questionSelectOneTts(label, options);
+        }
+        return label;
+
+      case 'selectboxes':
+        final options = _getSelectBoxOptions(component);
+        if (options.isNotEmpty) {
+          return PromptDictionary.current
+              .questionSelectMultiTts(label, options);
+        }
+        return label;
+
+      case 'survey':
+        final surveyValues = _getSurveyValues(component);
+        if (surveyValues.isNotEmpty) {
+          return PromptDictionary.current
+              .surveyQuestionPromptTts(label, surveyValues);
+        }
+        return label;
+
+      default:
+        return buildQuestionText(component);
+    }
+  }
+
   /// Parse a raw text answer into the appropriate value for a component type.
   dynamic parseAnswer(ComponentModel component, String rawText) {
     final text = rawText.trim();

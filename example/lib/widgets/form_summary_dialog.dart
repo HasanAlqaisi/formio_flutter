@@ -359,11 +359,23 @@ class _FormSummaryDialogState extends State<FormSummaryDialog>
   ///
   /// Uses [AIService.extractOptions] which handles all Form.io
   /// component structures (select, radio, selectboxes).
+  ///
+  /// Falls back to index-based matching for generic keys like
+  /// `opt1, opt2` that the AI may generate instead of real values.
   String _resolveLabel(String valueKey, ComponentModel question) {
     final options = AIService.extractOptions(question.raw);
+    // Direct value match
     for (final opt in options) {
       if (opt['value'] == valueKey) {
         return opt['label'] ?? valueKey;
+      }
+    }
+    // Fallback: match generic opt-N keys by index (1-based → 0-based)
+    final indexMatch = RegExp(r'^opt(\d+)$').firstMatch(valueKey);
+    if (indexMatch != null) {
+      final idx = int.parse(indexMatch.group(1)!) - 1;
+      if (idx >= 0 && idx < options.length) {
+        return options[idx]['label'] ?? valueKey;
       }
     }
     return valueKey;

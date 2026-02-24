@@ -145,7 +145,9 @@ Rules:
 - Mentioned options → true, others → false.
 - "all" or "everything" → set all to true.
 - "none" or "nothing" → set all to false.
-- Output: {"value": {"opt1": true, "opt2": false, "opt3": true}}''';
+- MANDATORY: Use the exact "value" keys from the provided options list as keys.
+- Output format: {"value": {"<actual_value>": true, "<actual_value>": false}}
+- Example: if options have values a1, a2, a3 → {"value": {"a1": true, "a2": false, "a3": true}}''';
 
   @override
   String get checkboxPrompt =>
@@ -306,6 +308,27 @@ Rules:
   @override
   String questionSelectMulti(String label, List<String> options) =>
       '$label. Choose one or more of these options: ${options.join(", ")}';
+
+  // ── TTS-short variants ──
+
+  @override
+  String questionSelectOneTts(String label, List<String> options) =>
+      options.length > PromptDictionary.ttsListThreshold
+          ? '$label. Please choose one of the options.'
+          : questionSelectOne(label, options);
+
+  @override
+  String questionSelectMultiTts(String label, List<String> options) =>
+      options.length > PromptDictionary.ttsListThreshold
+          ? '$label. Please choose one or more of the options.'
+          : questionSelectMulti(label, options);
+
+  @override
+  String surveyQuestionPromptTts(
+          String questionLabel, List<String> options) =>
+      options.length > PromptDictionary.ttsListThreshold
+          ? '$questionLabel. Please say a rating.'
+          : surveyQuestionPrompt(questionLabel, options);
 
   // ═══════════════════════════════════════════════════════════
   //  CHAT SCREEN UI STRINGS
