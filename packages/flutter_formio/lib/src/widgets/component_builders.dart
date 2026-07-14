@@ -446,7 +446,9 @@ Widget buildFallback(FieldScope s, Map<String, dynamic> raw, String path, String
       component: model,
       value: coerceValue(type, s.getValue(path)),
       onChanged: (v) => s.setValue(path, v),
-      formData: const {},
+      // Pass the real submission so content/html elements can interpolate
+      // {{data.x}} and any stock widget can see sibling data.
+      formData: s.data,
     );
   } catch (e) {
     return placeholderCard(

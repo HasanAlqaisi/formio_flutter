@@ -10,6 +10,7 @@ import '../core/form_logic_engine.dart';
 class FieldScope {
   const FieldScope({
     required this.context,
+    required this.data,
     required this.getValue,
     required this.setValue,
     required this.errorFor,
@@ -19,6 +20,10 @@ class FieldScope {
   });
 
   final BuildContext context;
+
+  /// The full current (post-engine) submission data, for widgets that need the
+  /// whole context — e.g. `{{data.x}}` interpolation in content/html elements.
+  final Map<String, dynamic> data;
 
   /// Read the nested value at [path].
   final dynamic Function(String path) getValue;

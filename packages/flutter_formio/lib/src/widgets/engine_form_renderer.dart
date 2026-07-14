@@ -137,6 +137,7 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
 
   FieldScope _makeScope(BuildContext context) => FieldScope(
         context: context,
+        data: _data,
         getValue: _getPath,
         setValue: _setPath,
         errorFor: (path) =>
