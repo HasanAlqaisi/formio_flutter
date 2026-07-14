@@ -30,8 +30,8 @@ Widget buildField(FieldScope s, Map<String, dynamic> raw, String path, Widget co
 
   final labelWidget = label.isEmpty
       ? null
-      : Text(required ? '$label *' : label,
-          style: const TextStyle(fontWeight: FontWeight.w500));
+      : Text(required ? '$label${s.theme.requiredSuffix}' : label,
+          style: s.theme.resolvedLabelStyle(ctx));
 
   Widget labeled;
   if (labelWidget == null) {
@@ -57,7 +57,7 @@ Widget buildField(FieldScope s, Map<String, dynamic> raw, String path, Widget co
   }
 
   return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 6),
+    padding: s.theme.fieldPadding,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -65,25 +65,23 @@ Widget buildField(FieldScope s, Map<String, dynamic> raw, String path, Widget co
         if (desc != null && desc.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 2),
-            child: Text(desc,
-                style: TextStyle(fontSize: 12, color: Theme.of(ctx).hintColor)),
+            child: Text(desc, style: s.theme.resolvedDescriptionStyle(ctx)),
           ),
         if (error != null)
           Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: Text(messageForError(error),
-                style: TextStyle(
-                    color: Theme.of(ctx).colorScheme.error, fontSize: 12)),
+            child:
+                Text(messageForError(error), style: s.theme.resolvedErrorStyle(ctx)),
           ),
       ],
     ),
   );
 }
 
-String labelText(Map<String, dynamic> raw) {
+String labelText(Map<String, dynamic> raw, {String requiredSuffix = ' *'}) {
   final label = raw['label'] as String? ?? '';
   return raw['validate']?['required'] == true && label.isNotEmpty
-      ? '$label *'
+      ? '$label$requiredSuffix'
       : label;
 }
 
@@ -129,8 +127,9 @@ Widget buildTextLeaf(FieldScope s, Map<String, dynamic> raw, String path, String
             : TextInputType.text,
     maxLines: type == 'textarea' ? (raw['rows'] as num?)?.toInt() ?? 3 : 1,
     decoration: InputDecoration(
-      isDense: true,
-      border: const OutlineInputBorder(),
+      isDense: s.theme.isDense,
+      border: s.theme.resolvedInputBorder(ctx),
+      contentPadding: s.theme.inputContentPadding,
       hintText: raw['placeholder'] as String?,
       prefixText: (raw['prefix'] as String?)?.isNotEmpty == true
           ? raw['prefix'] as String
@@ -249,7 +248,7 @@ Widget buildCheckbox(FieldScope s, Map<String, dynamic> raw, String path) {
     dense: true,
     contentPadding: EdgeInsets.zero,
     controlAffinity: ListTileControlAffinity.leading,
-    title: Text(labelText(raw)),
+    title: Text(labelText(raw, requiredSuffix: s.theme.requiredSuffix)),
     value: checked,
     onChanged:
         disabled ? null : (val) => s.setValue(path, val ?? false, immediate: true),
@@ -330,8 +329,9 @@ Widget buildDateTime(FieldScope s, Map<String, dynamic> raw, String path, String
     onTap: disabled ? null : pick,
     child: InputDecorator(
       decoration: InputDecoration(
-        isDense: true,
-        border: const OutlineInputBorder(),
+        isDense: s.theme.isDense,
+        border: s.theme.resolvedInputBorder(ctx),
+        contentPadding: s.theme.inputContentPadding,
         suffixIcon: Icon(
             enableTime && !enableDate ? Icons.access_time : Icons.calendar_today),
         fillColor:
@@ -355,7 +355,7 @@ Widget buildDataGrid(FieldScope s, Map<String, dynamic> raw, String path) {
   final disabled = raw['disabled'] == true;
 
   return Card(
-    margin: const EdgeInsets.symmetric(vertical: 6),
+    margin: s.theme.sectionMargin,
     child: Padding(
       padding: const EdgeInsets.all(10),
       child: Column(
@@ -364,8 +364,8 @@ Widget buildDataGrid(FieldScope s, Map<String, dynamic> raw, String path) {
           if (label.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 4),
-              child: Text(labelText(raw),
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              child: Text(labelText(raw, requiredSuffix: s.theme.requiredSuffix),
+                  style: s.theme.resolvedPanelTitleStyle(ctx)),
             ),
           for (var i = 0; i < rows.length; i++)
             Container(

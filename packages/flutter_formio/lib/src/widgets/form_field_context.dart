@@ -30,6 +30,7 @@ library;
 import 'package:flutter/widgets.dart';
 
 import '../core/form_logic_engine.dart';
+import 'form_theme.dart';
 
 /// A builder for a custom or overridden component type.
 typedef FormioFieldBuilder = Widget Function(FormioFieldContext ctx);
@@ -43,6 +44,7 @@ typedef FormioFieldBuilder = Widget Function(FormioFieldContext ctx);
 class FormioFieldContext {
   FormioFieldContext({
     required this.context,
+    required this.theme,
     required this.component,
     required this.path,
     required dynamic Function(String path) read,
@@ -64,6 +66,9 @@ class FormioFieldContext {
 
   /// The build context of the renderer.
   final BuildContext context;
+
+  /// The active design tokens, so a custom widget can match the form's styling.
+  final FormioTheme theme;
 
   /// The raw Form.io JSON for this component (all its properties).
   final Map<String, dynamic> component;

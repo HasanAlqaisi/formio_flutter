@@ -70,6 +70,28 @@ void main() {
     expect(find.text('Inside'), findsNothing); // …along with its children
   });
 
+  testWidgets('applies FormioTheme tokens (required suffix)', (tester) async {
+    final form = {
+      'display': 'form',
+      'components': [
+        {
+          'type': 'textfield', 'key': 'name', 'label': 'Name', 'input': true,
+          'validate': {'required': true},
+        },
+      ],
+    };
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: EngineFormRenderer(
+          form: form,
+          engine: _FakeEngine(),
+          theme: const FormioTheme(requiredSuffix: ' (required)'),
+        ),
+      ),
+    ));
+    expect(find.text('Name (required)'), findsOneWidget);
+  });
+
   testWidgets('validation error is gated until submit', (tester) async {
     final engine = _FakeEngine(
       errors: const [FormLogicError(path: 'visible', rule: 'required')],

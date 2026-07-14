@@ -6,10 +6,12 @@ library;
 import 'package:flutter/widgets.dart';
 
 import '../core/form_logic_engine.dart';
+import 'form_theme.dart';
 
 class FieldScope {
   const FieldScope({
     required this.context,
+    required this.theme,
     required this.data,
     required this.getValue,
     required this.setValue,
@@ -20,6 +22,9 @@ class FieldScope {
   });
 
   final BuildContext context;
+
+  /// Design tokens for the built-in widgets (labels, inputs, errors, panels).
+  final FormioTheme theme;
 
   /// The full current (post-engine) submission data, for widgets that need the
   /// whole context — e.g. `{{data.x}}` interpolation in content/html elements.

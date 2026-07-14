@@ -18,8 +18,10 @@ import '../core/form_logic_engine.dart';
 import 'component_builders.dart' as cb;
 import 'form_field_context.dart';
 import 'form_field_scope.dart';
+import 'form_theme.dart';
 
 export 'form_field_context.dart' show FormioFieldContext, FormioFieldBuilder;
+export 'form_theme.dart' show FormioTheme;
 
 typedef EngineFormSubmit = void Function(Map<String, dynamic> data);
 
@@ -33,6 +35,7 @@ class EngineFormRenderer extends StatefulWidget {
     this.onChanged,
     this.customComponents,
     this.textDirection,
+    this.theme = const FormioTheme(),
     this.debounce = const Duration(milliseconds: 450),
   });
 
@@ -50,6 +53,10 @@ class EngineFormRenderer extends StatefulWidget {
   /// [Directionality] is used (e.g. from `MaterialApp`'s locale). Set
   /// [TextDirection.rtl] for right-to-left forms
   final TextDirection? textDirection;
+
+  /// Design tokens for the built-in widgets. Defaults match the ambient Material
+  /// theme; override to restyle without replacing widgets.
+  final FormioTheme theme;
 
   final Duration debounce;
 
@@ -163,6 +170,7 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
 
   FieldScope _makeScope(BuildContext context) => FieldScope(
         context: context,
+        theme: widget.theme,
         data: _data,
         getValue: _getPath,
         setValue: _setPath,
@@ -340,7 +348,7 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
           (rawLabel == 'Panel' || rawLabel == 'Field Set') ? null : rawLabel,
         ].firstWhere((h) => h != null && h.isNotEmpty, orElse: () => null);
         return Card(
-          margin: const EdgeInsets.symmetric(vertical: 6),
+          margin: widget.theme.sectionMargin,
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
@@ -350,7 +358,7 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Text(header,
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                        style: widget.theme.resolvedPanelTitleStyle(context)),
                   ),
                 _renderList(
                     (raw['components'] as List?) ?? const [], parentPath),
@@ -435,6 +443,7 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
   FormioFieldContext _fieldContext(Map<String, dynamic> raw, String path) =>
       FormioFieldContext(
         context: context,
+        theme: widget.theme,
         component: raw,
         path: path,
         read: _scope.getValue,
@@ -452,11 +461,10 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
     final error =
         (_submitted || _touched.contains(path)) ? _errors[path] : null;
     if (error == null) {
-      return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6), child: field);
+      return Padding(padding: widget.theme.fieldPadding, child: field);
     }
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: widget.theme.fieldPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -464,8 +472,7 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(cb.messageForError(error),
-                style: TextStyle(
-                    color: Theme.of(context).colorScheme.error, fontSize: 12)),
+                style: widget.theme.resolvedErrorStyle(context)),
           ),
         ],
       ),
