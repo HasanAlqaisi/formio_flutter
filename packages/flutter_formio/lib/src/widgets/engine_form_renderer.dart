@@ -37,7 +37,7 @@ class EngineFormRenderer extends StatefulWidget {
   });
 
   final Map<String, dynamic> form;
-  final FormLogicEngine engine;
+  final FormEngine engine;
   final Map<String, dynamic>? initialData;
   final EngineFormSubmit? onSubmit;
   final ValueChanged<Map<String, dynamic>>? onChanged;

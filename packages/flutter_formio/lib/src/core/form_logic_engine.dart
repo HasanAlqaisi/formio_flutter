@@ -95,12 +95,29 @@ class FormLogicEngineException implements Exception {
   String toString() => 'FormLogicEngineException: $message';
 }
 
+/// The minimal engine surface [EngineFormRenderer] depends on.
+///
+/// Implement this to back the renderer with an alternative engine (e.g. an
+/// isolate-hosted one) or a fake in tests. [FormLogicEngine] is the default
+/// `flutter_js` implementation.
+abstract interface class FormEngine {
+  /// Prepare/cache [form] before processing (see [FormLogicEngine.setForm]).
+  void setForm(Map<String, dynamic> form);
+
+  /// Run the pipeline against [submissionData]; returns data/hidden/errors.
+  /// [validate] defaults to true (live validation).
+  FormLogicResult processData(
+    Map<String, dynamic> submissionData, {
+    bool validate,
+  });
+}
+
 /// Persistent wrapper around the `@formio/core` bundle running in `flutter_js`.
 ///
 /// Create once, call [init] at startup, [setForm] when the form loads/changes,
 /// then [processData] on every change/submit (only the small submission crosses
 /// the FFI boundary). [process] remains as a one-shot form+data convenience.
-class FormLogicEngine {
+class FormLogicEngine implements FormEngine {
   FormLogicEngine();
 
   static const _assetPath =
