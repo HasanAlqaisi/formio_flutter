@@ -32,6 +32,7 @@ class EngineFormRenderer extends StatefulWidget {
     this.onSubmit,
     this.onChanged,
     this.customComponents,
+    this.textDirection,
     this.debounce = const Duration(milliseconds: 450),
   });
 
@@ -44,6 +45,11 @@ class EngineFormRenderer extends StatefulWidget {
   /// Host-registered builders for custom component types (or overrides of
   /// built-in types), keyed by the Form.io component `type`.
   final Map<String, FormioFieldBuilder>? customComponents;
+
+  /// Text/layout direction for the whole form. When null, the ambient
+  /// [Directionality] is used (e.g. from `MaterialApp`'s locale). Set
+  /// [TextDirection.rtl] for right-to-left forms
+  final TextDirection? textDirection;
 
   final Duration debounce;
 
@@ -489,7 +495,7 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
       return const Center(child: CircularProgressIndicator());
     }
     _scope = _makeScope(context);
-    return Column(
+    final body = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Expanded(
@@ -514,6 +520,9 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
         ),
       ],
     );
+    return widget.textDirection == null
+        ? body
+        : Directionality(textDirection: widget.textDirection!, child: body);
   }
 
   // ---- utils ------------------------------------------------------------

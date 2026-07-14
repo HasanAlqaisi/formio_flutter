@@ -397,7 +397,7 @@ Widget buildDataGrid(FieldScope s, Map<String, dynamic> raw, String path) {
             ),
           if (!disabled)
             Align(
-              alignment: Alignment.centerLeft,
+              alignment: AlignmentDirectional.centerStart,
               child: TextButton.icon(
                 icon: const Icon(Icons.add),
                 label: const Text('Add'),

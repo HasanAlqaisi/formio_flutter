@@ -53,6 +53,8 @@ class _FormPickerState extends State<FormPicker> {
             form: form,
             engine: _engine,
             customComponents: creatioComponents,
+            // The Creatio samples are Arabic; render right-to-left.
+            textDirection: TextDirection.rtl,
             onSubmit: (data) {
               debugPrint('SUBMIT: ${jsonEncode(data)}');
               ScaffoldMessenger.of(context).showSnackBar(
