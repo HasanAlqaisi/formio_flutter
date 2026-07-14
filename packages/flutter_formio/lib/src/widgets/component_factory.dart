@@ -324,10 +324,6 @@ class ComponentFactory {
           onChanged: (files) => onChanged(files),
           onFilePick: onFilePick,
         );
-      case 'nestedform':
-        return NestedFormComponent(component: component, value: value is Map<String, dynamic> ? value : {}, onChanged: onChanged);
-      case 'form':
-        return FormComponent(component: component, value: value is Map<String, dynamic> ? value : {}, onChanged: onChanged);
       case 'captcha':
         return CaptchaComponent(component: component, value: value, onChanged: onChanged);
       case 'tagpad':

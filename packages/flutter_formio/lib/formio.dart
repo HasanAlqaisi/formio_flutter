@@ -19,8 +19,9 @@
 ///   Widget build(BuildContext context) {
 ///     return MaterialApp(
 ///       home: Scaffold(
-///         body: FormRenderer(
+///         body: EngineFormRenderer(
 ///           form: myForm,
+///           engine: myEngine,
 ///           onSubmit: (data) => print('Submitted: $data'),
 ///         ),
 ///       ),
@@ -36,6 +37,7 @@ export 'package:formio_api/formio_api.dart';
 
 // Core Flutter-specific
 export 'src/core/flutter_js_evaluator.dart';
+export 'src/core/form_logic_engine.dart';
 export 'src/core/validators.dart';
 // Models - Flutter-specific
 export 'src/models/file_typedefs.dart';
@@ -66,10 +68,8 @@ export 'src/widgets/components/edit_grid_component.dart';
 export 'src/widgets/components/email_component.dart';
 export 'src/widgets/components/fieldset_component.dart';
 export 'src/widgets/components/file_component.dart';
-export 'src/widgets/components/form_component.dart';
 export 'src/widgets/components/hidden_component.dart';
 export 'src/widgets/components/html_element_component.dart';
-export 'src/widgets/components/nested_form_component.dart';
 export 'src/widgets/components/number_component.dart';
 export 'src/widgets/components/panel_component.dart';
 export 'src/widgets/components/password_component.dart';
@@ -90,7 +90,7 @@ export 'src/widgets/components/time_component.dart';
 export 'src/widgets/components/unknown_component.dart';
 export 'src/widgets/components/url_component.dart';
 export 'src/widgets/components/well_component.dart';
-export 'src/widgets/form_renderer.dart';
+export 'src/widgets/engine_form_renderer.dart';
 
 // Note: Other 35+ components are available via ComponentFactory
 // Users can import specific components as needed from src/widgets/components/
