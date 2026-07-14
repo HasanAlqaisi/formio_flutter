@@ -5,6 +5,55 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-07-14
+
+Major release. Form logic is now delegated to Form.io's own `@formio/core`
+running headless via `flutter_js`, replacing the hand-rolled Dart evaluators.
+This gives full logic fidelity — conditionals, calculations, Logic-tab actions,
+and validation, **including custom JavaScript** — and eliminates a large class
+of drift bugs.
+
+### Added
+
+- `EngineFormRenderer` — engine-driven, path-aware renderer over nested submissions.
+- `FormLogicEngine` — headless `@formio/core` wrapper (`init` / `setForm` / `processData`),
+  behind a `FormEngine` interface so it can be mocked or replaced (e.g. isolate-hosted).
+- Custom-component extension API: `customComponents` map + `FormioFieldContext`
+  (`value` / `setValue` / `read` / `error` / `controller` / `builtin` / `chrome`)
+  + `FormioFieldBuilder`. Register new types or override built-ins.
+- `FormioTheme` design tokens via `EngineFormRenderer.theme`.
+- `EngineFormRenderer.textDirection` for right-to-left forms.
+- Localized validation errors via `ComponentFactory.setLocale`.
+- Per-component error boundary: a throwing component degrades to a placeholder
+  instead of taking down the whole form.
+
+### Changed
+
+- Conditionals, calculations, and validation now run in `@formio/core`, not Dart.
+- Discrete selections (dropdowns, chips, checkboxes) recompute immediately;
+  text input stays debounced.
+
+### Removed — BREAKING
+
+- `FormRenderer`, `WizardRenderer`, `FormDataProvider`.
+- Stock components (and their exports) for types the engine renders natively —
+  `textfield`, `textarea`, `number`, `currency`, `email`, `url`, `password`,
+  `phoneNumber`, `checkbox`, `radio`, `select`, `selectboxes`, `date`, `datetime`,
+  `time`, `columns`, `table`, `panel`, `well`, `fieldset`, `tabs`, `container`,
+  `datagrid`, `editgrid`. `ComponentFactory` remains as the premium-type fallback
+  (address, signature, file, survey, …) and the host-registration mechanism.
+
+### Fixed
+
+- Conditionally-hidden panels no longer render as dead, engine-reverted shells.
+- Panel/fieldset headers read `title`/`legend` instead of the default `label`.
+- `content` / `htmlelement` components interpolate `{{data.x}}`.
+
+### Performance
+
+- The form is cached JS-side (`setForm`); only the submission crosses the FFI
+  boundary per recompute — a ~3000–9000× smaller payload on large forms.
+
 ## [2.0.4] - 2026-02-11
 
 ### Added
