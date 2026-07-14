@@ -85,9 +85,28 @@ String labelText(Map<String, dynamic> raw, {String requiredSuffix = ' *'}) {
       : label;
 }
 
+/// Localized message for an engine validation [e], via the global
+/// [ComponentFactory.locale]. `custom` rules carry the form author's own
+/// message in [FormLogicError.messageKey] and are shown as-is.
 String messageForError(FormLogicError e) {
-  if (e.rule == 'required') return 'This field is required';
-  return e.messageKey ?? e.rule ?? 'Invalid';
+  final loc = ComponentFactory.locale;
+  switch (e.rule) {
+    case 'required':
+      return loc.fieldRequired;
+    case 'email':
+      return loc.invalidEmail;
+    case 'url':
+      return loc.invalidUrl;
+    case 'number':
+      return loc.invalidNumber;
+    case 'pattern':
+      return loc.invalidFormat;
+    case 'custom':
+      return e.messageKey ?? loc.invalidValue;
+    default:
+      // minLength / maxLength / min / max / unique / …
+      return loc.invalidValue;
+  }
 }
 
 Widget placeholderCard(BuildContext ctx, String text) => Container(

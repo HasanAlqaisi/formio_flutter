@@ -98,6 +98,8 @@ abstract class FormioLocalizations {
   String get invalidUrl;
   String get invalidNumber;
   String get mustBeNumber;
+  String get invalidValue;
+  String get invalidFormat;
 
   // Signature & Sketchpad
   String get clearSignature;
@@ -256,6 +258,10 @@ class DefaultFormioLocalizations implements FormioLocalizations {
   String get invalidNumber => 'Invalid number';
   @override
   String get mustBeNumber => 'Must be a number';
+  @override
+  String get invalidValue => 'Invalid value';
+  @override
+  String get invalidFormat => 'Invalid format';
 
   @override
   String get clearSignature => 'Clear';
