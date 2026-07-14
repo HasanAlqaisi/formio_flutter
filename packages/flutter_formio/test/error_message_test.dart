@@ -23,20 +23,20 @@ void main() {
     expect(m('custom', messageKey: 'must be ok'), 'must be ok');
   });
 
-  test('a custom locale localizes error messages', () {
-    ComponentFactory.setLocale(const _ArabicRequired());
-    expect(
-      cb.messageForError(const FormLogicError(path: 'x', rule: 'required')),
-      'هذا الحقل مطلوب',
-    );
+  test('the built-in Arabic locale localizes error messages', () {
+    ComponentFactory.setLocale(const ArabicFormioLocalizations());
+    String m(String rule) =>
+        cb.messageForError(FormLogicError(path: 'x', rule: rule));
+
+    expect(m('required'), 'هذا الحقل مطلوب');
+    expect(m('email'), 'بريد إلكتروني غير صالح');
+    expect(m('pattern'), 'تنسيق غير صالح');
+    expect(m('minLength'), 'قيمة غير صالحة');
+    // Inherited (untranslated-in-error) + composed helpers.
+    expect(const ArabicFormioLocalizations().submit, 'إرسال');
+    expect(const ArabicFormioLocalizations().getRequiredMessage('الاسم'),
+        'الاسم مطلوب.');
+
     ComponentFactory.setLocale(const DefaultFormioLocalizations());
   });
-}
-
-/// Minimal locale override: only translates the required message (others inherit
-/// the English defaults via [DefaultFormioLocalizations]).
-class _ArabicRequired extends DefaultFormioLocalizations {
-  const _ArabicRequired();
-  @override
-  String get fieldRequired => 'هذا الحقل مطلوب';
 }

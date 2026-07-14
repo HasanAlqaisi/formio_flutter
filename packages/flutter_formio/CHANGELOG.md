@@ -24,6 +24,7 @@ of drift bugs.
 - `FormioTheme` design tokens via `EngineFormRenderer.theme`.
 - `EngineFormRenderer.textDirection` for right-to-left forms.
 - Localized validation errors via `ComponentFactory.setLocale`.
+- Built-in Arabic localization: `ArabicFormioLocalizations`.
 - Per-component error boundary: a throwing component degrades to a placeholder
   instead of taking down the whole form.
 

@@ -31,6 +31,7 @@ export 'src/core/validators.dart';
 // Models - Flutter-specific
 export 'src/models/file_typedefs.dart';
 export 'src/models/formio_localizations.dart';
+export 'src/models/formio_localizations_ar.dart';
 // Widgets
 export 'src/widgets/base_component.dart';
 export 'src/widgets/component_factory.dart';
