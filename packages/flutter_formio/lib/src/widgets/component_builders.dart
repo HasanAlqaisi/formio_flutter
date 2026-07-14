@@ -186,7 +186,7 @@ Widget buildSelect(FieldScope s, Map<String, dynamic> raw, String path) {
                     final val = o['value']?.toString();
                     if (val == null) return;
                     sel ? next.add(val) : next.remove(val);
-                    s.setValue(path, next.toList());
+                    s.setValue(path, next.toList(), immediate: true);
                   },
           ),
       ],
@@ -206,7 +206,7 @@ Widget buildSelect(FieldScope s, Map<String, dynamic> raw, String path) {
           child: Text(o['label']?.toString() ?? ''),
         ),
     ],
-    onChanged: disabled ? null : (v) => s.setValue(path, v),
+    onChanged: disabled ? null : (v) => s.setValue(path, v, immediate: true),
   );
 }
 
@@ -233,7 +233,8 @@ Widget buildSelectBoxes(FieldScope s, Map<String, dynamic> raw, String path) {
               : (v) {
                   final key = o['value']?.toString();
                   if (key == null) return;
-                  s.setValue(path, {...selected, key: v ?? false});
+                  s.setValue(path, {...selected, key: v ?? false},
+                      immediate: true);
                 },
         ),
     ],
@@ -250,7 +251,8 @@ Widget buildCheckbox(FieldScope s, Map<String, dynamic> raw, String path) {
     controlAffinity: ListTileControlAffinity.leading,
     title: Text(labelText(raw)),
     value: checked,
-    onChanged: disabled ? null : (val) => s.setValue(path, val ?? false),
+    onChanged:
+        disabled ? null : (val) => s.setValue(path, val ?? false, immediate: true),
   );
 }
 
@@ -260,7 +262,8 @@ Widget buildRadio(FieldScope s, Map<String, dynamic> raw, String path) {
   final current = s.getValue(path)?.toString();
   return RadioGroup<String>(
     groupValue: current,
-    onChanged: disabled ? (_) {} : (val) => s.setValue(path, val),
+    onChanged:
+        disabled ? (_) {} : (val) => s.setValue(path, val, immediate: true),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -320,7 +323,7 @@ Widget buildDateTime(FieldScope s, Map<String, dynamic> raw, String path, String
       if (t == null) return;
       picked = DateTime(picked.year, picked.month, picked.day, t.hour, t.minute);
     }
-    s.setValue(path, picked.toIso8601String());
+    s.setValue(path, picked.toIso8601String(), immediate: true);
   }
 
   return InkWell(
@@ -385,7 +388,7 @@ Widget buildDataGrid(FieldScope s, Map<String, dynamic> raw, String path) {
                           icon: const Icon(Icons.delete_outline, size: 20),
                           onPressed: () {
                             final next = [...rows]..removeAt(i);
-                            s.setValue(path, next);
+                            s.setValue(path, next, immediate: true);
                           },
                         ),
                     ],
@@ -401,7 +404,8 @@ Widget buildDataGrid(FieldScope s, Map<String, dynamic> raw, String path) {
               child: TextButton.icon(
                 icon: const Icon(Icons.add),
                 label: const Text('Add'),
-                onPressed: () => s.setValue(path, [...rows, <String, dynamic>{}]),
+                onPressed: () =>
+                    s.setValue(path, [...rows, <String, dynamic>{}], immediate: true),
               ),
             ),
         ],

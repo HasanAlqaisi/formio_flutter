@@ -28,8 +28,10 @@ class FieldScope {
   /// Read the nested value at [path].
   final dynamic Function(String path) getValue;
 
-  /// Write [value] at [path] (marks touched + schedules a recompute).
-  final void Function(String path, dynamic value) setValue;
+  /// Write [value] at [path] (marks touched + recomputes). Pass
+  /// `immediate: true` for discrete taps (select/checkbox/radio/date/add-row)
+  /// so the change shows at once; leave false for rapid text input (debounced).
+  final void Function(String path, dynamic value, {bool immediate}) setValue;
 
   /// The validation error to display for [path], or null (gated by touched/submit).
   final FormLogicError? Function(String path) errorFor;

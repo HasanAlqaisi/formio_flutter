@@ -40,7 +40,8 @@ class FmsFileField extends StatelessWidget {
               title: Text(id.toString()),
               trailing: IconButton(
                 icon: const Icon(Icons.close),
-                onPressed: () => ctx.setValue([...ids]..remove(id)),
+                onPressed: () =>
+                    ctx.setValue([...ids]..remove(id), immediate: true),
               ),
             ),
           Align(
@@ -49,7 +50,8 @@ class FmsFileField extends StatelessWidget {
               icon: const Icon(Icons.upload_file),
               label: const Text('Upload'),
               // Real app: pick file → upload to FMS storage → store the id.
-              onPressed: () => ctx.setValue([...ids, 'att_${ids.length + 1}']),
+              onPressed: () =>
+                  ctx.setValue([...ids, 'att_${ids.length + 1}'], immediate: true),
             ),
           ),
         ],

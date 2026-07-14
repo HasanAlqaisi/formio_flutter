@@ -212,7 +212,7 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
     return cur;
   }
 
-  void _setPath(String path, dynamic value) {
+  void _setPath(String path, dynamic value, {bool immediate = false}) {
     final tokens = _parsePath(path);
     dynamic cur = _data;
     for (var i = 0; i < tokens.length - 1; i++) {
@@ -238,7 +238,12 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
       (cur as Map<String, dynamic>)[last as String] = value;
     }
     _touched.add(path);
-    _scheduleRecompute();
+    if (immediate) {
+      _debounce?.cancel();
+      _recompute();
+    } else {
+      _scheduleRecompute();
+    }
   }
 
   // ---- dispatch ---------------------------------------------------------

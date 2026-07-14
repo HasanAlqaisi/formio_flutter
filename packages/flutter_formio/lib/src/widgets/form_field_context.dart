@@ -46,7 +46,7 @@ class FormioFieldContext {
     required this.component,
     required this.path,
     required dynamic Function(String path) read,
-    required void Function(String path, dynamic value) write,
+    required void Function(String path, dynamic value, {bool immediate}) write,
     required FormLogicError? Function(String path) errorFor,
     required TextEditingController Function(String path) controllerFor,
     required FocusNode Function(String path) focusFor,
@@ -74,7 +74,7 @@ class FormioFieldContext {
   final String path;
 
   final dynamic Function(String path) _read;
-  final void Function(String path, dynamic value) _write;
+  final void Function(String path, dynamic value, {bool immediate}) _write;
   final FormLogicError? Function(String path) _errorFor;
   final TextEditingController Function(String path) _controllerFor;
   final FocusNode Function(String path) _focusFor;
@@ -85,9 +85,11 @@ class FormioFieldContext {
   /// This field's current value in the (post-engine) submission data.
   dynamic get value => _read(path);
 
-  /// Write this field's value. Marks the field touched and schedules a
-  /// debounced engine recompute — identical to how a built-in field updates.
-  void setValue(dynamic value) => _write(path, value);
+  /// Write this field's value. Marks the field touched and recomputes. Pass
+  /// `immediate: true` for discrete controls (a tap/selection) so the value
+  /// shows at once; leave false (default) for rapid text input, which debounces.
+  void setValue(dynamic value, {bool immediate = false}) =>
+      _write(path, value, immediate: immediate);
 
   /// Read the value at any other absolute [otherPath] in the submission
   /// (list indices supported, e.g. `grid[0].amount`).
