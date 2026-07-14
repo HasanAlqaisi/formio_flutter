@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:formio_api/formio_api.dart';
 
-import 'config/app_secrets.dart';
+import 'config/app_secrets.example.dart';
 import 'models/form_compatibility_checker.dart';
 import 'models/turkish_prompts.dart';
 import 'screens/chat_screen.dart';
@@ -67,17 +67,21 @@ class FormSelectionPage extends StatefulWidget {
 
 class _FormSelectionPageState extends State<FormSelectionPage> {
   // ─── Form.io Config ──────────────────────────────────────
-  final _baseUrlController =
-      TextEditingController(text: AppSecrets.formioBaseUrl);
-  final _formIdController =
-      TextEditingController(text: AppSecrets.formioFormId);
+  final _baseUrlController = TextEditingController(
+    text: AppSecrets.formioBaseUrl,
+  );
+  final _formIdController = TextEditingController(
+    text: AppSecrets.formioFormId,
+  );
   final _emailController = TextEditingController(text: AppSecrets.formioEmail);
-  final _passwordController =
-      TextEditingController(text: AppSecrets.formioPassword);
+  final _passwordController = TextEditingController(
+    text: AppSecrets.formioPassword,
+  );
 
   // ─── OpenAI Config ──────────────────────────────────────
-  final _apiKeyController =
-      TextEditingController(text: AppSecrets.openAiApiKey);
+  final _apiKeyController = TextEditingController(
+    text: AppSecrets.openAiApiKey,
+  );
 
   // ─── State ──────────────────────────────────────────────
   final AIService _aiService = AIService();
@@ -142,8 +146,10 @@ class _FormSelectionPageState extends State<FormSelectionPage> {
       // Extract JWT token from login response
       // The ApiClient interceptor will handle the token from the response
       // We need to set it manually from the response headers
-      final loginResponse = await _apiClient!.dio
-          .post('/user/login', data: user.toLoginJson());
+      final loginResponse = await _apiClient!.dio.post(
+        '/user/login',
+        data: user.toLoginJson(),
+      );
       final token = loginResponse.headers.value('x-jwt-token');
       if (token != null) {
         ApiClient.setAuthToken(token);
@@ -198,7 +204,9 @@ class _FormSelectionPageState extends State<FormSelectionPage> {
       final response = await rootBundle.loadString('assets/sample_form.json');
       final data = jsonDecode(response) as List;
       final forms =
-          data.map((e) => FormModel.fromJson(e as Map<String, dynamic>)).toList();
+          data
+              .map((e) => FormModel.fromJson(e as Map<String, dynamic>))
+              .toList();
 
       setState(() {
         _forms = forms;
@@ -213,7 +221,9 @@ class _FormSelectionPageState extends State<FormSelectionPage> {
   }
 
   Future<void> _submitForm(
-      FormModel form, Map<String, dynamic> formData) async {
+    FormModel form,
+    Map<String, dynamic> formData,
+  ) async {
     if (_submissionService == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -225,8 +235,10 @@ class _FormSelectionPageState extends State<FormSelectionPage> {
     }
 
     try {
-      final submission =
-          await _submissionService!.submit('/${form.path}', formData);
+      final submission = await _submissionService!.submit(
+        '/${form.path}',
+        formData,
+      );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -261,43 +273,46 @@ class _FormSelectionPageState extends State<FormSelectionPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => WelcomeScreen(
-          formTitle: form.title,
-          onStart: ({
-            required bool confirmationEnabled,
-            required bool aiEnabled,
-            required bool skipOptional,
-            required bool offlineMode,
-            required String locale,
-          }) {
-            // Apply AI mode from config
-            _aiService.fallbackMode = !aiEnabled;
+        builder:
+            (_) => WelcomeScreen(
+              formTitle: form.title,
+              onStart: ({
+                required bool confirmationEnabled,
+                required bool aiEnabled,
+                required bool skipOptional,
+                required bool offlineMode,
+                required String locale,
+              }) {
+                // Apply AI mode from config
+                _aiService.fallbackMode = !aiEnabled;
 
-            // Apply offline mode — force local AI when offline
-            if (offlineMode) {
-              _aiService.fallbackMode = true;
-            }
+                // Apply offline mode — force local AI when offline
+                if (offlineMode) {
+                  _aiService.fallbackMode = true;
+                }
 
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ChatScreen(
-                  form: form,
-                  aiService: _aiService,
-                  formId: formId,
-                  confirmationEnabled: confirmationEnabled,
-                  skipOptional: skipOptional,
-                  offlineMode: offlineMode,
-                  locale: locale,
-                  onSubmit: (formData) => _submitForm(form, formData),
-                ),
-              ),
-            );
-          },
-        ),
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (_) => ChatScreen(
+                          form: form,
+                          aiService: _aiService,
+                          formId: formId,
+                          confirmationEnabled: confirmationEnabled,
+                          skipOptional: skipOptional,
+                          offlineMode: offlineMode,
+                          locale: locale,
+                          onSubmit: (formData) => _submitForm(form, formData),
+                        ),
+                  ),
+                );
+              },
+            ),
       ),
     );
   }
+
   /// Show a blocking dialog when the form has required fields
   /// that cannot be filled by voice input.
   void _showIncompatibleFormDialog(FormCompatibilityResult result) {
@@ -307,145 +322,143 @@ class _FormSelectionPageState extends State<FormSelectionPage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        icon: Icon(
-          Icons.warning_amber_rounded,
-          color: theme.colorScheme.error,
-          size: 48,
-        ),
-        title: Text(
-          d.incompatibleFormTitle,
-          style: TextStyle(
-            color: theme.colorScheme.error,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                d.incompatibleFormMessage,
-                style: theme.textTheme.bodyMedium,
+      builder:
+          (ctx) => AlertDialog(
+            icon: Icon(
+              Icons.warning_amber_rounded,
+              color: theme.colorScheme.error,
+              size: 48,
+            ),
+            title: Text(
+              d.incompatibleFormTitle,
+              style: TextStyle(
+                color: theme.colorScheme.error,
+                fontWeight: FontWeight.bold,
               ),
-              const SizedBox(height: 16),
-              Text(
-                d.incompatibleFieldsHeader,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              ...result.unsupportedRequiredFields.map(
-                (field) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(
-                        Icons.block_rounded,
-                        size: 18,
-                        color: theme.colorScheme.error.withAlpha(180),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              field.label,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Text(
-                              '${field.type} — ${field.reason}',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    d.incompatibleFormMessage,
+                    style: theme.textTheme.bodyMedium,
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  Text(
+                    d.incompatibleFieldsHeader,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...result.unsupportedRequiredFields.map(
+                    (field) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.block_rounded,
+                            size: 18,
+                            color: theme.colorScheme.error.withAlpha(180),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  field.label,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  '${field.type} — ${field.reason}',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              FilledButton.icon(
+                onPressed: () => Navigator.of(ctx).pop(),
+                icon: const Icon(Icons.arrow_back_rounded),
+                label: Text(d.incompatibleGoBack),
               ),
             ],
           ),
-        ),
-        actions: [
-          FilledButton.icon(
-            onPressed: () => Navigator.of(ctx).pop(),
-            icon: const Icon(Icons.arrow_back_rounded),
-            label: Text(d.incompatibleGoBack),
-          ),
-        ],
-      ),
     );
   }
 
   void _showConfigDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Yapılandırma'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _configField(
-                _baseUrlController,
-                'Form.io URL',
-                Icons.link_rounded,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Yapılandırma'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _configField(
+                    _baseUrlController,
+                    'Form.io URL',
+                    Icons.link_rounded,
+                  ),
+                  const SizedBox(height: 12),
+                  _configField(_formIdController, 'Form ID', Icons.tag_rounded),
+                  const SizedBox(height: 12),
+                  _configField(
+                    _emailController,
+                    'E-posta',
+                    Icons.email_rounded,
+                  ),
+                  const SizedBox(height: 12),
+                  _configField(
+                    _passwordController,
+                    'Şifre',
+                    Icons.lock_rounded,
+                    obscure: true,
+                  ),
+                  const Divider(height: 24),
+                  _configField(
+                    _apiKeyController,
+                    'OpenAI API Key',
+                    Icons.key_rounded,
+                    obscure: true,
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              _configField(
-                _formIdController,
-                'Form ID',
-                Icons.tag_rounded,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('İptal'),
               ),
-              const SizedBox(height: 12),
-              _configField(
-                _emailController,
-                'E-posta',
-                Icons.email_rounded,
-              ),
-              const SizedBox(height: 12),
-              _configField(
-                _passwordController,
-                'Şifre',
-                Icons.lock_rounded,
-                obscure: true,
-              ),
-              const Divider(height: 24),
-              _configField(
-                _apiKeyController,
-                'OpenAI API Key',
-                Icons.key_rounded,
-                obscure: true,
+              FilledButton(
+                onPressed: () {
+                  final key = _apiKeyController.text.trim();
+                  if (key.isNotEmpty) {
+                    _aiService.initialize(apiKey: key);
+                  }
+                  Navigator.pop(context);
+                },
+                child: const Text('Kaydet'),
               ),
             ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('İptal'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final key = _apiKeyController.text.trim();
-              if (key.isNotEmpty) {
-                _aiService.initialize(apiKey: key);
-              }
-              Navigator.pop(context);
-            },
-            child: const Text('Kaydet'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -516,8 +529,9 @@ class _FormSelectionPageState extends State<FormSelectionPage> {
               padding: const EdgeInsets.only(bottom: 12),
               child: Text(
                 'Formlar',
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w600),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             ..._forms.map((form) => _buildFormCard(form, theme)),
@@ -533,13 +547,18 @@ class _FormSelectionPageState extends State<FormSelectionPage> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.error_outline,
-                      color: theme.colorScheme.error, size: 20),
+                  Icon(
+                    Icons.error_outline,
+                    color: theme.colorScheme.error,
+                    size: 20,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       _error!,
-                      style: TextStyle(color: theme.colorScheme.onErrorContainer),
+                      style: TextStyle(
+                        color: theme.colorScheme.onErrorContainer,
+                      ),
                     ),
                   ),
                 ],
@@ -556,9 +575,10 @@ class _FormSelectionPageState extends State<FormSelectionPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: _isLoggedIn
-              ? theme.colorScheme.primary.withAlpha(100)
-              : theme.colorScheme.outlineVariant.withAlpha(100),
+          color:
+              _isLoggedIn
+                  ? theme.colorScheme.primary.withAlpha(100)
+                  : theme.colorScheme.outlineVariant.withAlpha(100),
         ),
       ),
       child: Padding(
@@ -573,17 +593,20 @@ class _FormSelectionPageState extends State<FormSelectionPage> {
                   height: 44,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: _isLoggedIn
-                          ? [Colors.green, Colors.green.shade700]
-                          : [
-                              theme.colorScheme.primary,
-                              theme.colorScheme.tertiary
-                            ],
+                      colors:
+                          _isLoggedIn
+                              ? [Colors.green, Colors.green.shade700]
+                              : [
+                                theme.colorScheme.primary,
+                                theme.colorScheme.tertiary,
+                              ],
                     ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    _isLoggedIn ? Icons.cloud_done_rounded : Icons.cloud_rounded,
+                    _isLoggedIn
+                        ? Icons.cloud_done_rounded
+                        : Icons.cloud_rounded,
                     color: Colors.white,
                     size: 22,
                   ),
@@ -597,8 +620,9 @@ class _FormSelectionPageState extends State<FormSelectionPage> {
                         _isLoggedIn
                             ? 'Bağlantı başarılı'
                             : 'Form.io Bağlantısı',
-                        style: theme.textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w600),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       if (_statusMessage != null)
                         Text(
@@ -626,20 +650,24 @@ class _FormSelectionPageState extends State<FormSelectionPage> {
               width: double.infinity,
               child: FilledButton.icon(
                 onPressed: _isLoading ? null : _loginAndFetchForm,
-                icon: _isLoading
-                    ? SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: theme.colorScheme.onPrimary,
+                icon:
+                    _isLoading
+                        ? SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: theme.colorScheme.onPrimary,
+                          ),
+                        )
+                        : Icon(
+                          _isLoggedIn
+                              ? Icons.refresh_rounded
+                              : Icons.login_rounded,
                         ),
-                      )
-                    : Icon(_isLoggedIn
-                        ? Icons.refresh_rounded
-                        : Icons.login_rounded),
                 label: Text(
-                    _isLoggedIn ? 'Yeniden Çek' : 'Giriş Yap & Formu Çek'),
+                  _isLoggedIn ? 'Yeniden Çek' : 'Giriş Yap & Formu Çek',
+                ),
               ),
             ),
           ],
@@ -695,8 +723,9 @@ class _FormSelectionPageState extends State<FormSelectionPage> {
                   children: [
                     Text(
                       form.title.isNotEmpty ? form.title : 'İsimsiz Form',
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w600),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
