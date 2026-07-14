@@ -16,7 +16,10 @@ import 'package:flutter/material.dart';
 
 import '../core/form_logic_engine.dart';
 import 'component_builders.dart' as cb;
+import 'form_field_context.dart';
 import 'form_field_scope.dart';
+
+export 'form_field_context.dart' show FormioFieldContext, FormioFieldBuilder;
 
 typedef EngineFormSubmit = void Function(Map<String, dynamic> data);
 
@@ -28,6 +31,7 @@ class EngineFormRenderer extends StatefulWidget {
     this.initialData,
     this.onSubmit,
     this.onChanged,
+    this.customComponents,
     this.debounce = const Duration(milliseconds: 450),
   });
 
@@ -36,6 +40,11 @@ class EngineFormRenderer extends StatefulWidget {
   final Map<String, dynamic>? initialData;
   final EngineFormSubmit? onSubmit;
   final ValueChanged<Map<String, dynamic>>? onChanged;
+
+  /// Host-registered builders for custom component types (or overrides of
+  /// built-in types), keyed by the Form.io component `type`.
+  final Map<String, FormioFieldBuilder>? customComponents;
+
   final Duration debounce;
 
   @override
@@ -44,7 +53,12 @@ class EngineFormRenderer extends StatefulWidget {
 
 class _EngineFormRendererState extends State<EngineFormRenderer> {
   static const _layoutTypes = {
-    'columns', 'table', 'panel', 'well', 'fieldset', 'tabs',
+    'columns',
+    'table',
+    'panel',
+    'well',
+    'fieldset',
+    'tabs',
   };
   static const _nestingTypes = {'container', 'creatioContainer'};
   static const _arrayTypes = {'datagrid', 'editgrid'};
@@ -222,8 +236,23 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
         ? parentPath
         : _childPath(parentPath, key);
 
-    if (!isLayout && path.isNotEmpty && _hidden[path] == true) {
+    // Hide anything the engine marked hidden. Input components are keyed by
+    // their data path; layout/structural components (panels, columns, …) are
+    // keyed by their `key`. Only checking the input/path case left
+    // conditionally-hidden panels on screen as dead, engine-reverted shells.
+    final hiddenByPath = path.isNotEmpty && _hidden[path] == true;
+    final hiddenByKey =
+        !input && key != null && key.isNotEmpty && _hidden[key] == true;
+    if (hiddenByPath || hiddenByKey) {
       return const SizedBox.shrink();
+    }
+
+    // A host-registered builder takes precedence over both the native builders
+    // and the stock fallback
+    final builders = widget.customComponents;
+    final custom = (type != null && builders != null) ? builders[type] : null;
+    if (custom != null) {
+      return custom(_fieldContext(raw, path));
     }
 
     // Layout containers (structural recursion stays here).
@@ -269,6 +298,15 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
       case 'panel':
       case 'well':
       case 'fieldset':
+        // Form.io puts the header in `title` (panels/wells) or `legend`
+        // (fieldsets); `label` is the default component name ("Panel"), not a
+        // header. Fall back across the three, then to a non-default label.
+        final rawLabel = raw['label'] as String?;
+        final header = <String?>[
+          raw['title'] as String?,
+          raw['legend'] as String?,
+          (rawLabel == 'Panel' || rawLabel == 'Field Set') ? null : rawLabel,
+        ].firstWhere((h) => h != null && h.isNotEmpty, orElse: () => null);
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 6),
           child: Padding(
@@ -276,14 +314,14 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if ((raw['label'] as String?)?.isNotEmpty == true &&
-                    raw['hideLabel'] != true)
+                if (header != null && raw['hideLabel'] != true)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(raw['label'] as String,
+                    child: Text(header,
                         style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
-                _renderList((raw['components'] as List?) ?? const [], parentPath),
+                _renderList(
+                    (raw['components'] as List?) ?? const [], parentPath),
               ],
             ),
           ),
@@ -318,18 +356,28 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
       );
     }
 
+    return _renderControl(raw, path, type);
+  }
+
+  /// Renders control-level components (leaf inputs, arrays, and the stock
+  /// fallback). Split out from [_render] so [FormioFieldContext.builtin] can
+  /// re-enter it to render a component as a given built-in type.
+  Widget _renderControl(Map<String, dynamic> raw, String path, String? type) {
     // Control components (delegated to stateless builders).
     switch (type) {
       case 'select':
-        return cb.buildField(_scope, raw, path, cb.buildSelect(_scope, raw, path));
+        return cb.buildField(
+            _scope, raw, path, cb.buildSelect(_scope, raw, path));
       case 'selectboxes':
         return cb.buildField(
             _scope, raw, path, cb.buildSelectBoxes(_scope, raw, path));
       case 'checkbox':
-        return cb.buildField(_scope, raw, path, cb.buildCheckbox(_scope, raw, path),
+        return cb.buildField(
+            _scope, raw, path, cb.buildCheckbox(_scope, raw, path),
             showLabel: false);
       case 'radio':
-        return cb.buildField(_scope, raw, path, cb.buildRadio(_scope, raw, path));
+        return cb.buildField(
+            _scope, raw, path, cb.buildRadio(_scope, raw, path));
       case 'date':
       case 'datetime':
       case 'time':
@@ -350,8 +398,27 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
     return _wrapError(cb.buildFallback(_scope, raw, path, type), path);
   }
 
+  /// Builds the public [FormioFieldContext] handed to a custom builder for the
+  /// component [raw] at [path]. Curated surface over the internal [_scope].
+  FormioFieldContext _fieldContext(Map<String, dynamic> raw, String path) =>
+      FormioFieldContext(
+        context: context,
+        component: raw,
+        path: path,
+        read: _scope.getValue,
+        write: _scope.setValue,
+        errorFor: _scope.errorFor,
+        controllerFor: _scope.controllerFor,
+        focusFor: _scope.focusFor,
+        renderChild: (childRaw) => _render(childRaw, path),
+        builtin: (t) => _renderControl({...raw, 'type': t}, path, t),
+        chrome: (control, {bool showLabel = true}) =>
+            cb.buildField(_scope, raw, path, control, showLabel: showLabel),
+      );
+
   Widget _wrapError(Widget field, String path) {
-    final error = (_submitted || _touched.contains(path)) ? _errors[path] : null;
+    final error =
+        (_submitted || _touched.contains(path)) ? _errors[path] : null;
     if (error == null) {
       return Padding(
           padding: const EdgeInsets.symmetric(vertical: 6), child: field);
@@ -392,7 +459,8 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
         widget.onSubmit?.call(_data);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${result.errors.length} validation error(s)')),
+          SnackBar(
+              content: Text('${result.errors.length} validation error(s)')),
         );
       }
     } catch (e) {

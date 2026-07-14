@@ -10,6 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:formio/formio.dart';
 
+import 'custom_components.dart';
+
 void main() => runApp(const FormDemoApp());
 
 class FormDemoApp extends StatelessWidget {
@@ -50,6 +52,7 @@ class _FormPickerState extends State<FormPicker> {
           body: EngineFormRenderer(
             form: form,
             engine: _engine,
+            customComponents: creatioComponents,
             onSubmit: (data) {
               debugPrint('SUBMIT: ${jsonEncode(data)}');
               ScaffoldMessenger.of(context).showSnackBar(
