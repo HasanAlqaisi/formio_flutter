@@ -97,7 +97,9 @@ class FormLogicEngineException implements Exception {
 
 /// Persistent wrapper around the `@formio/core` bundle running in `flutter_js`.
 ///
-/// Create once, call [init] at startup, then [process] on every change/submit.
+/// Create once, call [init] at startup, [setForm] when the form loads/changes,
+/// then [processData] on every change/submit (only the small submission crosses
+/// the FFI boundary). [process] remains as a one-shot form+data convenience.
 class FormLogicEngine {
   FormLogicEngine();
 
@@ -121,37 +123,72 @@ class FormLogicEngine {
     _runtime = runtime;
   }
 
-  /// Runs the Form.io evaluator pipeline against [form] + [submissionData].
+  JavascriptRuntime _requireRuntime() {
+    final runtime = _runtime;
+    if (runtime == null) {
+      throw FormLogicEngineException(
+          'Engine not initialized — call init() first.');
+    }
+    return runtime;
+  }
+
+  /// Evaluates [expr] (which must return a JSON string), decodes it, and throws
+  /// if the runtime or the engine reported an error.
+  Map<String, dynamic> _evalJson(JavascriptRuntime runtime, String expr) {
+    final res = runtime.evaluate(expr);
+    if (res.isError) throw FormLogicEngineException(res.stringResult);
+    final decoded = jsonDecode(res.stringResult) as Map<String, dynamic>;
+    if (decoded['error'] != null) {
+      throw FormLogicEngineException(decoded['error'].toString());
+    }
+    return decoded;
+  }
+
+  /// Caches [form] inside the JS runtime (parsed and DOM-stripped once) so
+  /// subsequent [processData] calls only marshal the small submission across the
+  /// FFI boundary. Call whenever the form definition changes.
   ///
-  /// Returns calculated [FormLogicResult.data], the conditional/hidden map, and
-  /// validation errors. Synchronous (flutter_js runs on the platform thread via
-  /// FFI) — debounce calls from the UI.
+  /// This is the key perf lever: without it, every recompute re-serialized and
+  /// re-parsed the entire (often ~1MB) form in QuickJS.
+  void setForm(Map<String, dynamic> form) {
+    final runtime = _requireRuntime();
+    // Double-encode: inner jsonEncode → JSON text; outer → a JS string literal.
+    runtime.evaluate('globalThis.__fmsForm = ${jsonEncode(jsonEncode(form))};');
+    _evalJson(runtime, 'fmsSetForm(globalThis.__fmsForm)');
+  }
+
+  /// Runs the pipeline against the form cached by [setForm], sending only
+  /// [submissionData]. [validate] defaults to true (live validation); pass false
+  /// only for a fast "draft" pass that skips the validate processor.
+  ///
+  /// Synchronous (flutter_js runs on the platform thread via FFI) — debounce
+  /// calls from the UI.
+  FormLogicResult processData(
+    Map<String, dynamic> submissionData, {
+    bool validate = true,
+  }) {
+    final runtime = _requireRuntime();
+    runtime.evaluate(
+        'globalThis.__fmsData = ${jsonEncode(jsonEncode(submissionData))};');
+    return FormLogicResult.fromJson(
+        _evalJson(runtime, 'fmsProcessData(globalThis.__fmsData, $validate)'));
+  }
+
+  /// One-shot: runs the pipeline against [form] + [submissionData], re-parsing
+  /// the form each call. Prefer [setForm] + [processData]; kept for callers that
+  /// don't hold a stable form or want a single call.
   FormLogicResult process({
     required Map<String, dynamic> form,
     required Map<String, dynamic> submissionData,
   }) {
-    final runtime = _runtime;
-    if (runtime == null) {
-      throw FormLogicEngineException('Engine not initialized — call init() first.');
-    }
-
-    // Pass the payload as a JS string literal (jsonEncode escapes it safely,
-    // incl. unicode/RTL content), then let fmsProcess JSON.parse it.
+    final runtime = _requireRuntime();
     final payload = jsonEncode({
       'form': form,
       'submission': {'data': submissionData},
     });
     runtime.evaluate('globalThis.__fmsIn = ${jsonEncode(payload)};');
-    final res = runtime.evaluate('fmsProcess(globalThis.__fmsIn)');
-    if (res.isError) {
-      throw FormLogicEngineException(res.stringResult);
-    }
-
-    final decoded = jsonDecode(res.stringResult) as Map<String, dynamic>;
-    if (decoded['error'] != null) {
-      throw FormLogicEngineException(decoded['error'].toString());
-    }
-    return FormLogicResult.fromJson(decoded);
+    return FormLogicResult.fromJson(
+        _evalJson(runtime, 'fmsProcess(globalThis.__fmsIn)'));
   }
 
   void dispose() {

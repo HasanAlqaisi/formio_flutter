@@ -81,6 +81,7 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
 
   bool _ready = false;
   bool _submitting = false;
+  bool _formSet = false;
   String? _fatal;
   Timer? _debounce;
   late FieldScope _scope;
@@ -93,6 +94,17 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
     super.initState();
     _data = _deepCopy(widget.initialData ?? const {});
     _recompute();
+  }
+
+  @override
+  void didUpdateWidget(EngineFormRenderer old) {
+    super.didUpdateWidget(old);
+    // A new form definition must be re-cached in the engine before the next
+    // processData call.
+    if (!identical(widget.form, old.form)) {
+      _formSet = false;
+      _recompute();
+    }
   }
 
   @override
@@ -119,8 +131,8 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
 
   void _recompute() {
     try {
-      final result =
-          widget.engine.process(form: widget.form, submissionData: _data);
+      _ensureFormSet();
+      final result = widget.engine.processData(_data);
       setState(() {
         _applyResult(result);
         _ready = true;
@@ -132,6 +144,14 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
         _ready = true;
       });
     }
+  }
+
+  /// Caches the form in the engine once (see [FormLogicEngine.setForm]) so
+  /// recomputes only marshal the small submission across the FFI boundary.
+  void _ensureFormSet() {
+    if (_formSet) return;
+    widget.engine.setForm(widget.form);
+    _formSet = true;
   }
 
   void _scheduleRecompute() {
@@ -456,8 +476,8 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
     });
     _debounce?.cancel();
     try {
-      final result =
-          widget.engine.process(form: widget.form, submissionData: _data);
+      _ensureFormSet();
+      final result = widget.engine.processData(_data);
       setState(() {
         _applyResult(result);
         _submitting = false;
