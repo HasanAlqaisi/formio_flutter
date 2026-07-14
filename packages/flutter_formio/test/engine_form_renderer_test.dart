@@ -92,6 +92,31 @@ void main() {
     expect(find.text('Name (required)'), findsOneWidget);
   });
 
+  testWidgets('a throwing component degrades to a placeholder, not a crash', (tester) async {
+    final form = {
+      'display': 'form',
+      'components': [
+        {'type': 'textfield', 'key': 'ok', 'label': 'OK', 'input': true},
+        {'type': 'boom', 'key': 'boom', 'input': true},
+      ],
+    };
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: EngineFormRenderer(
+          form: form,
+          engine: _FakeEngine(),
+          customComponents: {
+            'boom': (ctx) => throw StateError('kaboom'),
+          },
+        ),
+      ),
+    ));
+
+    expect(tester.takeException(), isNull); // error was caught, not propagated
+    expect(find.text('OK'), findsOneWidget); // sibling still renders
+    expect(find.textContaining('render error'), findsOneWidget); // placeholder shown
+  });
+
   testWidgets('validation error is gated until submit', (tester) async {
     final engine = _FakeEngine(
       errors: const [FormLogicError(path: 'visible', rule: 'required')],

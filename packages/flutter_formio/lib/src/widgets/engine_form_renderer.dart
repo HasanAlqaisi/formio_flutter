@@ -12,6 +12,7 @@ library;
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 
 import '../core/form_logic_engine.dart';
@@ -292,7 +293,7 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
     final builders = widget.customComponents;
     final custom = (type != null && builders != null) ? builders[type] : null;
     if (custom != null) {
-      return custom(_fieldContext(raw, path));
+      return _guarded(type, key, () => custom(_fieldContext(raw, path)));
     }
 
     // Layout containers (structural recursion stays here).
@@ -396,7 +397,21 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
       );
     }
 
-    return _renderControl(raw, path, type);
+    return _guarded(type, key, () => _renderControl(raw, path, type));
+  }
+
+  /// Renders [build], degrading a single throwing component to an inline error
+  /// placeholder instead of taking down the whole form.
+  Widget _guarded(String? type, String? key, Widget Function() build) {
+    try {
+      return build();
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('⚠️ Component "${key ?? type}" failed to render: $e\n$st');
+      }
+      return cb.placeholderCard(
+          context, '${type ?? '?'} "${key ?? '?'}" — render error: $e');
+    }
   }
 
   /// Renders control-level components (leaf inputs, arrays, and the stock
