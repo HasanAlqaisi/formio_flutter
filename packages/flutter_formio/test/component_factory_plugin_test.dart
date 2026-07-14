@@ -93,11 +93,11 @@ void main() {
       ComponentFactory.unregister('textfield');
     });
 
-    testWidgets('should fall back to default when no custom builder is registered', (WidgetTester tester) async {
-      // Ensure textfield is not custom registered
+    testWidgets('unregistered type with no stock fallback renders UnknownComponent', (WidgetTester tester) async {
+      // Basic inputs are rendered natively by EngineFormRenderer and have no
+      // stock fallback here, so an unregistered 'textfield' hits the default.
       ComponentFactory.unregister('textfield');
 
-      // Create a component model
       final component = ComponentModel(
         type: 'textfield',
         key: 'testField',
@@ -106,7 +106,6 @@ void main() {
         raw: {},
       );
 
-      // Build the widget
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -119,8 +118,7 @@ void main() {
         ),
       );
 
-      // Should find the default textfield (by checking for TextFormField)
-      expect(find.byType(TextFormField), findsOneWidget);
+      expect(find.byType(UnknownComponent), findsOneWidget);
     });
 
     testWidgets('should pass context parameters to custom builder', (WidgetTester tester) async {

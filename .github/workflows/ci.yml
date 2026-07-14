@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main, engine-renderer]
+  pull_request:
+
+jobs:
+  engine:
+    name: Engine bundle & tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/formio-core
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install (pinned via package-lock)
+        run: npm ci
+
+      - name: Engine regression tests (against the committed bundle)
+        run: npm test
+
+      - name: Rebuild bundle
+        run: npm run build
+
+      - name: Bundle drift guard
+        run: |
+          bundle=../../packages/flutter_formio/assets/formio/fms-formio-core.bundle.js
+          if ! git diff --quiet "$bundle"; then
+            echo "::error::Committed engine bundle is stale. Run 'npm run build' in tools/formio-core and commit the result."
+            git --no-pager diff --stat "$bundle"
+            exit 1
+          fi
+          echo "Bundle matches a fresh build ✓"
+
+  flutter:
+    name: Package analyze & test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/flutter_formio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.1'
+          channel: stable
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze lib test
+
+      - name: Test
+        run: flutter test

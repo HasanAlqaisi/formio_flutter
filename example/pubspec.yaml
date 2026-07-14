@@ -28,6 +28,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/
+    - assets/form-samples/
 
 dependency_overrides:
   formio_api:

@@ -30,3 +30,9 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 build/
 .agent
+
+# Local-only test corpus (Creatio domain samples — not part of package source).
+# Kept on disk so the example app can load them; excluded from version control.
+example/assets/form-samples/
+# Mentor guide scratch (local reading docs)
+_formio_guide/
