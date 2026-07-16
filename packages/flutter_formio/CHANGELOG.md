@@ -36,6 +36,12 @@ of drift bugs.
 
 ### Removed — BREAKING
 
+- **The separate `formio_api` package is merged into `formio`.** Its models,
+  REST client, and utilities now ship inside this package — import everything
+  from `package:formio/formio.dart` (drop any `package:formio_api/...` imports
+  and the `formio_api` dependency). The Form.io logic now runs in `@formio/core`,
+  so the pure-Dart evaluators `formio_api` used to carry are gone:
+  `ConditionalEvaluator`, `CalculationEvaluator`, and `TemplateParser`.
 - `FormRenderer`, `WizardRenderer`, `FormDataProvider`.
 - Stock components (and their exports) for types the engine renders natively —
   `textfield`, `textarea`, `number`, `currency`, `email`, `url`, `password`,

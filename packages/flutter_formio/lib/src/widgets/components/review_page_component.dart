@@ -6,8 +6,7 @@ library;
 
 import 'package:flutter/material.dart';
 
-import 'package:formio_api/formio_api.dart';
-import '../component_factory.dart';
+import 'package:formio/formio.dart';
 
 class ReviewPageComponent extends StatelessWidget {
   /// The Form.io component definition.

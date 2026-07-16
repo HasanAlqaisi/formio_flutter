@@ -14,8 +14,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
-import 'package:formio_api/formio_api.dart';
-import '../component_factory.dart';
+import 'package:formio/formio.dart';
 
 class SketchpadComponent extends StatefulWidget {
   /// The Form.io component definition.

@@ -8,7 +8,7 @@ library;
 
 import 'package:flutter/material.dart';
 
-import 'package:formio_api/formio_api.dart';
+import 'package:formio/formio.dart';
 
 typedef CustomComponentBuilder = Widget Function(ComponentModel component, dynamic value, ValueChanged<dynamic> onChanged);
 

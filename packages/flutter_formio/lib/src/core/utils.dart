@@ -1,4 +1,4 @@
-import 'package:formio_api/src/core/constants.dart';
+import 'package:formio/src/core/constants.dart';
 import 'package:intl/intl.dart';
 
 /// A set of utility functions used throughout the Form.io API integration.

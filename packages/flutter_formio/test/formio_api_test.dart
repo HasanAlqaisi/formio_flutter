@@ -1,5 +1,5 @@
-import 'package:test/test.dart';
-import 'package:formio_api/formio_api.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:formio/formio.dart';
 
 void main() {
   group('formio_api Package', () {

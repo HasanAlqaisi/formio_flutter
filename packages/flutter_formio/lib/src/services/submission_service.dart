@@ -4,10 +4,10 @@
 /// using the REST endpoints `/form/:path/submission`.
 library;
 
-import 'package:formio_api/src/core/exceptions.dart';
-import 'package:formio_api/src/models/submission.dart';
-import 'package:formio_api/src/network/api_client.dart';
-import 'package:formio_api/src/network/endpoints.dart';
+import 'package:formio/src/core/exceptions.dart';
+import 'package:formio/src/models/submission.dart';
+import 'package:formio/src/network/api_client.dart';
+import 'package:formio/src/network/endpoints.dart';
 
 class SubmissionService {
   /// API client used to make HTTP requests.

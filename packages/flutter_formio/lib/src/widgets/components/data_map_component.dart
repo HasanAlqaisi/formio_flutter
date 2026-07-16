@@ -7,8 +7,7 @@ library;
 
 import 'package:flutter/material.dart';
 
-import 'package:formio_api/formio_api.dart';
-import '../component_factory.dart';
+import 'package:formio/formio.dart';
 
 class DataMapComponent extends StatefulWidget {
   /// The Form.io component definition.

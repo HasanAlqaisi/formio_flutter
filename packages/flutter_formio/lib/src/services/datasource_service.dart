@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:formio_api/formio_api.dart';
+import 'package:formio/formio.dart';
 
 /// Service for handling DataSource component data fetching.
 class DataSourceService {

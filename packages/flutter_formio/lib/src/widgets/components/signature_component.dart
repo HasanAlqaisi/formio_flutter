@@ -10,9 +10,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:formio_api/formio_api.dart';
+import 'package:formio/formio.dart';
 
-import '../component_factory.dart';
 
 class SignatureComponent extends StatefulWidget {
   /// The Form.io component definition.

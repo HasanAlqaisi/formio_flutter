@@ -1,5 +1,11 @@
 # Migration Guide: v1.x → v2.0
 
+> **Note (v3.0):** The two-package split described below was **reversed** in
+> v3.0 — `formio_api` is now merged back into `formio`. Import everything from
+> `package:formio/formio.dart`; there is no separate `formio_api` package or
+> dependency anymore. The rest of this document is retained as history for the
+> v1.x → v2.0 upgrade.
+
 ## Overview
 
 The `formio` package has been split into two packages for better modularity:
@@ -251,7 +257,7 @@ void main() {
 
 - [GitHub Issues](https://github.com/mskayali/formio_flutter/issues)
 - [Discussions](https://github.com/mskayali/formio_flutter/discussions)
-- [Example App](https://github.com/mskayali/formio_flutter/tree/main/packages/flutter_formio/example)
+- [Example App](https://github.com/mskayali/formio_flutter/tree/main/example)
 
 ## Rollback (if needed)
 

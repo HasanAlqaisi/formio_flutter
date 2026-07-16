@@ -5,9 +5,8 @@
 library;
 
 import 'package:flutter/foundation.dart';
-import 'package:formio_api/formio_api.dart';
+import 'package:formio/formio.dart';
 
-import '../widgets/component_factory.dart';
 
 
 class FormioValidators {

@@ -7,8 +7,8 @@ library;
 import 'package:dio/dio.dart';
 // Flutter dependency removed
 
-import 'package:formio_api/src/models/form.dart';
-import 'package:formio_api/src/network/api_client.dart';
+import 'package:formio/src/models/form.dart';
+import 'package:formio/src/network/api_client.dart';
 
 class FormService {
   /// An instance of the API client to make HTTP requests.

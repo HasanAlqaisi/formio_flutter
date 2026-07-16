@@ -5,9 +5,9 @@
 /// operations for managing these actions.
 library;
 
-import 'package:formio_api/src/models/action.dart';
-import 'package:formio_api/src/network/api_client.dart';
-import 'package:formio_api/src/network/endpoints.dart';
+import 'package:formio/src/models/action.dart';
+import 'package:formio/src/network/api_client.dart';
+import 'package:formio/src/network/endpoints.dart';
 
 class ActionService {
   /// API client used to perform HTTP operations.

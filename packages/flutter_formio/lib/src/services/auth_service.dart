@@ -4,8 +4,8 @@
 /// with protected Form.io endpoints.
 library;
 
-import 'package:formio_api/src/models/user.dart';
-import 'package:formio_api/src/network/api_client.dart';
+import 'package:formio/src/models/user.dart';
+import 'package:formio/src/network/api_client.dart';
 
 class AuthService {
   /// An instance of the API client to perform HTTP operations.

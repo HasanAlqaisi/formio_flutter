@@ -4,9 +4,9 @@
 /// Use AuthService for login/register/logout operations.
 library;
 
-import 'package:formio_api/src/models/user.dart';
-import 'package:formio_api/src/network/api_client.dart';
-import 'package:formio_api/src/network/endpoints.dart';
+import 'package:formio/src/models/user.dart';
+import 'package:formio/src/network/api_client.dart';
+import 'package:formio/src/network/endpoints.dart';
 
 class UserService {
   /// API client used to perform HTTP operations.
