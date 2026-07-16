@@ -19,7 +19,7 @@ dependencies:
   # Flutter-specific dependencies
   flutter_html: ^3.0.0
   flutter_js: ^0.8.5
-  intl: ^0.18.1
+  intl: ^0.20.2
   url_launcher: ^6.3.2
   sticky_headers: ^0.3.0
 
