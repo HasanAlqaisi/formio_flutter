@@ -4,10 +4,8 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:formio_api/formio_api.dart';
+import 'package:formio/formio.dart';
 
-import '../core/form_logic_engine.dart';
-import 'component_factory.dart';
 import 'form_field_scope.dart';
 
 const kTextTypes = {

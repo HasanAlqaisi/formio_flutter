@@ -4,7 +4,7 @@
 library;
 
 import 'package:flutter_js/flutter_js.dart';
-import 'package:formio_api/formio_api.dart';
+import 'package:formio/formio.dart';
 
 /// Flutter implementation of JsEvaluator using flutter_js package.
 ///

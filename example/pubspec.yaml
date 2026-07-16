@@ -1,5 +1,5 @@
-name: speech2form
-description: "Speech2Form — Voice-powered conversational form filling with Form.io + AI"
+name: formio_example
+description: "Example app for the formio package — renders Form.io forms natively via the @formio/core engine."
 publish_to: "none"
 version: 1.0.0+1
 
@@ -11,13 +11,6 @@ dependencies:
     sdk: flutter
   formio:
     path: ../packages/flutter_formio
-  formio_api:
-    path: ../packages/formio_api
-  flutter_tts: ^4.2.0
-  speech_to_text: ^7.0.0
-  openai_dart: ^0.6.2
-  shared_preferences: ^2.5.4
-  geocoding: ^4.0.0
 
 dev_dependencies:
   flutter_test:
@@ -29,7 +22,3 @@ flutter:
   assets:
     - assets/
     - assets/form-samples/
-
-dependency_overrides:
-  formio_api:
-    path: ../packages/formio_api

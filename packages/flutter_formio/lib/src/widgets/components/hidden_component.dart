@@ -6,7 +6,7 @@ library;
 
 import 'package:flutter/widgets.dart';
 
-import 'package:formio_api/formio_api.dart';
+import 'package:formio/formio.dart';
 
 class HiddenComponent extends StatelessWidget {
   /// The Form.io component definition.

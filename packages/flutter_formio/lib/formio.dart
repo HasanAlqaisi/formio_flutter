@@ -21,8 +21,31 @@
 
 library flutter_formio;
 
-// Re-export formio_api for convenience
-export 'package:formio_api/formio_api.dart';
+// Form.io API — models, REST client, and core utilities (formerly the
+// separate `formio_api` package, now merged in).
+export 'src/core/constants.dart';
+export 'src/core/exceptions.dart';
+export 'src/core/interpolation_utils.dart';
+export 'src/core/js_evaluator.dart';
+export 'src/core/js_evaluator_interface.dart';
+export 'src/core/utils.dart';
+export 'src/models/action.dart';
+export 'src/models/component.dart';
+export 'src/models/file_data.dart';
+export 'src/models/form.dart';
+export 'src/models/formio_locale_interface.dart';
+export 'src/models/role.dart';
+export 'src/models/submission.dart';
+export 'src/models/user.dart';
+export 'src/models/wizard_config.dart';
+export 'src/network/api_client.dart';
+export 'src/network/endpoints.dart';
+export 'src/services/action_service.dart';
+export 'src/services/auth_service.dart';
+export 'src/services/datasource_service.dart';
+export 'src/services/form_service.dart';
+export 'src/services/submission_service.dart';
+export 'src/services/user_service.dart';
 
 // Core Flutter-specific
 export 'src/core/flutter_js_evaluator.dart';

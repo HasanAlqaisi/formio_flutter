@@ -9,7 +9,7 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:formio_api/formio_api.dart';
+import 'package:formio/formio.dart';
 
 class DataSourceComponent extends StatefulWidget {
   /// The Form.io component definition.

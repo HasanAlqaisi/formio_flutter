@@ -3,7 +3,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:formio/formio.dart';
-import 'package:formio_api/formio_api.dart' show FileData;
+import 'package:formio/formio.dart' show FileData;
 
 
 /// Callback type for custom file picker implementations.

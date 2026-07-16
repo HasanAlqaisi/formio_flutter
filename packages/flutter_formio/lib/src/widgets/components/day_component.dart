@@ -6,9 +6,8 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:formio_api/formio_api.dart';
+import 'package:formio/formio.dart';
 
-import '../component_factory.dart';
 
 class DayComponent extends StatefulWidget {
   /// The Form.io component definition.
