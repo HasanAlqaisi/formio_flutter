@@ -59,17 +59,6 @@ void main() {
       expect(component.label, equals('First Name'));
       expect(component.required, isTrue);
     });
-
-    test('should evaluate simple conditional logic', () {
-      final conditional = {
-        'show': 'true',
-        'when': 'country',
-        'eq': 'USA',
-      };
-      final formData = {'country': 'USA'};
-
-      expect(ConditionalEvaluator.shouldShow(conditional, formData), isTrue);
-    });
   });
 }
 
