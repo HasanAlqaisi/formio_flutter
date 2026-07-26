@@ -348,26 +348,42 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
           },
         );
       case 'table':
-        return Column(
-          children: [
-            for (final row in (raw['rows'] as List?) ?? const [])
-              if (row is List)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    for (final cell in row)
-                      if (cell is Map<String, dynamic>)
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: _renderList(
-                                (cell['components'] as List?) ?? const [],
-                                parentPath),
-                          ),
-                        ),
-                  ],
-                ),
-          ],
+        final rows = [
+          for (final row in (raw['rows'] as List?) ?? const [])
+            if (row is List) row,
+        ];
+        if (rows.isEmpty) return const SizedBox.shrink();
+        // Cells share the width equally. On narrow screens that crushes them, so
+        // linearize each row into a stack; keep the tabular Row when there's room.
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final widest =
+                rows.fold<int>(0, (m, r) => r.length > m ? r.length : m);
+            final stack =
+                widest > 0 && constraints.maxWidth / widest < _minColumnWidth;
+            Widget cell(dynamic c) => Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: (c is Map<String, dynamic>)
+                      ? _renderList(
+                          (c['components'] as List?) ?? const [], parentPath)
+                      : const SizedBox.shrink(),
+                );
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final row in rows)
+                  if (stack)
+                    for (final c in row) cell(c)
+                  else
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (final c in row) Expanded(child: cell(c)),
+                      ],
+                    ),
+              ],
+            );
+          },
         );
       case 'panel':
       case 'well':
