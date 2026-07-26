@@ -9,13 +9,20 @@ import 'package:formio/formio.dart';
 import 'form_field_scope.dart';
 
 const kTextTypes = {
-  'textfield', 'textarea', 'number', 'currency',
-  'email', 'url', 'phoneNumber', 'password',
+  'textfield',
+  'textarea',
+  'number',
+  'currency',
+  'email',
+  'url',
+  'phoneNumber',
+  'password',
 };
 
 // ---- field chrome (label position + description + inline error) ----------
 
-Widget buildField(FieldScope s, Map<String, dynamic> raw, String path, Widget control,
+Widget buildField(
+    FieldScope s, Map<String, dynamic> raw, String path, Widget control,
     {bool showLabel = true}) {
   final ctx = s.context;
   final label = (!showLabel || raw['hideLabel'] == true)
@@ -68,8 +75,8 @@ Widget buildField(FieldScope s, Map<String, dynamic> raw, String path, Widget co
         if (error != null)
           Padding(
             padding: const EdgeInsets.only(top: 4),
-            child:
-                Text(messageForError(error), style: s.theme.resolvedErrorStyle(ctx)),
+            child: Text(messageForError(error),
+                style: s.theme.resolvedErrorStyle(ctx)),
           ),
       ],
     ),
@@ -119,7 +126,8 @@ Widget placeholderCard(BuildContext ctx, String text) => Container(
 
 // ---- text inputs (controller-bound; live calc / read-only) ---------------
 
-Widget buildTextLeaf(FieldScope s, Map<String, dynamic> raw, String path, String type) {
+Widget buildTextLeaf(
+    FieldScope s, Map<String, dynamic> raw, String path, String type) {
   final ctx = s.context;
   final controller = s.controllerFor(path);
   final focus = s.focusFor(path);
@@ -186,26 +194,15 @@ Widget buildSelect(FieldScope s, Map<String, dynamic> raw, String path) {
   if (multiple) {
     final selected = (current is List ? current : const [])
         .map((e) => e?.toString())
-        .where((e) => e != null && e.isNotEmpty)
+        .whereType<String>()
+        .where((e) => e.isNotEmpty)
         .toSet();
-    return Wrap(
-      spacing: 6,
-      children: [
-        for (final o in options)
-          FilterChip(
-            label: Text(o['label']?.toString() ?? ''),
-            selected: selected.contains(o['value']?.toString()),
-            onSelected: disabled
-                ? null
-                : (sel) {
-                    final next = {...selected};
-                    final val = o['value']?.toString();
-                    if (val == null) return;
-                    sel ? next.add(val) : next.remove(val);
-                    s.setValue(path, next.toList(), immediate: true);
-                  },
-          ),
-      ],
+    return MultiSelectField(
+      options: options,
+      selected: selected,
+      hint: raw['placeholder'] as String?,
+      enabled: !disabled,
+      onChanged: (vals) => s.setValue(path, vals, immediate: true),
     );
   }
 
@@ -267,8 +264,9 @@ Widget buildCheckbox(FieldScope s, Map<String, dynamic> raw, String path) {
     controlAffinity: ListTileControlAffinity.leading,
     title: Text(labelText(raw, requiredSuffix: s.theme.requiredSuffix)),
     value: checked,
-    onChanged:
-        disabled ? null : (val) => s.setValue(path, val ?? false, immediate: true),
+    onChanged: disabled
+        ? null
+        : (val) => s.setValue(path, val ?? false, immediate: true),
   );
 }
 
@@ -300,7 +298,8 @@ Widget buildRadio(FieldScope s, Map<String, dynamic> raw, String path) {
 
 String _two(int n) => n.toString().padLeft(2, '0');
 
-Widget buildDateTime(FieldScope s, Map<String, dynamic> raw, String path, String type) {
+Widget buildDateTime(
+    FieldScope s, Map<String, dynamic> raw, String path, String type) {
   final ctx = s.context;
   final disabled = raw['disabled'] == true || raw['readOnly'] == true;
   final enableDate =
@@ -337,7 +336,8 @@ Widget buildDateTime(FieldScope s, Map<String, dynamic> raw, String path, String
         initialTime: TimeOfDay.fromDateTime(picked),
       );
       if (t == null) return;
-      picked = DateTime(picked.year, picked.month, picked.day, t.hour, t.minute);
+      picked =
+          DateTime(picked.year, picked.month, picked.day, t.hour, t.minute);
     }
     s.setValue(path, picked.toIso8601String(), immediate: true);
   }
@@ -349,10 +349,12 @@ Widget buildDateTime(FieldScope s, Map<String, dynamic> raw, String path, String
         isDense: s.theme.isDense,
         border: s.theme.resolvedInputBorder(ctx),
         contentPadding: s.theme.inputContentPadding,
-        suffixIcon: Icon(
-            enableTime && !enableDate ? Icons.access_time : Icons.calendar_today),
-        fillColor:
-            disabled ? Theme.of(ctx).disabledColor.withValues(alpha: 0.05) : null,
+        suffixIcon: Icon(enableTime && !enableDate
+            ? Icons.access_time
+            : Icons.calendar_today),
+        fillColor: disabled
+            ? Theme.of(ctx).disabledColor.withValues(alpha: 0.05)
+            : null,
         filled: disabled,
       ),
       child: Text(display(),
@@ -381,7 +383,8 @@ Widget buildDataGrid(FieldScope s, Map<String, dynamic> raw, String path) {
           if (label.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 4),
-              child: Text(labelText(raw, requiredSuffix: s.theme.requiredSuffix),
+              child: Text(
+                  labelText(raw, requiredSuffix: s.theme.requiredSuffix),
                   style: s.theme.resolvedPanelTitleStyle(ctx)),
             ),
           for (var i = 0; i < rows.length; i++)
@@ -411,7 +414,8 @@ Widget buildDataGrid(FieldScope s, Map<String, dynamic> raw, String path) {
                     ],
                   ),
                   for (final c in children)
-                    if (c is Map<String, dynamic>) s.renderChild(c, '$path[$i]'),
+                    if (c is Map<String, dynamic>)
+                      s.renderChild(c, '$path[$i]'),
                 ],
               ),
             ),
@@ -421,8 +425,9 @@ Widget buildDataGrid(FieldScope s, Map<String, dynamic> raw, String path) {
               child: TextButton.icon(
                 icon: const Icon(Icons.add),
                 label: const Text('Add'),
-                onPressed: () =>
-                    s.setValue(path, [...rows, <String, dynamic>{}], immediate: true),
+                onPressed: () => s.setValue(
+                    path, [...rows, <String, dynamic>{}],
+                    immediate: true),
               ),
             ),
         ],
@@ -460,7 +465,8 @@ dynamic coerceValue(String? type, dynamic v) {
 
 /// Renders any type not handled natively via the stock [ComponentFactory]
 /// (incl. host-registered custom components), guarded against build errors.
-Widget buildFallback(FieldScope s, Map<String, dynamic> raw, String path, String? type) {
+Widget buildFallback(
+    FieldScope s, Map<String, dynamic> raw, String path, String? type) {
   final model = ComponentModel.fromJson(raw);
   try {
     return ComponentFactory.build(
@@ -472,7 +478,7 @@ Widget buildFallback(FieldScope s, Map<String, dynamic> raw, String path, String
       formData: s.data,
     );
   } catch (e) {
-    return placeholderCard(
-        s.context, '${type ?? '?'} "${raw['label'] ?? raw['key']}" — render error: $e');
+    return placeholderCard(s.context,
+        '${type ?? '?'} "${raw['label'] ?? raw['key']}" — render error: $e');
   }
 }
