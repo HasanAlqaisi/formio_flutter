@@ -77,6 +77,10 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
   static const _nestingTypes = {'container', 'creatioContainer'};
   static const _arrayTypes = {'datagrid', 'editgrid'};
 
+  /// Below this per-column pixel width, a `columns` row collapses to a stacked
+  /// layout so labels/fields don't get crushed on narrow (phone) screens.
+  static const _minColumnWidth = 170.0;
+
   Map<String, dynamic> _data = {};
   Map<String, dynamic> _hidden = {};
   final Map<String, FormLogicError> _errors = {};
@@ -299,20 +303,49 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
     // Layout containers (structural recursion stays here).
     switch (type) {
       case 'columns':
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (final col in (raw['columns'] as List?) ?? const [])
-              if (col is Map<String, dynamic>)
-                Expanded(
-                  flex: (col['width'] as num?)?.toInt() ?? 1,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: _renderList(
+        final cols = [
+          for (final col in (raw['columns'] as List?) ?? const [])
+            if (col is Map<String, dynamic>) col,
+        ];
+        if (cols.isEmpty) return const SizedBox.shrink();
+        // Form.io columns use a 12-unit Bootstrap grid. Render responsively:
+        // stack full-width on narrow screens; otherwise size each column to its
+        // grid width and let a Wrap flow rows (widths summing to >12 wrap, just
+        // like Bootstrap) instead of crushing everything into one Row.
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final avail = constraints.maxWidth;
+            final units = [
+              for (final c in cols)
+                ((c['width'] as num?)?.toInt() ?? 12).clamp(1, 12),
+            ];
+            final narrowest = units.reduce((a, b) => a < b ? a : b);
+            if (avail * narrowest / 12 < _minColumnWidth) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final col in cols)
+                    _renderList(
                         (col['components'] as List?) ?? const [], parentPath),
+                ],
+              );
+            }
+            return Wrap(
+              crossAxisAlignment: WrapCrossAlignment.start,
+              children: [
+                for (var i = 0; i < cols.length; i++)
+                  SizedBox(
+                    width: (avail * units[i] / 12).floorToDouble(),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: _renderList(
+                          (cols[i]['components'] as List?) ?? const [],
+                          parentPath),
+                    ),
                   ),
-                ),
-          ],
+              ],
+            );
+          },
         );
       case 'table':
         return Column(
