@@ -138,6 +138,18 @@ abstract class FormioLocalizations {
 
   /// Get step progress message
   String getStepMessage(int current, int total) => '$step $current $stepOf $total';
+
+  /// "Must be at least [limit] characters" (minLength validation).
+  String getMinLengthMessage(String limit) => 'Must be at least $limit characters';
+
+  /// "Must be at most [limit] characters" (maxLength validation).
+  String getMaxLengthMessage(String limit) => 'Must be at most $limit characters';
+
+  /// "Must be [limit] or more" (min validation).
+  String getMinValueMessage(String limit) => 'Must be $limit or more';
+
+  /// "Must be [limit] or less" (max validation).
+  String getMaxValueMessage(String limit) => 'Must be $limit or less';
 }
 
 /// Default English implementation of [FormioLocalizations].
@@ -307,6 +319,18 @@ class DefaultFormioLocalizations implements FormioLocalizations {
 
   @override
   String getStepMessage(int current, int total) => '$step $current $stepOf $total';
+
+  @override
+  String getMinLengthMessage(String limit) => 'Must be at least $limit characters';
+
+  @override
+  String getMaxLengthMessage(String limit) => 'Must be at most $limit characters';
+
+  @override
+  String getMinValueMessage(String limit) => 'Must be $limit or more';
+
+  @override
+  String getMaxValueMessage(String limit) => 'Must be $limit or less';
 
   /// Creates an object that provides English resource values for Form.io widgets.
   static Future<FormioLocalizations> load(Locale locale) {

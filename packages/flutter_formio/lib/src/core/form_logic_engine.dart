@@ -26,6 +26,7 @@ class FormLogicError {
     this.rule,
     this.messageKey,
     this.level,
+    this.setting,
   });
 
   /// Full data path of the failing component (e.g. `creatioContainer1.categoryId`).
@@ -43,12 +44,17 @@ class FormLogicError {
   /// `error` | `warning` | etc.
   final String? level;
 
+  /// The rule's limit/parameter (e.g. `maxLength` → "5", `min` → "10",
+  /// `pattern` → the regex), used to build a specific message. May be null.
+  final String? setting;
+
   factory FormLogicError.fromJson(Map<String, dynamic> j) => FormLogicError(
         path: (j['path'] ?? '') as String,
         key: j['key'] as String?,
         rule: j['rule'] as String?,
         messageKey: j['messageKey'] as String?,
         level: j['level'] as String?,
+        setting: j['setting'] as String?,
       );
 
   @override

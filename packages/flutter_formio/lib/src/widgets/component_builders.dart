@@ -108,8 +108,24 @@ String messageForError(FormLogicError e) {
       return loc.invalidFormat;
     case 'custom':
       return e.messageKey ?? loc.invalidValue;
+    case 'minLength':
+      return e.setting != null
+          ? loc.getMinLengthMessage(e.setting!)
+          : loc.invalidValue;
+    case 'maxLength':
+      return e.setting != null
+          ? loc.getMaxLengthMessage(e.setting!)
+          : loc.invalidValue;
+    case 'min':
+      return e.setting != null
+          ? loc.getMinValueMessage(e.setting!)
+          : loc.invalidValue;
+    case 'max':
+      return e.setting != null
+          ? loc.getMaxValueMessage(e.setting!)
+          : loc.invalidValue;
     default:
-      // minLength / maxLength / min / max / unique / …
+      // minWords / maxWords / unique / …
       return loc.invalidValue;
   }
 }

@@ -182,6 +182,18 @@ class ArabicFormioLocalizations extends DefaultFormioLocalizations {
   @override
   String getStepMessage(int current, int total) => 'خطوة $current من $total';
 
+  @override
+  String getMinLengthMessage(String limit) => 'يجب ألا يقل عن $limit أحرف';
+
+  @override
+  String getMaxLengthMessage(String limit) => 'يجب ألا يزيد عن $limit حرفًا';
+
+  @override
+  String getMinValueMessage(String limit) => 'يجب أن تكون القيمة $limit أو أكثر';
+
+  @override
+  String getMaxValueMessage(String limit) => 'يجب أن تكون القيمة $limit أو أقل';
+
   /// Provides Arabic resource values for Form.io widgets.
   static Future<FormioLocalizations> load(Locale locale) {
     return SynchronousFuture<FormioLocalizations>(

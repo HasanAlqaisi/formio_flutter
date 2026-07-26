@@ -112,6 +112,20 @@ test('custom JavaScript validation runs with the real eval context', () => {
   assert.equal(run(form, { x: 'ok' }).errors.length, 0);
 });
 
+test('limit validators report their setting for specific messages', () => {
+  const form = {
+    display: 'form',
+    components: [
+      field('a', { validate: { maxLength: 5 } }),
+      num('n', { validate: { min: 10 } }),
+    ],
+  };
+  const errs = run(form, { a: 'toolong', n: 3 }).errors;
+  const byRule = Object.fromEntries(errs.map((e) => [e.rule, e]));
+  assert.equal(byRule.maxLength.setting, '5');
+  assert.equal(byRule.min.setting, '10');
+});
+
 // ---- validation toggle (live-by-default; opt-in skip) -----------------------
 test('required validation runs by default and is skippable', () => {
   const form = { display: 'form', components: [field('r', { validate: { required: true } })] };

@@ -89,6 +89,9 @@ function runPipeline(form, data, validate) {
         rule: e.ruleName,
         messageKey: e.errorKeyOrMessage,
         level: e.level,
+        // The rule's limit/param (e.g. maxLength "5", min "10", pattern regex),
+        // so the client can build a specific message like "at most 5 characters".
+        setting: ctx.setting != null ? String(ctx.setting) : undefined,
       };
     }),
   };
