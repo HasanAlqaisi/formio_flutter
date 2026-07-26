@@ -7,7 +7,7 @@
 /// context (`data`, `row`, `moment`, lodash, `utils`, …) — without a WebView.
 ///
 /// The JS engine is bundled as a package asset
-/// (`assets/formio/fms-formio-core.bundle.js`) and loaded once via [init].
+/// (`assets/formio/formio-core.bundle.js`) and loaded once via [init].
 library;
 
 import 'dart:convert';
@@ -127,7 +127,7 @@ class FormLogicEngine implements FormEngine {
   FormLogicEngine();
 
   static const _assetPath =
-      'packages/formio/assets/formio/fms-formio-core.bundle.js';
+      'packages/formio/assets/formio/formio-core.bundle.js';
 
   JavascriptRuntime? _runtime;
 
@@ -176,8 +176,8 @@ class FormLogicEngine implements FormEngine {
   void setForm(Map<String, dynamic> form) {
     final runtime = _requireRuntime();
     // Double-encode: inner jsonEncode → JSON text; outer → a JS string literal.
-    runtime.evaluate('globalThis.__fmsForm = ${jsonEncode(jsonEncode(form))};');
-    _evalJson(runtime, 'fmsSetForm(globalThis.__fmsForm)');
+    runtime.evaluate('globalThis.__fioForm = ${jsonEncode(jsonEncode(form))};');
+    _evalJson(runtime, 'fioSetForm(globalThis.__fioForm)');
   }
 
   /// Runs the pipeline against the form cached by [setForm], sending only
@@ -192,9 +192,9 @@ class FormLogicEngine implements FormEngine {
   }) {
     final runtime = _requireRuntime();
     runtime.evaluate(
-        'globalThis.__fmsData = ${jsonEncode(jsonEncode(submissionData))};');
+        'globalThis.__fioData = ${jsonEncode(jsonEncode(submissionData))};');
     return FormLogicResult.fromJson(
-        _evalJson(runtime, 'fmsProcessData(globalThis.__fmsData, $validate)'));
+        _evalJson(runtime, 'fioProcessData(globalThis.__fioData, $validate)'));
   }
 
   /// One-shot: runs the pipeline against [form] + [submissionData], re-parsing
@@ -209,9 +209,9 @@ class FormLogicEngine implements FormEngine {
       'form': form,
       'submission': {'data': submissionData},
     });
-    runtime.evaluate('globalThis.__fmsIn = ${jsonEncode(payload)};');
+    runtime.evaluate('globalThis.__fioIn = ${jsonEncode(payload)};');
     return FormLogicResult.fromJson(
-        _evalJson(runtime, 'fmsProcess(globalThis.__fmsIn)'));
+        _evalJson(runtime, 'fioProcess(globalThis.__fioIn)'));
   }
 
   void dispose() {

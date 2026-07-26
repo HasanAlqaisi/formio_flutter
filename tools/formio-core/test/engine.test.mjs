@@ -16,19 +16,19 @@ import vm from 'node:vm';
 
 // ---- load the shipped bundle into an isolated context -----------------------
 const HERE = dirname(fileURLToPath(import.meta.url));
-const BUNDLE = join(HERE, '../../../packages/flutter_formio/assets/formio/fms-formio-core.bundle.js');
+const BUNDLE = join(HERE, '../../../packages/flutter_formio/assets/formio/formio-core.bundle.js');
 const ctx = { console };
 ctx.globalThis = ctx;
 vm.createContext(ctx);
-vm.runInContext(readFileSync(BUNDLE, 'utf8') + '\nglobalThis.__FMS = FMS;', ctx);
-const FMS = ctx.__FMS;
+vm.runInContext(readFileSync(BUNDLE, 'utf8') + '\nglobalThis.__FormioCore = FormioCore;', ctx);
+const FIO = ctx.__FormioCore;
 
 /** Set the form then process data through the cached path (validation on by default). */
 function run(form, data = {}, validate = true) {
-  const set = JSON.parse(FMS.fmsSetForm(JSON.stringify(form)));
-  assert.equal(set.error, undefined, `fmsSetForm error: ${set.error}`);
-  const res = JSON.parse(FMS.fmsProcessData(JSON.stringify(data), validate));
-  assert.equal(res.error, undefined, `fmsProcessData error: ${res.error}`);
+  const set = JSON.parse(FIO.fioSetForm(JSON.stringify(form)));
+  assert.equal(set.error, undefined, `fioSetForm error: ${set.error}`);
+  const res = JSON.parse(FIO.fioProcessData(JSON.stringify(data), validate));
+  assert.equal(res.error, undefined, `fioProcessData error: ${res.error}`);
   return res;
 }
 
@@ -38,8 +38,8 @@ const num = (key, extra = {}) => ({ type: 'number', key, input: true, ...extra }
 // ---- exports API ------------------------------------------------------------
 test('bundle exposes the expected globals', () => {
   assert.deepEqual(
-    Object.keys(FMS).sort(),
-    ['fmsProcess', 'fmsProcessData', 'fmsSetForm'],
+    Object.keys(FIO).sort(),
+    ['fioProcess', 'fioProcessData', 'fioSetForm'],
   );
 });
 
@@ -140,7 +140,7 @@ test('datagrid rows round-trip (added rows persist)', () => {
 });
 
 // ---- 2a: cached-form path is identical to the one-shot path ------------------
-test('fmsProcessData (cached form) === fmsProcess (one-shot payload)', () => {
+test('fioProcessData (cached form) === fioProcess (one-shot payload)', () => {
   const form = {
     display: 'form',
     components: [
@@ -150,8 +150,8 @@ test('fmsProcessData (cached form) === fmsProcess (one-shot payload)', () => {
     ],
   };
   const data = { toggle: 'go', a: 4, b: 6 };
-  FMS.fmsSetForm(JSON.stringify(form));
-  const cached = FMS.fmsProcessData(JSON.stringify(data), true);
-  const oneShot = FMS.fmsProcess(JSON.stringify({ form, submission: { data } }));
+  FIO.fioSetForm(JSON.stringify(form));
+  const cached = FIO.fioProcessData(JSON.stringify(data), true);
+  const oneShot = FIO.fioProcess(JSON.stringify({ form, submission: { data } }));
   assert.equal(cached, oneShot);
 });

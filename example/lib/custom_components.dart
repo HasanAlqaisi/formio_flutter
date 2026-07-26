@@ -15,14 +15,15 @@ final Map<String, FormioFieldBuilder> creatioComponents = {
   // `sites` behaves exactly like a select — alias it to the built-in.
   'sites': (FormioFieldContext ctx) => ctx.builtin('select'),
   // Brand-new domain types provided entirely by the host app.
-  'fmsfile': (FormioFieldContext ctx) => FmsFileField(ctx),
+  'fmsfile': (FormioFieldContext ctx) => FileUploadField(ctx),
   'location': (FormioFieldContext ctx) => LocationField(ctx),
 };
 
 /// Custom file-upload field. Value is a list of attachment ids stored in the
-/// submission; a real app would pick a file and upload it to the FMS backend.
-class FmsFileField extends StatelessWidget {
-  const FmsFileField(this.ctx, {super.key});
+/// submission; a real app would pick a file and upload it to your storage
+/// backend.
+class FileUploadField extends StatelessWidget {
+  const FileUploadField(this.ctx, {super.key});
   final FormioFieldContext ctx;
 
   @override
@@ -49,7 +50,7 @@ class FmsFileField extends StatelessWidget {
             child: OutlinedButton.icon(
               icon: const Icon(Icons.upload_file),
               label: const Text('Upload'),
-              // Real app: pick file → upload to FMS storage → store the id.
+              // Real app: pick file → upload to your storage → store the id.
               onPressed: () =>
                   ctx.setValue([...ids, 'att_${ids.length + 1}'], immediate: true),
             ),

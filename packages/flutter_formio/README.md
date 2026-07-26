@@ -75,7 +75,7 @@ EngineFormRenderer(
   form: form,
   engine: engine,
   customComponents: {
-    'fmsfile': (ctx) => MyFileField(ctx),      // a brand-new type
+    'geopoint': (ctx) => MyMapField(ctx),       // a brand-new type
     'sites':   (ctx) => ctx.builtin('select'), // alias to a built-in
     'select':  (ctx) => MyBrandedSelect(ctx),  // override a built-in
   },
@@ -153,7 +153,7 @@ changing `tools/formio-core/entry.js`):
 ```bash
 cd tools/formio-core
 npm ci
-npm run build   # → packages/flutter_formio/assets/formio/fms-formio-core.bundle.js
+npm run build   # → packages/flutter_formio/assets/formio/formio-core.bundle.js
 npm test        # engine regression tests
 ```
 

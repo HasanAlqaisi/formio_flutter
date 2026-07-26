@@ -1,10 +1,10 @@
 {
-  "name": "fms-formio-core-bundle",
+  "name": "formio-core-bundle",
   "version": "1.0.0",
   "private": true,
   "description": "Bundles @formio/core into a single IIFE for headless logic evaluation in flutter_js (QuickJS/JavaScriptCore). Output ships as a flutter_formio package asset.",
   "scripts": {
-    "build": "esbuild entry.js --bundle --format=iife --global-name=FMS --target=es2019 --minify --outfile=../../packages/flutter_formio/assets/formio/fms-formio-core.bundle.js",
+    "build": "esbuild entry.js --bundle --format=iife --global-name=FormioCore --target=es2019 --minify --outfile=../../packages/flutter_formio/assets/formio/formio-core.bundle.js",
     "test": "node --test",
     "verify": "npm run build && npm test"
   },

@@ -1,372 +1,230 @@
 # Form.io Flutter
 
-A comprehensive Flutter package for rendering [Form.io](https://form.io) forms with full feature parity.
+Render [Form.io](https://form.io) forms natively in Flutter — with the **real
+Form.io logic engine**, not a re-implementation.
 
 [![Pub Version](https://img.shields.io/pub/v/formio)](https://pub.dev/packages/formio)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-## Features
+As of **3.0.0**, all form logic — conditionals, calculations, Logic-tab actions,
+and validation (including custom JavaScript) — is delegated to Form.io's own
+[`@formio/core`](https://www.npmjs.com/package/@formio/core) running headless via
+[`flutter_js`](https://pub.dev/packages/flutter_js). Behavior matches the Form.io
+web renderer by construction, with **no WebView**. Flutter only draws the widgets.
 
-### ✅ Complete Component Support (100%)
-All 41 Form.io components are fully implemented:
-- **Basic**: TextField, TextArea, Number, Password, Email, URL, PhoneNumber, Tags, Address
-- **Advanced**: DateTime, Day, Time, Currency, Survey
-- **Layout**: Panel, Table, Tabs, Well, Columns, FieldSet, Container
-- **Data**: Select, SelectBoxes, Checkbox, Radio, Button
-- **Special**: File, Signature, Hidden, HTML, Content, Alert, Form
+> **Upgrading from 2.x?** `FormRenderer`/`WizardRenderer` are replaced by
+> `EngineFormRenderer`, and the separate `formio_api` package is merged into
+> `formio`. See [CHANGELOG](packages/flutter_formio/CHANGELOG.md) and
+> [MIGRATION](packages/flutter_formio/MIGRATION.md).
 
-### ✅ Full Flutter Theme Support
-- **100% ThemeData integration** - All components respect `inputDecorationTheme` and `colorScheme`
-- **Zero hardcoded styles** - Border radius, colors, and borders from theme
-- **Live theme switching** - Change themes at runtime (see example app)
-- **Consistent UI** - Components automatically match your design system
+## How it works
 
-### ✅ Internationalization (i18n)
-- **60+ customizable strings** - All user-facing text translatable
-- **Built-in locales**: English (default), Turkish
-- **Easy custom locales** - Create your own language support
-- **Global configuration** - Set once via `ComponentFactory.setLocale()`
+```
+Form JSON ─► EngineFormRenderer ──(on every change)──► FormLogicEngine
+                    ▲                                   (@formio/core in flutter_js)
+                    └────────── { data, hidden, errors } ◄──┘
+```
 
-### ✅ Custom Widget Callbacks
-- **Custom pickers** - Use Material, Cupertino, or your own date/time pickers
-- **Custom file picker** - Integrate any file picker package
-- **Custom HTTP client** - Use dio, http, or custom networking
-- **100% optional** - Defaults work out of the box
+`EngineFormRenderer` owns the nested submission. On every change it sends the data
+to the engine and repaints from `{ data, hidden, errors }`. Basic inputs and
+layout are rendered natively; premium/less-common types fall back to
+`ComponentFactory`; anything domain-specific is provided by **your** app.
 
-### ✅ Comprehensive Validation System
-- Required, Pattern (regex), Min/Max Length
-- Min/Max Words, Min/Max Numeric Values  
-- Email, URL, JSON format validation
-- **Date/Time validation** (minDate, maxDate, minYear, maxYear)
-- **File validation** (fileSize, filePattern with MIME types)
-- **Custom JavaScript validation** (via flutter_js)
-- **Cross-field validation** (password confirmation, field comparison)
-- Config-driven validation with `FormioValidators.fromConfig()`
-
-### ✅ Advanced Form Features (~98% Form.io Parity)
-- **Wizard Forms**: Multi-page forms with navigation and progress tracking
-- **Calculated Values**: Auto-calculated fields using JSONLogic or JavaScript
-- **Conditional Logic**: Show/hide components based on form data (Simple + JSONLogic)
-- **Default Values**: Pre-populate form fields
-- **Data Grids**: Editable table data
-
-### ✅ Complete API Integration
-- Form CRUD operations
-- Submission management
-- User authentication
-- Action handling
-- Role-based access
-
-## Installation
-
-Add to your `pubspec.yaml`:
+## Install
 
 ```yaml
 dependencies:
-  formio: ^1.0.0
+  formio: ^3.0.0
 ```
-
-## Quick Start
-
-### 1. Basic Form Rendering
 
 ```dart
-import 'package:formio/flutter_formio.dart';
-
-// Set your Form.io server URL
-ApiClient.setBaseUrl(Uri.parse('https://examples.form.io'));
-
-// Fetch and render a form
-final formService = FormService(ApiClient());
-final form = await formService.fetchForm('formPath');
-
-// Display the form
-FormRenderer(
-  form: form,
-  onSubmit: (data) => print('Submitted: $data'),
-  onError: (error) => print('Error: $error'),
-)
+import 'package:formio/formio.dart';
 ```
 
-### 2. Theme Customization
+## Quick start
+
+Initialize the engine once (it loads the `@formio/core` bundle), then hand it to
+the renderer:
 
 ```dart
 import 'package:flutter/material.dart';
+import 'package:formio/formio.dart';
 
-MaterialApp(
-  theme: ThemeData(
-    colorScheme: ColorScheme.fromSeed(seedColor: Colors.purple),
-    inputDecorationTheme: InputDecorationTheme(
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(20), // Rounded inputs!
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(20),
-        borderSide: BorderSide(color: Colors.purple, width: 2),
-      ),
-    ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20), // Rounded buttons!
+late final FormLogicEngine engine;
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  engine = FormLogicEngine();
+  await engine.init(); // loads the bundle once
+  runApp(const MyApp());
+}
+
+class FormPage extends StatelessWidget {
+  const FormPage({super.key, required this.form});
+  final Map<String, dynamic> form; // parsed Form.io JSON (a `components` tree)
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        body: EngineFormRenderer(
+          form: form,
+          engine: engine,
+          onSubmit: (data) => debugPrint('Submitted: $data'),
+          onChanged: (data) {/* live data on every edit */},
         ),
-      ),
-    ),
-  ),
-  home: MyFormPage(),
-)
-// All form components automatically use this theme!
-```
-
-### 3. Internationalization (i18n)
-
-```dart
-import 'package:formio/flutter_formio.dart';
-
-void main() {
-  // Set global locale (before MaterialApp)
-  ComponentFactory.setLocale(FormioLocale.tr()); // Turkish
-  
-  // Or create custom locale
-  ComponentFactory.setLocale(FormioLocale(
-    submit: 'إرسال',      // Arabic
-    cancel: 'إلغاء',
-    clear: 'مسح',
-    // ... 60+ customizable strings
-  ));
-  
-  runApp(MyApp());
+      );
 }
 ```
 
-### 4. Custom Widget Callbacks
+`form` is the parsed Form.io definition. If your export wraps it (e.g. Creatio's
+`{"template": "<stringified JSON>"}`), unwrap and `jsonDecode` it first:
 
 ```dart
-import 'package:file_picker/file_picker.dart';
+final outer = jsonDecode(raw);
+final tpl = outer is Map && outer['template'] != null ? outer['template'] : outer;
+final form = (tpl is String ? jsonDecode(tpl) : tpl) as Map<String, dynamic>;
+```
 
-FormRenderer(
+### `EngineFormRenderer` options
+
+| Parameter | Purpose |
+|-----------|---------|
+| `form` | Parsed Form.io definition (required). |
+| `engine` | An initialized `FormLogicEngine` (required). |
+| `initialData` | Pre-populate the submission. |
+| `onSubmit` | Called with the data when the built-in Submit passes validation. |
+| `onChanged` | Called with the live data on every recompute. |
+| `customComponents` | Host builders for custom types / overrides (see below). |
+| `theme` | `FormioTheme` design tokens. |
+| `textDirection` | `TextDirection.rtl` for RTL forms (defaults to ambient). |
+| `debounce` | Text-input recompute debounce (default 450 ms). |
+
+## Custom components & overrides
+
+Domain-specific widgets (file pickers, maps, signature pads…) live in **your**
+app — the package provides the extension point, you provide the widget. The same
+map overrides any built-in type.
+
+```dart
+EngineFormRenderer(
   form: form,
-  
-  // Optional: Use your own file picker
-  onFilePick: ({required allowMultiple, allowedExtensions}) async {
-    final result = await FilePicker.platform.pickFiles(
-      allowMultiple: allowMultiple,
-      type: allowedExtensions != null ? FileType.custom : FileType.any,
-      allowedExtensions: allowedExtensions,
-    );
-    return result?.files.map((f) => FileData(
-      name: f.name,
-      bytes: f.bytes,
-      path: f.path,
-    )).toList();
+  engine: engine,
+  customComponents: {
+    'geopoint': (ctx) => MyMapField(ctx),       // a brand-new type
+    'sites':   (ctx) => ctx.builtin('select'), // alias to a built-in
+    'select':  (ctx) => MyBrandedSelect(ctx),  // override a built-in
   },
-  
-  // Optional: Use Cupertino date picker
-  onDatePick: ({required initialDate, required firstDate, required lastDate}) async {
-    return await showCupertinoDatePicker(...);
-  },
-)
+);
 ```
 
-### 5. Wizard (Multi-Page) Forms
+Each builder receives a `FormioFieldContext`:
 
 ```dart
-final wizardConfig = WizardConfig.fromJson({
-  'display': 'wizard',
-  'components': [
-    {
-      'type': 'panel',
-      'key': 'page1',
-      'label': 'Personal Info',
-      'components': [...]
-    },
-    {
-      'type': 'panel',
-      'key': 'page2',
-      'label': 'Address',
-      'components': [...]
-    },
-  ]
-});
+class MyFileField extends StatelessWidget {
+  const MyFileField(this.ctx, {super.key});
+  final FormioFieldContext ctx;
 
-WizardRenderer(
-  wizardConfig: wizardConfig,
-  onSubmit: (data) => print('Wizard completed: $data'),
-  showProgress: true,
-)
-```
-
-### 3. Calculated Values
-
-```dart
-ComponentModel.fromJson({
-  'type': 'currency',
-  'key': 'total',
-  'label': 'Total',
-  'calculateValue': {
-    '+': [
-      {'var': 'data.subtotal'},
-      {'var': 'data.tax'}
-    ]
-  },
-  'allowCalculateOverride': false,
-})
-```
-
-### 4. Cross-Field Validation
-
-```dart
-// Password confirmation
-ComponentModel.fromJson({
-  'type': 'password',
-  'key': 'confirmPassword',
-  'label': 'Confirm Password',
-  'validate': {
-    'required': true,
-    'matchField': 'password',
-  },
-})
-```
-
-## Advanced Usage
-
-### Custom Validation
-
-```dart
-TextFormField(
-  validator: (val) => FormioValidators.combine([
-    () => FormioValidators.required(val, fieldName: 'Email'),
-    () => FormioValidators.email(val),
-    () => FormioValidators.maxLength(val, 100),
-  ]),
-)
-```
-
-### Conditional Logic
-
-Components support both simple and JSONLogic conditionals:
-
-```json
-{
-  "conditional": {
-    "when": "country",
-    "eq": "USA",
-    "show": true
+  @override
+  Widget build(BuildContext context) {
+    final ids = (ctx.value as List?) ?? const [];
+    return ctx.chrome(Column(children: [        // optional standard label/error
+      for (final id in ids) Text('$id'),
+      OutlinedButton(
+        onPressed: () async {
+          final id = await MyStorage.pickAndUpload();
+          ctx.setValue([...ids, id], immediate: true); // triggers a recompute
+        },
+        child: const Text('Upload'),
+      ),
+    ]));
   }
 }
 ```
 
-Or with JSONLogic:
+`FormioFieldContext` exposes: `value` / `setValue` / `read(path)` / `error` /
+`controller()` / `focusNode()` / `child()` / `builtin(type)` / `chrome()` /
+`theme` / `component`.
 
-```json
-{
-  "conditional": {
-    "json": {
-      "and": [
-        {"==": [{"var": "data.country"}, "USA"]},
-        {">": [{"var": "data.age"}, 18]}
-      ]
-    }
-  }
-}
+### A note on buttons
+
+Form.io `button` components are **not** rendered — submission is driven by the
+renderer's own Submit button + `onSubmit`. To render a form button with custom
+behavior, override it: `customComponents: {'button': (ctx) => ...}`.
+
+## Theming
+
+```dart
+EngineFormRenderer(
+  form: form,
+  engine: engine,
+  theme: const FormioTheme(
+    labelStyle: TextStyle(fontWeight: FontWeight.w600),
+    inputBorder: OutlineInputBorder(),
+    requiredSuffix: ' *',
+    columnBreakpoint: 170, // px below which columns/tables stack (responsive)
+  ),
+);
 ```
 
-## Implementation Status
+Every token defaults to the ambient Material theme, so `FormioTheme()` keeps the
+stock look. Layouts are **responsive**: `columns` and `table` sit side-by-side on
+wide screens and stack vertically on narrow ones (threshold = `columnBreakpoint`).
 
-| Feature Category | Coverage | Status |
-|-----------------|----------|--------|
-| Components | 100% (41/41) | ✅ Complete |
-| Validation | 95% | ✅ Complete |
-| Wizard Forms | 100% | ✅ Complete |
-| Calculated Values | 95% (JSONLogic) | ✅ Complete |
-| Conditional Logic | 100% | ✅ Complete |
-| API Integration | 100% | ✅ Complete |
+## Validation
 
-**Overall: ~92% Form.io feature parity**
+Live validation runs by default. Error text is localized and, where the engine
+supplies a limit, specific — e.g. `Must be at most 20 characters`,
+`Must be 10 or more`. Custom-validation messages authored in the form are shown
+as-is.
 
-## Architecture
+## Internationalization & RTL
 
-```
-lib/
-├── core/               # Core functionality
-│   ├── validators.dart        # Centralized validation
-│   ├── calculation_evaluator.dart  # Calculated values
-│   ├── conditional_evaluator.dart  # Conditional logic
-│   └── utils.dart            # Helper functions
-├── models/             # Data models
-│   ├── form.dart
-│   ├── component.dart
-│   └── wizard_config.dart
-├── widgets/            # UI components
-│   ├── form_renderer.dart
-│   ├── wizard_renderer.dart
-│   ├── component_factory.dart
-│   └── components/           # All 41 components
-├── services/           # API services
-│   ├── form_service.dart
-│   ├── submission_service.dart
-│   └── auth_service.dart
-└── network/
-    └── api_client.dart
+```dart
+// Global locale for built-in strings & error messages:
+ComponentFactory.setLocale(const ArabicFormioLocalizations()); // built-in Arabic
+// or provide your own by subclassing DefaultFormioLocalizations.
+
+EngineFormRenderer(form: form, engine: engine, textDirection: TextDirection.rtl);
 ```
 
-## Testing
+## Repository layout
 
-The package includes comprehensive test coverage:
+```
+packages/flutter_formio/   # the published `formio` package
+tools/formio-core/         # @formio/core bundle source (esbuild) + engine tests
+example/                   # runnable demo (flutter run)
+```
+
+### Rebuilding the engine bundle
+
+The `@formio/core` bundle ships as a package asset. After editing
+`tools/formio-core/entry.js`:
 
 ```bash
-flutter test
+cd tools/formio-core
+npm ci
+npm run build   # → packages/flutter_formio/assets/formio/formio-core.bundle.js
+npm test        # engine regression tests
 ```
 
-**Test Results: 56/56 passing** ✅
-- Validator tests: 28/28
-- Calculation tests: 13/13
-- Cross-field validation: 15/15
-
-## Live Demo
-
-Run the example app to test with real forms:
+## Example
 
 ```bash
 cd example
+flutter pub get
 flutter run
 ```
 
-The demo loads forms from a live Form.io server and demonstrates all features.
-
-## Limitations
-
-### JavaScript Expressions
-Custom JavaScript code is not supported. Use JSONLogic instead:
-
-❌ **Not Supported:**
-```javascript
-"calculateValue": "value = data.price * data.quantity"
-```
-
-✅ **Use JSONLogic:**
-```json
-"calculateValue": {
-  "*": [
-    {"var": "data.price"},
-    {"var": "data.quantity"}
-  ]
-}
-```
-
-### Not Implemented (Low Priority)
-- PDF generation (backend feature)
-- Unique validation via API
-- File upload to external providers (S3, Azure)
-- Google Places autocomplete
+Pick a bundled sample form and open it — logic, validation, and custom components
+all run live. See [example/README.md](example/README.md).
 
 ## Contributing
 
-Contributions are welcome! Please read our contributing guidelines.
+Contributions are welcome. Please run `flutter analyze` and `flutter test` (in
+`packages/flutter_formio`) plus `npm test` (in `tools/formio-core`) before a PR.
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+MIT License — see [LICENSE](LICENSE).
 
 ## Support
 
@@ -376,6 +234,4 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Credits
 
-Built with ❤️ for the Flutter community.
-
-Form.io is a trademark of Form.io, Inc.
+Built with ❤️ for the Flutter community. Form.io is a trademark of Form.io, Inc.

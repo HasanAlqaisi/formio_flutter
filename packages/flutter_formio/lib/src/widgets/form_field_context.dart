@@ -19,9 +19,9 @@
 ///   form: form,
 ///   engine: engine,
 ///   customComponents: {
-///     'fmsfile': (ctx) => MyFileField(ctx),      // new type
-///     'sites':   (ctx) => ctx.builtin('select'), // reuse a built-in
-///     'select':  (ctx) => MyBrandedSelect(ctx),  // override a built-in
+///     'geopoint': (ctx) => MyMapField(ctx),       // new type
+///     'sites':    (ctx) => ctx.builtin('select'), // reuse a built-in
+///     'select':   (ctx) => MyBrandedSelect(ctx),  // override a built-in
 ///   },
 /// );
 /// ```
