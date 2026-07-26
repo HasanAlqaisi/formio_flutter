@@ -85,12 +85,25 @@ class _DayComponentState extends State<DayComponent> {
           _day = int.tryParse(parts[2].split('T').first); // Handle ISO datetime
         }
       }
+      // Form.io uses "00/00/0000" (and zero parts) to mean "no date". Treat any
+      // non-positive part as unset so it never lands outside the dropdowns.
+      _day = (_day != null && _day! > 0) ? _day : null;
+      _month = (_month != null && _month! > 0) ? _month : null;
+      _year = (_year != null && _year! > 0) ? _year : null;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final hasError = _isRequired && (_day == null || _month == null || _year == null);
+
+    final days = List.generate(31, (i) => i + 1);
+    final months = List.generate(12, (i) => i + 1);
+    final years = List.generate(_endYear - _startYear + 1, (i) => _endYear - i);
+
+    // A DropdownButton asserts if its value isn't among its items, so only pass
+    // a selection the item list actually contains.
+    int? inList(int? v, List<int> items) => items.contains(v) ? v : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,9 +115,9 @@ class _DayComponentState extends State<DayComponent> {
             // Day
             Expanded(
               child: DropdownButtonFormField<int>(
-                initialValue: _day,
+                initialValue: inList(_day, days),
                 decoration: InputDecoration(labelText: ComponentFactory.locale.day),
-                items: List.generate(31, (i) => i + 1).map((d) => DropdownMenuItem(value: d, child: Text(d.toString()))).toList(),
+                items: days.map((d) => DropdownMenuItem(value: d, child: Text(d.toString()))).toList(),
                 onChanged: (val) {
                   setState(() => _day = val);
                   _updateValue();
@@ -116,9 +129,9 @@ class _DayComponentState extends State<DayComponent> {
             // Month
             Expanded(
               child: DropdownButtonFormField<int>(
-                initialValue: _month,
+                initialValue: inList(_month, months),
                 decoration: InputDecoration(labelText: ComponentFactory.locale.month),
-                items: List.generate(12, (i) => i + 1).map((m) => DropdownMenuItem(value: m, child: Text(m.toString()))).toList(),
+                items: months.map((m) => DropdownMenuItem(value: m, child: Text(m.toString()))).toList(),
                 onChanged: (val) {
                   setState(() => _month = val);
                   _updateValue();
@@ -130,9 +143,9 @@ class _DayComponentState extends State<DayComponent> {
             // Year
             Expanded(
               child: DropdownButtonFormField<int>(
-                initialValue: _year,
+                initialValue: inList(_year, years),
                 decoration: InputDecoration(labelText: ComponentFactory.locale.year),
-                items: List.generate(_endYear - _startYear + 1, (i) => _endYear - i).map((y) => DropdownMenuItem(value: y, child: Text(y.toString()))).toList(),
+                items: years.map((y) => DropdownMenuItem(value: y, child: Text(y.toString()))).toList(),
                 onChanged: (val) {
                   setState(() => _year = val);
                   _updateValue();
