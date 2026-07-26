@@ -24,6 +24,7 @@ class FormioTheme {
     this.fieldPadding = const EdgeInsets.symmetric(vertical: 6),
     this.sectionMargin = const EdgeInsets.symmetric(vertical: 6),
     this.requiredSuffix = ' *',
+    this.columnBreakpoint = 170.0,
   });
 
   /// Style for field labels. Default: `w500`.
@@ -56,6 +57,11 @@ class FormioTheme {
   /// Appended to a required field's label. Default: `' *'`.
   final String requiredSuffix;
 
+  /// Minimum per-column pixel width before a `columns`/`table` row collapses to
+  /// a stacked layout (so labels/fields aren't crushed on narrow screens).
+  /// Default: 170.
+  final double columnBreakpoint;
+
   // --- resolved accessors (apply defaults against the ambient theme) ---
 
   TextStyle resolvedLabelStyle(BuildContext c) =>
@@ -85,6 +91,7 @@ class FormioTheme {
     EdgeInsetsGeometry? fieldPadding,
     EdgeInsetsGeometry? sectionMargin,
     String? requiredSuffix,
+    double? columnBreakpoint,
   }) =>
       FormioTheme(
         labelStyle: labelStyle ?? this.labelStyle,
@@ -97,5 +104,6 @@ class FormioTheme {
         fieldPadding: fieldPadding ?? this.fieldPadding,
         sectionMargin: sectionMargin ?? this.sectionMargin,
         requiredSuffix: requiredSuffix ?? this.requiredSuffix,
+        columnBreakpoint: columnBreakpoint ?? this.columnBreakpoint,
       );
 }

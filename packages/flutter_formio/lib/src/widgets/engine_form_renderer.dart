@@ -77,10 +77,6 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
   static const _nestingTypes = {'container', 'creatioContainer'};
   static const _arrayTypes = {'datagrid', 'editgrid'};
 
-  /// Below this per-column pixel width, a `columns` row collapses to a stacked
-  /// layout so labels/fields don't get crushed on narrow (phone) screens.
-  static const _minColumnWidth = 170.0;
-
   Map<String, dynamic> _data = {};
   Map<String, dynamic> _hidden = {};
   final Map<String, FormLogicError> _errors = {};
@@ -320,7 +316,7 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
                 ((c['width'] as num?)?.toInt() ?? 12).clamp(1, 12),
             ];
             final narrowest = units.reduce((a, b) => a < b ? a : b);
-            if (avail * narrowest / 12 < _minColumnWidth) {
+            if (avail * narrowest / 12 < widget.theme.columnBreakpoint) {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -360,7 +356,8 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
             final widest =
                 rows.fold<int>(0, (m, r) => r.length > m ? r.length : m);
             final stack =
-                widest > 0 && constraints.maxWidth / widest < _minColumnWidth;
+                widest > 0 &&
+                    constraints.maxWidth / widest < widget.theme.columnBreakpoint;
             Widget cell(dynamic c) => Padding(
                   padding: const EdgeInsets.all(4),
                   child: (c is Map<String, dynamic>)
