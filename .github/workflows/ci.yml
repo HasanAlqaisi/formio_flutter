@@ -29,7 +29,7 @@ jobs:
 
       - name: Bundle drift guard
         run: |
-          bundle=../../packages/flutter_formio/assets/formio/fms-formio-core.bundle.js
+          bundle=../../packages/flutter_formio/assets/formio/formio-core.bundle.js
           if ! git diff --quiet "$bundle"; then
             echo "::error::Committed engine bundle is stale. Run 'npm run build' in tools/formio-core and commit the result."
             git --no-pager diff --stat "$bundle"
