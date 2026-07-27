@@ -3,6 +3,7 @@
 /// returns a widget; layout/array builders recurse via `scope.renderChild`.
 library;
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:formio/formio.dart';
 
@@ -142,6 +143,27 @@ Widget placeholderCard(BuildContext ctx, String text) => Container(
 
 // ---- text inputs (controller-bound; live calc / read-only) ---------------
 
+/// Maps a Form.io text component [type] to the mobile keyboard best suited to
+/// it, mirroring the HTML5 input-type keyboards Form.io's web renderer relies
+/// on (email → `@`/`.` keys, phone → dial pad, url → `/`/`.com` keys).
+TextInputType _keyboardTypeFor(String type) {
+  switch (type) {
+    case 'textarea':
+      return TextInputType.multiline;
+    case 'number':
+    case 'currency':
+      return const TextInputType.numberWithOptions(decimal: true);
+    case 'email':
+      return TextInputType.emailAddress;
+    case 'url':
+      return TextInputType.url;
+    case 'phoneNumber':
+      return TextInputType.phone;
+    default:
+      return TextInputType.text;
+  }
+}
+
 Widget buildTextLeaf(
     FieldScope s, Map<String, dynamic> raw, String path, String type) {
   final ctx = s.context;
@@ -161,11 +183,7 @@ Widget buildTextLeaf(
     focusNode: focus,
     readOnly: readOnly,
     obscureText: type == 'password',
-    keyboardType: type == 'textarea'
-        ? TextInputType.multiline
-        : isNumber
-            ? const TextInputType.numberWithOptions(decimal: true)
-            : TextInputType.text,
+    keyboardType: _keyboardTypeFor(type),
     maxLines: type == 'textarea' ? (raw['rows'] as num?)?.toInt() ?? 3 : 1,
     decoration: InputDecoration(
       isDense: s.theme.isDense,
@@ -314,6 +332,42 @@ Widget buildRadio(FieldScope s, Map<String, dynamic> raw, String path) {
 
 String _two(int n) => n.toString().padLeft(2, '0');
 
+/// Presents an iOS-style wheel picker in a bottom sheet and resolves to the
+/// chosen [DateTime], or `null` if the sheet is dismissed without confirming.
+Future<DateTime?> _showCupertinoDateTime(
+    BuildContext ctx, DateTime initial, CupertinoDatePickerMode mode) {
+  var result = initial;
+  return showCupertinoModalPopup<DateTime>(
+    context: ctx,
+    builder: (sheetCtx) => Container(
+      height: 300,
+      color: CupertinoColors.systemBackground.resolveFrom(sheetCtx),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            SizedBox(
+              height: 240,
+              child: CupertinoDatePicker(
+                mode: mode,
+                initialDateTime: initial,
+                minimumYear: 1900,
+                maximumYear: 2100,
+                use24hFormat: MediaQuery.of(sheetCtx).alwaysUse24HourFormat,
+                onDateTimeChanged: (d) => result = d,
+              ),
+            ),
+            CupertinoButton(
+              onPressed: () => Navigator.of(sheetCtx).pop(result),
+              child: const Text('Done'),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
 Widget buildDateTime(
     FieldScope s, Map<String, dynamic> raw, String path, String type) {
   final ctx = s.context;
@@ -336,24 +390,47 @@ Widget buildDateTime(
 
   Future<void> pick() async {
     var picked = dt ?? DateTime.now();
-    if (enableDate) {
-      final d = await showDatePicker(
-        context: ctx,
-        initialDate: picked,
-        firstDate: DateTime(1900),
-        lastDate: DateTime(2100),
-      );
-      if (d == null) return;
-      picked = DateTime(d.year, d.month, d.day, picked.hour, picked.minute);
-    }
-    if (enableTime && ctx.mounted) {
-      final t = await showTimePicker(
-        context: ctx,
-        initialTime: TimeOfDay.fromDateTime(picked),
-      );
-      if (t == null) return;
-      picked =
-          DateTime(picked.year, picked.month, picked.day, t.hour, t.minute);
+    final platform = Theme.of(ctx).platform;
+    final useCupertino =
+        platform == TargetPlatform.iOS || platform == TargetPlatform.macOS;
+
+    if (useCupertino) {
+      // Native-feeling iOS wheel picker; a single wheel covers all three modes.
+      final mode = enableDate && enableTime
+          ? CupertinoDatePickerMode.dateAndTime
+          : enableTime
+              ? CupertinoDatePickerMode.time
+              : CupertinoDatePickerMode.date;
+      final result = await _showCupertinoDateTime(ctx, picked, mode);
+      if (result == null) return;
+      // Preserve the components the chosen mode doesn't edit.
+      picked = switch (mode) {
+        CupertinoDatePickerMode.date => DateTime(
+            result.year, result.month, result.day, picked.hour, picked.minute),
+        CupertinoDatePickerMode.time => DateTime(
+            picked.year, picked.month, picked.day, result.hour, result.minute),
+        _ => result,
+      };
+    } else {
+      if (enableDate) {
+        final d = await showDatePicker(
+          context: ctx,
+          initialDate: picked,
+          firstDate: DateTime(1900),
+          lastDate: DateTime(2100),
+        );
+        if (d == null) return;
+        picked = DateTime(d.year, d.month, d.day, picked.hour, picked.minute);
+      }
+      if (enableTime && ctx.mounted) {
+        final t = await showTimePicker(
+          context: ctx,
+          initialTime: TimeOfDay.fromDateTime(picked),
+        );
+        if (t == null) return;
+        picked =
+            DateTime(picked.year, picked.month, picked.day, t.hour, t.minute);
+      }
     }
     s.setValue(path, picked.toIso8601String(), immediate: true);
   }
