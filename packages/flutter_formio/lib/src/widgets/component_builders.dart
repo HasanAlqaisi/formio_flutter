@@ -164,6 +164,25 @@ TextInputType _keyboardTypeFor(String type) {
   }
 }
 
+/// Reads a `prefix`/`suffix` addon from the schema, tolerating non-string JSON
+/// values (`{"suffix": 5}`). Returns null when absent or blank.
+String? _affixText(Map<String, dynamic> raw, String key) {
+  final v = raw[key];
+  if (v == null) return null;
+  final text = v.toString();
+  return text.isEmpty ? null : text;
+}
+
+/// Builds an always-visible `prefix`/`suffix` addon.
+Widget _affix(String text, TextStyle style, {required bool isPrefix}) =>
+    Padding(
+      // Directional so the gap stays on the inner side under RTL.
+      padding: isPrefix
+          ? const EdgeInsetsDirectional.only(start: 12, end: 4)
+          : const EdgeInsetsDirectional.only(start: 4, end: 12),
+      child: Text(text, style: style),
+    );
+
 Widget buildTextLeaf(
     FieldScope s, Map<String, dynamic> raw, String path, String type) {
   final ctx = s.context;
@@ -178,6 +197,10 @@ Widget buildTextLeaf(
   final readOnly = raw['disabled'] == true || raw['readOnly'] == true;
   final isNumber = type == 'number' || type == 'currency';
 
+  final prefix = _affixText(raw, 'prefix');
+  final suffix = _affixText(raw, 'suffix');
+  final affixStyle = s.theme.resolvedAffixStyle(ctx);
+
   return TextField(
     controller: controller,
     focusNode: focus,
@@ -190,12 +213,13 @@ Widget buildTextLeaf(
       border: s.theme.resolvedInputBorder(ctx),
       contentPadding: s.theme.inputContentPadding,
       hintText: raw['placeholder'] as String?,
-      prefixText: (raw['prefix'] as String?)?.isNotEmpty == true
-          ? raw['prefix'] as String
-          : null,
-      suffixText: (raw['suffix'] as String?)?.isNotEmpty == true
-          ? raw['suffix'] as String
-          : null,
+      prefixIcon:
+          prefix == null ? null : _affix(prefix, affixStyle, isPrefix: true),
+      suffixIcon:
+          suffix == null ? null : _affix(suffix, affixStyle, isPrefix: false),
+      // Without this the addon is forced into the default 48x48 icon box.
+      prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+      suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
       fillColor:
           readOnly ? Theme.of(ctx).disabledColor.withValues(alpha: 0.05) : null,
       filled: readOnly,

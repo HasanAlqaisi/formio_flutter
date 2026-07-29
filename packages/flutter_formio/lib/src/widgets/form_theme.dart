@@ -18,6 +18,7 @@ class FormioTheme {
     this.descriptionStyle,
     this.errorStyle,
     this.panelTitleStyle,
+    this.affixStyle,
     this.inputBorder,
     this.inputContentPadding,
     this.isDense = true,
@@ -38,6 +39,10 @@ class FormioTheme {
 
   /// Style for panel/fieldset/well headers. Default: `bold`.
   final TextStyle? panelTitleStyle;
+
+  /// Style for a field's `prefix`/`suffix` addon text (e.g. `$`, `kg`).
+  /// Default: the ambient hint colour.
+  final TextStyle? affixStyle;
 
   /// Border for text/date inputs. Default: [OutlineInputBorder].
   final InputBorder? inputBorder;
@@ -77,6 +82,9 @@ class FormioTheme {
   TextStyle resolvedPanelTitleStyle(BuildContext c) =>
       panelTitleStyle ?? const TextStyle(fontWeight: FontWeight.bold);
 
+  TextStyle resolvedAffixStyle(BuildContext c) =>
+      affixStyle ?? TextStyle(color: Theme.of(c).hintColor);
+
   InputBorder resolvedInputBorder(BuildContext c) =>
       inputBorder ?? const OutlineInputBorder();
 
@@ -85,6 +93,7 @@ class FormioTheme {
     TextStyle? descriptionStyle,
     TextStyle? errorStyle,
     TextStyle? panelTitleStyle,
+    TextStyle? affixStyle,
     InputBorder? inputBorder,
     EdgeInsetsGeometry? inputContentPadding,
     bool? isDense,
@@ -98,6 +107,7 @@ class FormioTheme {
         descriptionStyle: descriptionStyle ?? this.descriptionStyle,
         errorStyle: errorStyle ?? this.errorStyle,
         panelTitleStyle: panelTitleStyle ?? this.panelTitleStyle,
+        affixStyle: affixStyle ?? this.affixStyle,
         inputBorder: inputBorder ?? this.inputBorder,
         inputContentPadding: inputContentPadding ?? this.inputContentPadding,
         isDense: isDense ?? this.isDense,
