@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 
 import '../core/form_logic_engine.dart';
 import 'component_builders.dart' as cb;
+import 'components/tabs_section.dart';
 import 'form_field_context.dart';
 import 'form_field_scope.dart';
 import 'form_theme.dart';
@@ -294,6 +295,69 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
   String _childPath(String parent, String key) =>
       parent.isEmpty ? key : '$parent.$key';
 
+  /// Whether the engine hid a structural component with this [key].
+  bool _hiddenByKey(String? key) =>
+      key != null && key.isNotEmpty && _hidden[key] == true;
+
+  /// The error to display for [path], gated by the same touched/submitted policy
+  /// the fields themselves use.
+  FormLogicError? _visibleErrorFor(String path) =>
+      (_submitted || _touched.contains(path)) ? _errors[path] : null;
+
+  /// Whether anything inside [raw] currently shows a validation error.
+  ///
+  /// Used to flag a tab: with only the active tab built, an invalid field behind
+  /// another tab would otherwise be invisible and unfindable. Walks the same
+  /// nesting `_render` does (`components`, plus `columns` and table `rows`) and
+  /// derives paths the same way, so it agrees with what the fields show.
+  bool _subtreeHasVisibleError(Map<String, dynamic> raw, String parentPath) {
+    final type = raw['type'] as String?;
+    final key = raw['key'] as String?;
+    final isLayout = _layoutTypes.contains(type);
+    final declaredInput = raw['input'];
+    final input = declaredInput is bool
+        ? declaredInput
+        : _dataTypes.contains(type);
+    final path = (isLayout || !input || key == null)
+        ? parentPath
+        : _childPath(parentPath, key);
+
+    if (path.isNotEmpty && _visibleErrorFor(path) != null) return true;
+
+    // Every access below is type-checked rather than cast: this walker visits
+    // *all* component types, and these keys mean different things per type — a
+    // textarea's `rows` is an int (its line count), not a table's list of rows.
+    bool anyIn(Object? children) {
+      if (children is! List) return false;
+      for (final c in children) {
+        if (c is Map<String, dynamic> && _subtreeHasVisibleError(c, path)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    if (anyIn(raw['components'])) return true;
+
+    final columns = raw['columns'];
+    if (columns is List) {
+      for (final column in columns) {
+        if (column is Map && anyIn(column['components'])) return true;
+      }
+    }
+
+    final rows = raw['rows'];
+    if (rows is List) {
+      for (final row in rows) {
+        if (row is! List) continue;
+        for (final cell in row) {
+          if (cell is Map && anyIn(cell['components'])) return true;
+        }
+      }
+    }
+    return false;
+  }
+
   Widget _renderList(List<dynamic> comps, String parentPath) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -321,8 +385,7 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
     // keyed by their `key`. Only checking the input/path case left
     // conditionally-hidden panels on screen as dead, engine-reverted shells.
     final hiddenByPath = path.isNotEmpty && _hidden[path] == true;
-    final hiddenByKey =
-        !input && key != null && key.isNotEmpty && _hidden[key] == true;
+    final hiddenByKey = !input && _hiddenByKey(key);
     if (hiddenByPath || hiddenByKey) {
       return const SizedBox.shrink();
     }
@@ -450,20 +513,26 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
           ),
         );
       case 'tabs':
-        return _renderList(
-          [
-            for (final t in (raw['components'] as List?) ?? const [])
-              if (t is Map<String, dynamic>) ...[
-                if ((t['label'] as String?)?.isNotEmpty == true)
-                  <String, dynamic>{
-                    'type': 'htmlelement',
-                    'input': false,
-                    'content': '<b>${t['label']}</b>',
-                  },
-                ...((t['components'] as List?) ?? const []),
-              ],
+        // Each entry of a `tabs` component is one tab: {label, key, components}.
+        final tabs = [
+          for (final t in (raw['components'] as List?) ?? const [])
+            if (t is Map<String, dynamic>)
+              // A tab is structural, so the engine hides it by key.
+              if (!_hiddenByKey(t['key']?.toString())) t,
+        ];
+        if (tabs.isEmpty) return const SizedBox.shrink();
+        return FormioTabsSection(
+          theme: widget.theme,
+          labels: [
+            for (final t in tabs) t['label']?.toString() ?? '',
           ],
-          parentPath,
+          hasError: [
+            for (final t in tabs) _subtreeHasVisibleError(t, parentPath),
+          ],
+          contentBuilder: (index) => _renderList(
+            (tabs[index]['components'] as List?) ?? const [],
+            parentPath,
+          ),
         );
       case 'button':
         return const SizedBox.shrink();
