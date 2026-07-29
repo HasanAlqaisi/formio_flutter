@@ -16,6 +16,8 @@ import 'package:flutter/rendering.dart';
 
 import 'package:formio/formio.dart';
 
+import 'drawing_canvas_gesture.dart';
+
 class SketchpadComponent extends StatefulWidget {
   /// The Form.io component definition.
   final ComponentModel component;
@@ -194,40 +196,30 @@ class _SketchpadComponentState extends State<SketchpadComponent> {
               key: _globalKey,
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  return Listener(
-                    onPointerDown: (event) {},
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onPanStart: (details) {
-                        setState(() {
-                          _points.add(DrawingPoint(
-                            offset: details.localPosition,
-                            color: _isEraser ? colorScheme.surfaceContainerHighest : activeColor,
-                            strokeWidth: _isEraser ? _strokeWidth * 3 : _strokeWidth,
-                          ));
-                        });
-                      },
-                      onPanUpdate: (details) {
-                        setState(() {
-                          _points.add(DrawingPoint(
-                            offset: details.localPosition,
-                            color: _isEraser ? colorScheme.surfaceContainerHighest : activeColor,
-                            strokeWidth: _isEraser ? _strokeWidth * 3 : _strokeWidth,
-                          ));
-                        });
-                      },
-                      onPanEnd: (details) {
-                        setState(() {
-                          _points.add(DrawingPoint(offset: null));
-                        });
-                        _saveSketch();
-                      },
-                      child: Container(
-                        color: Colors.transparent,
-                        child: CustomPaint(
-                          painter: _SketchPainter(_points),
-                          size: Size(constraints.maxWidth, constraints.maxHeight),
-                        ),
+                  void addPoint(Offset offset) {
+                    setState(() {
+                      _points.add(DrawingPoint(
+                        offset: offset,
+                        color: _isEraser ? colorScheme.surfaceContainerHighest : activeColor,
+                        strokeWidth: _isEraser ? _strokeWidth * 3 : _strokeWidth,
+                      ));
+                    });
+                  }
+
+                  return DrawingCanvasGestureDetector(
+                    onPointDown: addPoint,
+                    onPointMove: addPoint,
+                    onStrokeEnd: () {
+                      setState(() {
+                        _points.add(DrawingPoint(offset: null));
+                      });
+                      _saveSketch();
+                    },
+                    child: Container(
+                      color: Colors.transparent,
+                      child: CustomPaint(
+                        painter: _SketchPainter(_points),
+                        size: Size(constraints.maxWidth, constraints.maxHeight),
                       ),
                     ),
                   );

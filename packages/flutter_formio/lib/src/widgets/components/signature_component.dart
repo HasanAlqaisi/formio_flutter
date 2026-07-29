@@ -12,6 +12,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:formio/formio.dart';
 
+import 'drawing_canvas_gesture.dart';
+
 
 class SignatureComponent extends StatefulWidget {
   /// The Form.io component definition.
@@ -91,34 +93,28 @@ class _SignatureComponentState extends State<SignatureComponent> {
               key: _globalKey,
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  return Listener(
-                    onPointerDown: (event) {
-                      // This prevents scroll gestures from interfering
+                  return DrawingCanvasGestureDetector(
+                    onPointDown: (offset) {
+                      setState(() {
+                        _points.add(offset);
+                      });
                     },
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onPanStart: (details) {
-                        setState(() {
-                          _points.add(details.localPosition);
-                        });
-                      },
-                      onPanUpdate: (details) {
-                        setState(() {
-                          _points.add(details.localPosition);
-                        });
-                      },
-                      onPanEnd: (details) {
-                        setState(() {
-                          _points.add(null); // Add null to separate strokes
-                        });
-                        _saveSignature();
-                      },
-                      child: Container(
-                        color: Colors.transparent,
-                        child: CustomPaint(
-                          painter: _SignaturePainter(_points, Theme.of(context).colorScheme.onSurfaceVariant),
-                          size: Size(constraints.maxWidth, constraints.maxHeight),
-                        ),
+                    onPointMove: (offset) {
+                      setState(() {
+                        _points.add(offset);
+                      });
+                    },
+                    onStrokeEnd: () {
+                      setState(() {
+                        _points.add(null); // Add null to separate strokes
+                      });
+                      _saveSignature();
+                    },
+                    child: Container(
+                      color: Colors.transparent,
+                      child: CustomPaint(
+                        painter: _SignaturePainter(_points, Theme.of(context).colorScheme.onSurfaceVariant),
+                        size: Size(constraints.maxWidth, constraints.maxHeight),
                       ),
                     ),
                   );
