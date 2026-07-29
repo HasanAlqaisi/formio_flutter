@@ -71,16 +71,7 @@ class _DayComponentState extends State<DayComponent> {
       };
 
   void _setPart(_DayPart part, int? value) {
-    setState(() {
-      switch (part) {
-        case _DayPart.day:
-          _day = value;
-        case _DayPart.month:
-          _month = value;
-        case _DayPart.year:
-          _year = value;
-      }
-    });
+    setState(() => _assign(part, value));
     _updateValue();
   }
 
@@ -102,43 +93,82 @@ class _DayComponentState extends State<DayComponent> {
     return rawMax is num ? rawMax.toInt() : DateTime.now().year;
   }
 
+  /// Whether the value puts the day before the month.
+  ///
+  /// Form.io's `dayFirst` defaults to **false**, i.e. `MM/DD/YYYY`. `@formio/core`
+  /// reads the value with `dayFirst ? [0,1,2] : [1,0,2]` (see `validateDay` and
+  /// `getDayFormat` in the engine bundle), so writing day-first regardless — as
+  /// this component used to — hands the engine the month in the day slot.
+  bool get _dayFirst => widget.component.raw['dayFirst'] == true;
+
+  /// The parts that appear in the value, in the order the engine expects.
+  ///
+  /// Hidden parts are omitted entirely rather than zero-filled: the engine's
+  /// `getDayFormat` drops them from the format, and `validateDay` shifts its
+  /// indices when the value has fewer than three segments.
+  List<_DayPart> get _valueOrder => [
+        if (_dayFirst) _DayPart.day,
+        _DayPart.month,
+        if (!_dayFirst) _DayPart.day,
+        _DayPart.year,
+      ].where((p) => _fieldConfig(p)['hide'] != true).toList();
+
   void _updateValue() {
-    if (_day != null && _month != null && _year != null) {
-      // Form.io expects DD/MM/YYYY format for day component
-      final formatted = '${_day!.toString().padLeft(2, '0')}/${_month!.toString().padLeft(2, '0')}/${_year!.toString().padLeft(4, '0')}';
-      widget.onChanged(formatted);
-    } else {
+    final order = _valueOrder;
+    // A part left blank means there is no date yet; Form.io's own partial marker
+    // ("00"/"0000") would read as an invalid day to the engine.
+    if (order.any((p) => _valueOf(p) == null)) {
       widget.onChanged(null);
+      return;
     }
+    widget.onChanged(order.map(_formatPart).join('/'));
   }
+
+  String _formatPart(_DayPart part) => part == _DayPart.year
+      ? _valueOf(part)!.toString().padLeft(4, '0')
+      : _valueOf(part)!.toString().padLeft(2, '0');
 
   @override
   void initState() {
     super.initState();
-    if (widget.value != null && widget.value!.isNotEmpty) {
-      // Try parsing DD/MM/YYYY format first (Form.io format)
-      if (widget.value!.contains('/')) {
-        final parts = widget.value!.split('/');
-        if (parts.length == 3) {
-          _day = int.tryParse(parts[0]);
-          _month = int.tryParse(parts[1]);
-          _year = int.tryParse(parts[2]);
-        }
+    _parseValue(widget.value);
+  }
+
+  void _parseValue(String? raw) {
+    if (raw == null || raw.isEmpty) return;
+
+    if (raw.contains('/')) {
+      // Slash form: segments map to the visible parts, in engine order.
+      final segments = raw.split('/');
+      final order = _valueOrder;
+      for (var i = 0; i < order.length && i < segments.length; i++) {
+        _assign(order[i], int.tryParse(segments[i]));
       }
-      // Fallback to YYYY-MM-DD format (ISO format)
-      else if (widget.value!.contains('-')) {
-        final parts = widget.value!.split('-');
-        if (parts.length >= 3) {
-          _year = int.tryParse(parts[0]);
-          _month = int.tryParse(parts[1]);
-          _day = int.tryParse(parts[2].split('T').first); // Handle ISO datetime
-        }
+    } else if (raw.contains('-')) {
+      // ISO YYYY-MM-DD[THH:…], as stored by other date components.
+      final segments = raw.split('-');
+      if (segments.length >= 3) {
+        _year = int.tryParse(segments[0]);
+        _month = int.tryParse(segments[1]);
+        _day = int.tryParse(segments[2].split('T').first);
       }
-      // Form.io uses "00/00/0000" (and zero parts) to mean "no date". Treat any
-      // non-positive part as unset so it never lands outside the dropdowns.
-      _day = (_day != null && _day! > 0) ? _day : null;
-      _month = (_month != null && _month! > 0) ? _month : null;
-      _year = (_year != null && _year! > 0) ? _year : null;
+    }
+
+    // Form.io uses "00"/"0000" to mean "not set". Treat any non-positive part as
+    // unset so it never lands outside the dropdown's options.
+    _day = (_day ?? 0) > 0 ? _day : null;
+    _month = (_month ?? 0) > 0 ? _month : null;
+    _year = (_year ?? 0) > 0 ? _year : null;
+  }
+
+  void _assign(_DayPart part, int? value) {
+    switch (part) {
+      case _DayPart.day:
+        _day = value;
+      case _DayPart.month:
+        _month = value;
+      case _DayPart.year:
+        _year = value;
     }
   }
 
@@ -202,13 +232,9 @@ class _DayComponentState extends State<DayComponent> {
   Widget build(BuildContext context) {
     final hasError = _isRequired && (_day == null || _month == null || _year == null);
 
-    // `dayFirst` controls display order only; the stored value stays DD/MM/YYYY.
-    // Defaults to day-first, the order this component has always rendered.
-    final order = widget.component.raw['dayFirst'] == false
-        ? [_DayPart.month, _DayPart.day, _DayPart.year]
-        : [_DayPart.day, _DayPart.month, _DayPart.year];
-    final visible =
-        order.where((p) => _fieldConfig(p)['hide'] != true).toList();
+    // Rendered in the same order the value is written, so the fields read the
+    // way the stored string does.
+    final visible = _valueOrder;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
