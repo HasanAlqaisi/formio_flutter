@@ -77,6 +77,28 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
   static const _nestingTypes = {'container', 'creatioContainer'};
   static const _arrayTypes = {'datagrid', 'editgrid'};
 
+  /// Types this renderer dispatches to a data-bound control (see
+  /// [_renderControl]). Form.io's component classes carry `input: true` in their
+  /// own `defaultSchema`, so a hand-written or partial schema that omits the
+  /// flag still describes a data component — these default to `input: true`
+  /// rather than requiring it, otherwise the component renders an editable
+  /// control bound to an empty path and the first edit has nowhere to write.
+  ///
+  /// Deliberately excludes [_nestingTypes]: defaulting `container` to an input
+  /// would nest its children under its key instead of flattening them, changing
+  /// the submission's shape rather than just fixing a crash.
+  static const _dataTypes = {
+    ...cb.kTextTypes,
+    ..._arrayTypes,
+    'select',
+    'selectboxes',
+    'checkbox',
+    'radio',
+    'date',
+    'datetime',
+    'time',
+  };
+
   Map<String, dynamic> _data = {};
   Map<String, dynamic> _hidden = {};
   final Map<String, FormLogicError> _errors = {};
@@ -222,6 +244,18 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
   }
 
   void _setPath(String path, dynamic value, {bool immediate = false}) {
+    // A path-less write means the component rendered an editable control with
+    // no data path — a schema/registration problem (e.g. an explicit
+    // `input: false` on a data component, or a custom builder writing to ''),
+    // not something the user can act on. Warn loudly in debug, but never take
+    // the form down over it in release; `_getPath` returns null in the same case.
+    if (path.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('⚠️ Ignored a write with no data path (value: $value). '
+            'The component is editable but has no `key`/`input` to bind to.');
+      }
+      return;
+    }
     final tokens = _parsePath(path);
     dynamic cur = _data;
     for (var i = 0; i < tokens.length - 1; i++) {
@@ -272,7 +306,12 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
     final type = raw['type'] as String?;
     final key = raw['key'] as String?;
     final isLayout = _layoutTypes.contains(type);
-    final input = raw['input'] == true;
+    // An explicit flag always wins; otherwise derive it from the type so a
+    // schema missing `input: true` still binds to its data path.
+    final declaredInput = raw['input'];
+    final input = declaredInput is bool
+        ? declaredInput
+        : _dataTypes.contains(type);
     final path = (isLayout || !input || key == null)
         ? parentPath
         : _childPath(parentPath, key);
