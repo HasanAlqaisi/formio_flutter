@@ -281,6 +281,13 @@ Widget buildSelect(FieldScope s, Map<String, dynamic> raw, String path) {
   );
 }
 
+/// Pulls a checkbox/radio label in next to its control.
+Widget _tightTiles(Widget child) => ListTileTheme.merge(
+      minLeadingWidth: 0,
+      horizontalTitleGap: 8,
+      child: child,
+    );
+
 Widget buildSelectBoxes(FieldScope s, Map<String, dynamic> raw, String path) {
   final options = selectOptions(raw);
   final disabled = raw['disabled'] == true;
@@ -289,13 +296,15 @@ Widget buildSelectBoxes(FieldScope s, Map<String, dynamic> raw, String path) {
     if (current is Map)
       for (final e in current.entries) e.key.toString(): e.value == true,
   };
-  return Column(
+  return _tightTiles(Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       for (final o in options)
         CheckboxListTile(
           dense: true,
           contentPadding: EdgeInsets.zero,
+          visualDensity: VisualDensity.compact,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           controlAffinity: ListTileControlAffinity.leading,
           title: Text(o['label']?.toString() ?? ''),
           value: selected[o['value']?.toString()] ?? false,
@@ -309,23 +318,25 @@ Widget buildSelectBoxes(FieldScope s, Map<String, dynamic> raw, String path) {
                 },
         ),
     ],
-  );
+  ));
 }
 
 Widget buildCheckbox(FieldScope s, Map<String, dynamic> raw, String path) {
   final v = s.getValue(path);
   final checked = v == true || v == 'true';
   final disabled = raw['disabled'] == true;
-  return CheckboxListTile(
+  return _tightTiles(CheckboxListTile(
     dense: true,
     contentPadding: EdgeInsets.zero,
     controlAffinity: ListTileControlAffinity.leading,
+    visualDensity: VisualDensity.compact,
+    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     title: Text(labelText(raw, requiredSuffix: s.theme.requiredSuffix)),
     value: checked,
     onChanged: disabled
         ? null
         : (val) => s.setValue(path, val ?? false, immediate: true),
-  );
+  ));
 }
 
 Widget buildRadio(FieldScope s, Map<String, dynamic> raw, String path) {
@@ -336,19 +347,21 @@ Widget buildRadio(FieldScope s, Map<String, dynamic> raw, String path) {
     groupValue: current,
     onChanged:
         disabled ? (_) {} : (val) => s.setValue(path, val, immediate: true),
-    child: Column(
+    child: _tightTiles(Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (final o in options)
           RadioListTile<String>(
             dense: true,
             contentPadding: EdgeInsets.zero,
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             controlAffinity: ListTileControlAffinity.leading,
             title: Text(o['label']?.toString() ?? ''),
             value: o['value']?.toString() ?? '',
           ),
       ],
-    ),
+    )),
   );
 }
 
