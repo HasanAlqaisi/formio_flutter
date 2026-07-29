@@ -7,6 +7,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:formio/formio.dart';
 
+import 'components/numeric_format.dart';
 import 'components/warning_card.dart';
 import 'form_field_scope.dart';
 
@@ -198,21 +199,47 @@ Widget _affix(String text, TextStyle style, {required bool isPrefix}) =>
       child: Text(text, style: style),
     );
 
+/// `decimalLimit` from the schema, defaulting to 2 for currency and to "no
+/// forced decimals" for a plain number.
+int? _decimalLimitFor(Map<String, dynamic> raw, {required bool isCurrency}) {
+  final declared = raw['decimalLimit'];
+  final limit = declared is num
+      ? declared.toInt()
+      : (declared is String ? int.tryParse(declared.trim()) : null);
+  if (limit != null) return limit.clamp(0, 10);
+  return isCurrency ? kCurrencyDecimalLimit : null;
+}
+
 Widget buildTextLeaf(
     FieldScope s, Map<String, dynamic> raw, String path, String type) {
   final ctx = s.context;
   final controller = s.controllerFor(path);
   final focus = s.focusFor(path);
 
-  final engineValue = s.getValue(path)?.toString() ?? '';
+  final readOnly = raw['disabled'] == true || raw['readOnly'] == true;
+  final isNumber = type == 'number' || type == 'currency';
+  final isCurrency = type == 'currency';
+  final locale = Localizations.maybeLocaleOf(ctx)?.toString();
+
+  // Form.io defaults `delimiter` to true for currency and false for number, so
+  // a number field is only reformatted when its author asks for it.
+  final grouping = isNumber &&
+      (raw['delimiter'] == true || (isCurrency && raw['delimiter'] != false));
+  final decimalLimit = _decimalLimitFor(raw, isCurrency: isCurrency);
+
+  // Formatted while the field is idle, raw while the user is in it — otherwise
+  // separators would fight the cursor mid-edit.
+  final engineValue = isNumber && grouping
+      ? formatNumeric(s.getValue(path),
+          grouping: true, decimalLimit: decimalLimit, locale: locale)
+      : s.getValue(path)?.toString() ?? '';
   if (!focus.hasFocus && controller.text != engineValue) {
     controller.text = engineValue;
   }
 
-  final readOnly = raw['disabled'] == true || raw['readOnly'] == true;
-  final isNumber = type == 'number' || type == 'currency';
-
-  final prefix = _affixText(raw, 'prefix');
+  final prefix = _affixText(raw, 'prefix') ??
+      // A currency's symbol goes in the prefix slot, unless the author set one.
+      (isCurrency ? currencySymbolFor(raw['currency'], locale) : null);
   final suffix = _affixText(raw, 'suffix');
   final affixStyle = s.theme.resolvedAffixStyle(ctx);
 
@@ -222,6 +249,13 @@ Widget buildTextLeaf(
     readOnly: readOnly,
     obscureText: type == 'password',
     keyboardType: _keyboardTypeFor(type),
+    // Regroups digits live; without it separators only appeared on blur.
+    inputFormatters: grouping
+        ? [
+            GroupedNumberInputFormatter(
+                locale: locale, decimalLimit: decimalLimit),
+          ]
+        : null,
     style: s.theme.inputTextStyle,
     maxLines: type == 'textarea' ? (raw['rows'] as num?)?.toInt() ?? 3 : 1,
     decoration: InputDecoration(
@@ -249,7 +283,8 @@ Widget buildTextLeaf(
     ),
     onChanged: readOnly
         ? null
-        : (v) => s.setValue(path, isNumber ? (num.tryParse(v) ?? v) : v),
+        : (v) => s.setValue(
+            path, isNumber ? parseNumeric(v, locale: locale) : v),
   );
 }
 

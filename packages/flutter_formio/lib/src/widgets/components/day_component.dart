@@ -8,7 +8,6 @@ library;
 import 'package:flutter/material.dart';
 import 'package:formio/formio.dart';
 
-
 class DayComponent extends StatefulWidget {
   /// The Form.io component definition.
   final ComponentModel component;
@@ -22,7 +21,12 @@ class DayComponent extends StatefulWidget {
   /// Callback called when the date changes.
   final ValueChanged<String?> onChanged;
 
-  const DayComponent({super.key, required this.component, required this.value, this.formData, required this.onChanged});
+  const DayComponent(
+      {super.key,
+      required this.component,
+      required this.value,
+      this.formData,
+      required this.onChanged});
 
   @override
   State<DayComponent> createState() => _DayComponentState();
@@ -76,18 +80,22 @@ class _DayComponentState extends State<DayComponent> {
   }
 
   int get _startYear {
-    final rawMin = widget.component.raw['fields']?['year']?['min'] ?? widget.component.raw['minYear'];
+    final rawMin = widget.component.raw['fields']?['year']?['min'] ??
+        widget.component.raw['minYear'];
     if (rawMin is String) {
-      final interpolated = InterpolationUtils.interpolate(rawMin, widget.formData);
+      final interpolated =
+          InterpolationUtils.interpolate(rawMin, widget.formData);
       return int.tryParse(interpolated) ?? 1900;
     }
     return rawMin is num ? rawMin.toInt() : 1900;
   }
 
   int get _endYear {
-    final rawMax = widget.component.raw['fields']?['year']?['max'] ?? widget.component.raw['maxYear'];
+    final rawMax = widget.component.raw['fields']?['year']?['max'] ??
+        widget.component.raw['maxYear'];
     if (rawMax is String) {
-      final interpolated = InterpolationUtils.interpolate(rawMax, widget.formData);
+      final interpolated =
+          InterpolationUtils.interpolate(rawMax, widget.formData);
       return int.tryParse(interpolated) ?? DateTime.now().year;
     }
     return rawMax is num ? rawMax.toInt() : DateTime.now().year;
@@ -180,15 +188,23 @@ class _DayComponentState extends State<DayComponent> {
           List.generate(_endYear - _startYear + 1, (i) => _endYear - i),
       };
 
-  /// Renders one part per its `fields` config: `{"type": "number"}` gives a text
-  /// input, anything else (Form.io's default) a dropdown.
+  /// Renders one part per its `fields` config.
+  ///
+  /// `type` defaults to **`text`** per Form.io's Day docs, so only an explicit
+  /// `select` gets a dropdown; `text`, `number` and an absent value are all text
+  /// inputs.
   Widget _buildPart(_DayPart part) {
     final cfg = _fieldConfig(part);
-    final label = _labelOf(part);
+    // `hideInputLabels` suppresses the per-part labels; the placeholder then
+    // carries the meaning.
+    final showLabels = widget.component.raw['hideInputLabels'] != true;
+    final label = showLabels ? _labelOf(part) : null;
+    // Only the configured placeholder — substituting the label here would
+    // defeat `hideInputLabels`, which is an explicit request for no labels.
     final placeholder = cfg['placeholder']?.toString();
     final hint = (placeholder?.isNotEmpty ?? false) ? placeholder : null;
 
-    if (cfg['type'] == 'number') {
+    if (cfg['type'] != 'select') {
       final current = _valueOf(part);
       final controller = _controllers.putIfAbsent(
           part, () => TextEditingController(text: current?.toString() ?? ''));
@@ -230,7 +246,8 @@ class _DayComponentState extends State<DayComponent> {
 
   @override
   Widget build(BuildContext context) {
-    final hasError = _isRequired && (_day == null || _month == null || _year == null);
+    final hasError =
+        _isRequired && (_day == null || _month == null || _year == null);
 
     // Rendered in the same order the value is written, so the fields read the
     // way the stored string does.
@@ -239,7 +256,8 @@ class _DayComponentState extends State<DayComponent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.component.label, style: FormioThemeScope.of(context).resolvedLabelStyle(context)),
+        Text(widget.component.label,
+            style: FormioThemeScope.of(context).resolvedLabelStyle(context)),
         const SizedBox(height: 8),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -253,7 +271,11 @@ class _DayComponentState extends State<DayComponent> {
         if (hasError)
           Padding(
             padding: const EdgeInsets.only(top: 6),
-            child: Text(ComponentFactory.locale.getRequiredMessage(widget.component.label), style: FormioThemeScope.of(context).resolvedErrorStyle(context)),
+            child: Text(
+                ComponentFactory.locale
+                    .getRequiredMessage(widget.component.label),
+                style:
+                    FormioThemeScope.of(context).resolvedErrorStyle(context)),
           ),
       ],
     );
