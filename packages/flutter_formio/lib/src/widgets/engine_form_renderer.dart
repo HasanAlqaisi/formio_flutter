@@ -84,13 +84,10 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
   /// flag still describes a data component — these default to `input: true`
   /// rather than requiring it, otherwise the component renders an editable
   /// control bound to an empty path and the first edit has nowhere to write.
-  ///
-  /// Deliberately excludes [_nestingTypes]: defaulting `container` to an input
-  /// would nest its children under its key instead of flattening them, changing
-  /// the submission's shape rather than just fixing a crash.
   static const _dataTypes = {
     ...cb.kTextTypes,
     ..._arrayTypes,
+    ..._nestingTypes,
     'select',
     'selectboxes',
     'checkbox',
@@ -324,9 +321,8 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
     final key = raw['key'] as String?;
     final isLayout = _layoutTypes.contains(type);
     final declaredInput = raw['input'];
-    final input = declaredInput is bool
-        ? declaredInput
-        : _dataTypes.contains(type);
+    final input =
+        declaredInput is bool ? declaredInput : _dataTypes.contains(type);
     final path = (isLayout || !input || key == null)
         ? parentPath
         : _childPath(parentPath, key);
@@ -382,9 +378,8 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
     // An explicit flag always wins; otherwise derive it from the type so a
     // schema missing `input: true` still binds to its data path.
     final declaredInput = raw['input'];
-    final input = declaredInput is bool
-        ? declaredInput
-        : _dataTypes.contains(type);
+    final input =
+        declaredInput is bool ? declaredInput : _dataTypes.contains(type);
     final path = (isLayout || !input || key == null)
         ? parentPath
         : _childPath(parentPath, key);
@@ -467,9 +462,8 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
           builder: (context, constraints) {
             final widest =
                 rows.fold<int>(0, (m, r) => r.length > m ? r.length : m);
-            final stack =
-                widest > 0 &&
-                    constraints.maxWidth / widest < widget.theme.columnBreakpoint;
+            final stack = widest > 0 &&
+                constraints.maxWidth / widest < widget.theme.columnBreakpoint;
             Widget cell(dynamic c) => Padding(
                   padding: const EdgeInsets.all(4),
                   child: (c is Map<String, dynamic>)
@@ -517,8 +511,7 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
                   child: Text(header,
                       style: widget.theme.resolvedPanelTitleStyle(context)),
                 ),
-              _renderList(
-                  (raw['components'] as List?) ?? const [], parentPath),
+              _renderList((raw['components'] as List?) ?? const [], parentPath),
             ],
           ),
         );
