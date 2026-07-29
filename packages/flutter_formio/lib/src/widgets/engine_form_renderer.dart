@@ -295,6 +295,15 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
   String _childPath(String parent, String key) =>
       parent.isEmpty ? key : '$parent.$key';
 
+  /// Reads a Bootstrap grid value (`width`/`offset`/…) that may arrive as a
+  /// number or a numeric string — schemas carry both, and casting to `num`
+  /// throws on the string form.
+  static int? _gridUnits(Object? value) {
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value.trim());
+    return null;
+  }
+
   /// Whether the engine hid a structural component with this [key].
   bool _hiddenByKey(String? key) =>
       key != null && key.isNotEmpty && _hidden[key] == true;
@@ -415,7 +424,8 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
             final avail = constraints.maxWidth;
             final units = [
               for (final c in cols)
-                ((c['width'] as num?)?.toInt() ?? 12).clamp(1, 12),
+                // Form.io defaults a column's width to 6 (half), not full.
+                (_gridUnits(c['width']) ?? 6).clamp(1, 12),
             ];
             final narrowest = units.reduce((a, b) => a < b ? a : b);
             if (avail * narrowest / 12 < widget.theme.columnBreakpoint) {
