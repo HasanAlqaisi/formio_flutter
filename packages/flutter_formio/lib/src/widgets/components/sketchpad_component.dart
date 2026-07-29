@@ -80,7 +80,8 @@ class _SketchpadComponentState extends State<SketchpadComponent> {
 
   Future<void> _saveSketch() async {
     try {
-      final boundary = _globalKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      final boundary = _globalKey.currentContext?.findRenderObject()
+          as RenderRepaintBoundary?;
       if (boundary != null && _points.isNotEmpty) {
         final image = await boundary.toImage(pixelRatio: 2.0);
         final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
@@ -100,12 +101,21 @@ class _SketchpadComponentState extends State<SketchpadComponent> {
     final colorScheme = Theme.of(context).colorScheme;
     final activeColor = _selectedColor ?? colorScheme.primary;
     final hasError = _isRequired && (widget.value == null || _points.isEmpty);
+    final theme = FormioThemeScope.of(context);
+    final canvasDecoration = theme
+        .resolvedContainerDecoration(context)
+        .copyWith(
+          color: theme.inputFillColor ?? colorScheme.surfaceContainerHighest,
+        );
+    final canvasRadius = (canvasDecoration.borderRadius as BorderRadius?) ??
+        BorderRadius.circular(8);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Label
-        Text(widget.component.label, style: Theme.of(context).textTheme.labelLarge),
+        Text(widget.component.label,
+            style: FormioThemeScope.of(context).resolvedLabelStyle(context)),
         const SizedBox(height: 8),
 
         // Toolbar
@@ -136,7 +146,9 @@ class _SketchpadComponentState extends State<SketchpadComponent> {
                             color: color,
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: activeColor == color && !_isEraser ? colorScheme.primary : colorScheme.outline,
+                              color: activeColor == color && !_isEraser
+                                  ? colorScheme.primary
+                                  : colorScheme.outline,
                               width: 2,
                             ),
                           ),
@@ -149,7 +161,9 @@ class _SketchpadComponentState extends State<SketchpadComponent> {
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: _isEraser ? colorScheme.primaryContainer : colorScheme.surface,
+                        color: _isEraser
+                            ? colorScheme.primaryContainer
+                            : colorScheme.surface,
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(color: colorScheme.outline),
                       ),
@@ -170,10 +184,12 @@ class _SketchpadComponentState extends State<SketchpadComponent> {
                       max: 10.0,
                       divisions: 9,
                       label: _strokeWidth.toInt().toString(),
-                      onChanged: (value) => setState(() => _strokeWidth = value),
+                      onChanged: (value) =>
+                          setState(() => _strokeWidth = value),
                     ),
                   ),
-                  Text('${_strokeWidth.toInt()}px', style: const TextStyle(fontSize: 12)),
+                  Text('${_strokeWidth.toInt()}px',
+                      style: const TextStyle(fontSize: 12)),
                 ],
               ),
             ],
@@ -185,13 +201,9 @@ class _SketchpadComponentState extends State<SketchpadComponent> {
         Container(
           height: 300,
           width: double.infinity,
-          decoration: BoxDecoration(
-            border: Border.all(color: colorScheme.outline),
-            borderRadius: BorderRadius.circular(8),
-            color: colorScheme.surfaceContainerHighest,
-          ),
+          decoration: canvasDecoration,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: canvasRadius,
             child: RepaintBoundary(
               key: _globalKey,
               child: LayoutBuilder(
@@ -200,8 +212,11 @@ class _SketchpadComponentState extends State<SketchpadComponent> {
                     setState(() {
                       _points.add(DrawingPoint(
                         offset: offset,
-                        color: _isEraser ? colorScheme.surfaceContainerHighest : activeColor,
-                        strokeWidth: _isEraser ? _strokeWidth * 3 : _strokeWidth,
+                        color: _isEraser
+                            ? colorScheme.surfaceContainerHighest
+                            : activeColor,
+                        strokeWidth:
+                            _isEraser ? _strokeWidth * 3 : _strokeWidth,
                       ));
                     });
                   }
@@ -253,8 +268,9 @@ class _SketchpadComponentState extends State<SketchpadComponent> {
           Padding(
             padding: const EdgeInsets.only(top: 6),
             child: Text(
-              ComponentFactory.locale.getRequiredMessage(widget.component.label),
-              style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12),
+              ComponentFactory.locale
+                  .getRequiredMessage(widget.component.label),
+              style: FormioThemeScope.of(context).resolvedErrorStyle(context),
             ),
           ),
       ],

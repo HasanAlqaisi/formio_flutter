@@ -73,7 +73,7 @@ class FileComponent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(component.label, style: Theme.of(context).textTheme.labelLarge),
+        Text(component.label, style: FormioThemeScope.of(context).resolvedLabelStyle(context)),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,

@@ -22,7 +22,7 @@ import 'form_field_scope.dart';
 import 'form_theme.dart';
 
 export 'form_field_context.dart' show FormioFieldContext, FormioFieldBuilder;
-export 'form_theme.dart' show FormioTheme;
+export 'form_theme.dart' show FormioTheme, FormioThemeScope;
 
 typedef EngineFormSubmit = void Function(Map<String, dynamic> data);
 
@@ -433,23 +433,20 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
           raw['legend'] as String?,
           (rawLabel == 'Panel' || rawLabel == 'Field Set') ? null : rawLabel,
         ].firstWhere((h) => h != null && h.isNotEmpty, orElse: () => null);
-        return Card(
-          margin: widget.theme.sectionMargin,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (header != null && raw['hideLabel'] != true)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(header,
-                        style: widget.theme.resolvedPanelTitleStyle(context)),
-                  ),
-                _renderList(
-                    (raw['components'] as List?) ?? const [], parentPath),
-              ],
-            ),
+        return cb.sectionCard(
+          widget.theme,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (header != null && raw['hideLabel'] != true)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(header,
+                      style: widget.theme.resolvedPanelTitleStyle(context)),
+                ),
+              _renderList(
+                  (raw['components'] as List?) ?? const [], parentPath),
+            ],
           ),
         );
       case 'tabs':
@@ -652,9 +649,13 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
         ),
       ],
     );
-    return widget.textDirection == null
+    final directed = widget.textDirection == null
         ? body
         : Directionality(textDirection: widget.textDirection!, child: body);
+    // Published so the stock component set — built through the static
+    // ComponentFactory, which takes no theme — can style its own labels and
+    // containers to match the built-in fields.
+    return FormioThemeScope(theme: widget.theme, child: directed);
   }
 
   // ---- utils ------------------------------------------------------------

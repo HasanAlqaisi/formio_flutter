@@ -81,7 +81,7 @@ class _DataMapComponentState extends State<DataMapComponent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.component.label, style: Theme.of(context).textTheme.labelSmall),
+        Text(widget.component.label, style: FormioThemeScope.of(context).resolvedLabelStyle(context)),
         const SizedBox(height: 8),
         Row(
           children: [
@@ -102,7 +102,7 @@ class _DataMapComponentState extends State<DataMapComponent> {
         if (hasError)
           Padding(
             padding: const EdgeInsets.only(top: 6),
-            child: Text(ComponentFactory.locale.getRequiredMessage(widget.component.label), style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12)),
+            child: Text(ComponentFactory.locale.getRequiredMessage(widget.component.label), style: FormioThemeScope.of(context).resolvedErrorStyle(context)),
           ),
       ],
     );

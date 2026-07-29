@@ -39,12 +39,12 @@ class CustomComponent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(component.label, style: Theme.of(context).textTheme.labelLarge),
+        Text(component.label, style: FormioThemeScope.of(context).resolvedLabelStyle(context)),
         const SizedBox(height: 6),
         Container(
           padding: const EdgeInsets.all(12),
           decoration:
-              BoxDecoration(border: Border.all(color: Theme.of(context).colorScheme.outline), borderRadius: BorderRadius.circular(6), color: Theme.of(context).colorScheme.surfaceContainerHighest),
+              FormioThemeScope.of(context).resolvedContainerDecoration(context).copyWith(color: Theme.of(context).colorScheme.surfaceContainerHighest),
           child: Text(
             'Custom component not implemented.\n'
             'You can handle "${component.key}" manually.\n\n'

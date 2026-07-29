@@ -7,6 +7,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:formio/formio.dart';
 
+import 'components/warning_card.dart';
 import 'form_field_scope.dart';
 
 const kTextTypes = {
@@ -131,14 +132,28 @@ String messageForError(FormLogicError e) {
   }
 }
 
-Widget placeholderCard(BuildContext ctx, String text) => Container(
+/// Wraps section content (panel / well / fieldset / datagrid) in the themed
+/// card, so every section shares one look.
+///
+/// Uses [FormioTheme.sectionDecoration] when the theme supplies one (bordered,
+/// optionally shadowed container); otherwise falls back to a Material [Card].
+Widget sectionCard(FormioTheme theme, Widget child) {
+  final padded = Padding(padding: theme.sectionPadding, child: child);
+  final decoration = theme.sectionDecoration;
+  return decoration == null
+      ? Card(margin: theme.sectionMargin, child: padded)
+      : Container(
+          margin: theme.sectionMargin,
+          decoration: decoration,
+          child: padded,
+        );
+}
+
+Widget placeholderCard(BuildContext ctx, String text) => warningCard(
+      ctx,
       margin: const EdgeInsets.symmetric(vertical: 6),
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.orange),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(text, style: const TextStyle(color: Colors.orange)),
+      child: Text(text, style: TextStyle(color: WarningColors.of(ctx).title)),
     );
 
 // ---- text inputs (controller-bound; live calc / read-only) ---------------
@@ -207,12 +222,18 @@ Widget buildTextLeaf(
     readOnly: readOnly,
     obscureText: type == 'password',
     keyboardType: _keyboardTypeFor(type),
+    style: s.theme.inputTextStyle,
     maxLines: type == 'textarea' ? (raw['rows'] as num?)?.toInt() ?? 3 : 1,
     decoration: InputDecoration(
       isDense: s.theme.isDense,
       border: s.theme.resolvedInputBorder(ctx),
+      enabledBorder: s.theme.inputBorder,
+      focusedBorder: s.theme.focusedInputBorder,
+      errorBorder: s.theme.errorInputBorder,
+      focusedErrorBorder: s.theme.errorInputBorder,
       contentPadding: s.theme.inputContentPadding,
       hintText: raw['placeholder'] as String?,
+      hintStyle: s.theme.hintStyle,
       prefixIcon:
           prefix == null ? null : _affix(prefix, affixStyle, isPrefix: true),
       suffixIcon:
@@ -220,9 +241,11 @@ Widget buildTextLeaf(
       // Without this the addon is forced into the default 48x48 icon box.
       prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
       suffixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-      fillColor:
-          readOnly ? Theme.of(ctx).disabledColor.withValues(alpha: 0.05) : null,
-      filled: readOnly,
+      // The read-only tint takes precedence over the theme's own fill.
+      fillColor: readOnly
+          ? Theme.of(ctx).disabledColor.withValues(alpha: 0.05)
+          : s.theme.inputFillColor,
+      filled: readOnly || s.theme.inputFillColor != null,
     ),
     onChanged: readOnly
         ? null
@@ -478,17 +501,24 @@ Widget buildDateTime(
       decoration: InputDecoration(
         isDense: s.theme.isDense,
         border: s.theme.resolvedInputBorder(ctx),
+        enabledBorder: s.theme.inputBorder,
+        focusedBorder: s.theme.focusedInputBorder,
+        errorBorder: s.theme.errorInputBorder,
+        focusedErrorBorder: s.theme.errorInputBorder,
         contentPadding: s.theme.inputContentPadding,
         suffixIcon: Icon(enableTime && !enableDate
             ? Icons.access_time
             : Icons.calendar_today),
         fillColor: disabled
             ? Theme.of(ctx).disabledColor.withValues(alpha: 0.05)
-            : null,
-        filled: disabled,
+            : s.theme.inputFillColor,
+        filled: disabled || s.theme.inputFillColor != null,
       ),
+      // Unset: the placeholder uses the hint style, a chosen value the input style.
       child: Text(display(),
-          style: TextStyle(color: dt == null ? Theme.of(ctx).hintColor : null)),
+          style: dt == null
+              ? (s.theme.hintStyle ?? TextStyle(color: Theme.of(ctx).hintColor))
+              : s.theme.inputTextStyle),
     ),
   );
 }
@@ -503,65 +533,59 @@ Widget buildDataGrid(FieldScope s, Map<String, dynamic> raw, String path) {
   final rows = rowsVal is List ? rowsVal : const [];
   final disabled = raw['disabled'] == true;
 
-  return Card(
-    margin: s.theme.sectionMargin,
-    child: Padding(
-      padding: const EdgeInsets.all(10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (label.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Text(
-                  labelText(raw, requiredSuffix: s.theme.requiredSuffix),
-                  style: s.theme.resolvedPanelTitleStyle(ctx)),
+  return sectionCard(
+    s.theme,
+    Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (label.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(labelText(raw, requiredSuffix: s.theme.requiredSuffix),
+                style: s.theme.resolvedPanelTitleStyle(ctx)),
+          ),
+        for (var i = 0; i < rows.length; i++)
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              border: Border.all(color: Theme.of(ctx).dividerColor),
+              borderRadius: BorderRadius.circular(6),
             ),
-          for (var i = 0; i < rows.length; i++)
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 4),
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                border: Border.all(color: Theme.of(ctx).dividerColor),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('#${i + 1}',
-                          style: const TextStyle(fontWeight: FontWeight.w500)),
-                      if (!disabled)
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline, size: 20),
-                          onPressed: () {
-                            final next = [...rows]..removeAt(i);
-                            s.setValue(path, next, immediate: true);
-                          },
-                        ),
-                    ],
-                  ),
-                  for (final c in children)
-                    if (c is Map<String, dynamic>)
-                      s.renderChild(c, '$path[$i]'),
-                ],
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('#${i + 1}',
+                        style: const TextStyle(fontWeight: FontWeight.w500)),
+                    if (!disabled)
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, size: 20),
+                        onPressed: () {
+                          final next = [...rows]..removeAt(i);
+                          s.setValue(path, next, immediate: true);
+                        },
+                      ),
+                  ],
+                ),
+                for (final c in children)
+                  if (c is Map<String, dynamic>) s.renderChild(c, '$path[$i]'),
+              ],
             ),
-          if (!disabled)
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: TextButton.icon(
-                icon: const Icon(Icons.add),
-                label: const Text('Add'),
-                onPressed: () => s.setValue(
-                    path, [...rows, <String, dynamic>{}],
-                    immediate: true),
-              ),
+          ),
+        if (!disabled)
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: TextButton.icon(
+              icon: const Icon(Icons.add),
+              label: const Text('Add'),
+              onPressed: () => s.setValue(path, [...rows, <String, dynamic>{}],
+                  immediate: true),
             ),
-        ],
-      ),
+          ),
+      ],
     ),
   );
 }
@@ -599,7 +623,7 @@ Widget buildFallback(
     FieldScope s, Map<String, dynamic> raw, String path, String? type) {
   final model = ComponentModel.fromJson(raw);
   try {
-    return ComponentFactory.build(
+    final built = ComponentFactory.build(
       component: model,
       value: coerceValue(type, s.getValue(path)),
       onChanged: (v) => s.setValue(path, v),
@@ -607,6 +631,14 @@ Widget buildFallback(
       // {{data.x}} and any stock widget can see sibling data.
       formData: s.data,
     );
+    final decorationTheme = s.theme.resolvedInputDecorationTheme(s.context);
+    return decorationTheme == null
+        ? built
+        : Theme(
+            data: Theme.of(s.context)
+                .copyWith(inputDecorationTheme: decorationTheme),
+            child: built,
+          );
   } catch (e) {
     return placeholderCard(s.context,
         '${type ?? '?'} "${raw['label'] ?? raw['key']}" — render error: $e');

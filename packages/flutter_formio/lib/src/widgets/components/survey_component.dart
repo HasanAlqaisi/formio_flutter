@@ -97,7 +97,7 @@ class _SurveyComponentState extends State<SurveyComponent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.component.label, style: Theme.of(context).textTheme.labelSmall),
+        Text(widget.component.label, style: FormioThemeScope.of(context).resolvedLabelStyle(context)),
         const SizedBox(height: 8),
 
         // StickyHeader with synchronized horizontal scrolling
@@ -110,7 +110,9 @@ class _SurveyComponentState extends State<SurveyComponent> {
               child: Container(
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  border: Border.all(color: Theme.of(context).colorScheme.outline),
+                  border: FormioThemeScope.of(context)
+                      .resolvedContainerDecoration(context)
+                      .border,
                 ),
                 child: Row(
                   children: [
