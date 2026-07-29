@@ -133,7 +133,7 @@ class _TagsComponentState extends State<TagsComponent> {
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
               widget.component.label,
-              style: Theme.of(context).textTheme.titleSmall,
+              style: FormioThemeScope.of(context).resolvedLabelStyle(context),
             ),
           ),
         // Tags display

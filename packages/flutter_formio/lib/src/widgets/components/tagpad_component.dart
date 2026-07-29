@@ -94,7 +94,7 @@ class _TagpadComponentState extends State<TagpadComponent> {
         if (widget.component.label.isNotEmpty)
           Text(
             widget.component.label,
-            style: Theme.of(context).textTheme.labelLarge,
+            style: FormioThemeScope.of(context).resolvedLabelStyle(context),
           ),
         const SizedBox(height: 8),
 

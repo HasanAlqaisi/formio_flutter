@@ -92,7 +92,7 @@ class _AddressComponentState extends State<AddressComponent> {
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
               widget.component.label,
-              style: Theme.of(context).textTheme.titleMedium,
+              style: FormioThemeScope.of(context).resolvedLabelStyle(context),
             ),
           ),
         _buildAddressField(

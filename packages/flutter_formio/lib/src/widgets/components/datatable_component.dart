@@ -111,14 +111,29 @@ class _DataTableComponentState extends State<DataTableComponent> {
   @override
   Widget build(BuildContext context) {
     if (_dataValues.isEmpty || _columns.isEmpty) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(
-            ComponentFactory.locale.noDataAvailable,
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
+      // Keep the label: dropping it left an unattributed "No data available"
+      // card with nothing to say which field it belonged to.
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (widget.component.label.isNotEmpty) ...[
+            Text(
+              widget.component.label,
+              style: FormioThemeScope.of(context).resolvedLabelStyle(context),
+            ),
+            const SizedBox(height: 8),
+          ],
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                ComponentFactory.locale.noDataAvailable,
+                style: FormioThemeScope.of(context)
+                    .resolvedDescriptionStyle(context),
+              ),
+            ),
           ),
-        ),
+        ],
       );
     }
 
@@ -135,7 +150,7 @@ class _DataTableComponentState extends State<DataTableComponent> {
         if (widget.component.label.isNotEmpty)
           Text(
             widget.component.label,
-            style: Theme.of(context).textTheme.labelLarge,
+            style: FormioThemeScope.of(context).resolvedLabelStyle(context),
           ),
         const SizedBox(height: 8),
 
@@ -232,10 +247,7 @@ class _DataTableComponentState extends State<DataTableComponent> {
             padding: const EdgeInsets.only(top: 6),
             child: Text(
               '${widget.component.label} ${ComponentFactory.locale.isRequired}.',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.error,
-                fontSize: 12,
-              ),
+              style: FormioThemeScope.of(context).resolvedErrorStyle(context),
             ),
           ),
       ],
