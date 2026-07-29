@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:formio/formio.dart';
 
-import 'package:url_launcher/url_launcher.dart';
+import 'safe_link.dart';
 
 class ContentComponent extends StatelessWidget {
   /// The Form.io component definition.
@@ -24,7 +24,7 @@ class ContentComponent extends StatelessWidget {
 
   /// Extracts the raw HTML or text content from the component and performs interpolation.
   String get _content => InterpolationUtils.interpolate(
-        component.raw['html'] ?? '',
+        component.raw['html']?.toString() ?? '',
         formData,
       );
 
@@ -43,9 +43,7 @@ class ContentComponent extends StatelessWidget {
         data: _content,
         style: {'p': Style(fontSize: FontSize.medium), 'h2': Style(fontSize: FontSize.larger, fontWeight: FontWeight.w600)},
         onLinkTap: (url, _, __) {
-          if (enableLinks && url != null) {
-            launchUrl(Uri.parse(url));
-          }
+          if (enableLinks) openFormLink(url);
         },
       ),
     );

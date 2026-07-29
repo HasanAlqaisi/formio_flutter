@@ -8,7 +8,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:formio/formio.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'safe_link.dart';
 
 class HtmlElementComponent extends StatelessWidget {
   /// The Form.io component definition.
@@ -48,9 +48,7 @@ class HtmlElementComponent extends StatelessWidget {
           'hr': Style(margin: Margins.only(top: 12, bottom: 12)),
         },
         onLinkTap: (url, _, __) {
-          if (enableLinks && url != null) {
-            launchUrl(Uri.parse(url));
-          }
+          if (enableLinks) openFormLink(url);
         },
       ),
     );
