@@ -72,10 +72,18 @@ Object? parseNumeric(String text, {String? locale}) {
 
 /// Formats grouped numbers while preserving the caret position.
 class GroupedNumberInputFormatter extends TextInputFormatter {
-  GroupedNumberInputFormatter({this.locale, this.decimalLimit});
+  GroupedNumberInputFormatter({
+    this.locale,
+    this.decimalLimit,
+    this.grouping = true,
+  });
 
   final String? locale;
   final int? decimalLimit;
+
+  /// When false the formatter only enforces [decimalLimit] — used for an
+  /// integer-only field, where it strips the decimal part entirely.
+  final bool grouping;
 
   @override
   TextEditingValue formatEditUpdate(
@@ -108,17 +116,20 @@ class GroupedNumberInputFormatter extends TextInputFormatter {
     var decimalPart = parts.length > 1 ? parts.sublist(1).join() : null;
 
     if (decimalPart != null && decimalLimit != null) {
-      decimalPart = decimalPart.substring(
-        0,
-        decimalPart.length.clamp(0, decimalLimit!),
-      );
+      decimalPart = decimalLimit == 0
+          // An integer-only field: drop the decimal part and its separator.
+          ? null
+          : decimalPart.substring(
+              0,
+              decimalPart.length.clamp(0, decimalLimit!),
+            );
     }
 
     final groupedInteger = integerPart.isEmpty
         ? ''
         : formatNumeric(
             int.tryParse(integerPart) ?? integerPart,
-            grouping: true,
+            grouping: grouping,
             locale: locale,
           );
 

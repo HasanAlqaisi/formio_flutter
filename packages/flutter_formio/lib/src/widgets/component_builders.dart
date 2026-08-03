@@ -201,13 +201,18 @@ Widget _affix(String text, TextStyle style, {required bool isPrefix}) =>
 
 /// `decimalLimit` from the schema, defaulting to 2 for currency and to "no
 /// forced decimals" for a plain number.
-int? _decimalLimitFor(Map<String, dynamic> raw, {required bool isCurrency}) {
+int? _decimalLimitFor(
+  Map<String, dynamic> raw, {
+  required bool isCurrency,
+  bool requireDecimal = false,
+}) {
   final declared = raw['decimalLimit'];
   final limit = declared is num
       ? declared.toInt()
       : (declared is String ? int.tryParse(declared.trim()) : null);
   if (limit != null) return limit.clamp(0, 10);
-  return isCurrency ? kCurrencyDecimalLimit : null;
+  // Currency always shows decimals; a plain number only when asked to.
+  return (isCurrency || requireDecimal) ? kCurrencyDecimalLimit : null;
 }
 
 Widget buildTextLeaf(
@@ -225,13 +230,21 @@ Widget buildTextLeaf(
   // a number field is only reformatted when its author asks for it.
   final grouping = isNumber &&
       (raw['delimiter'] == true || (isCurrency && raw['delimiter'] != false));
-  final decimalLimit = _decimalLimitFor(raw, isCurrency: isCurrency);
+  // `requireDecimal` pads the decimals even when digits are not grouped.
+  final requireDecimal = isNumber && raw['requireDecimal'] == true;
+  // Nothing else enforces `validate.integer`: it has no rule in @formio/core,
+  // which leans on the browser's number input for it. So the field has to.
+  final integerOnly = isNumber && raw['validate']?['integer'] == true;
+  final decimalLimit = integerOnly
+      ? 0
+      : _decimalLimitFor(raw,
+          isCurrency: isCurrency, requireDecimal: requireDecimal);
 
   // Formatted while the field is idle, raw while the user is in it — otherwise
   // separators would fight the cursor mid-edit.
-  final engineValue = isNumber && grouping
+  final engineValue = isNumber && (grouping || requireDecimal)
       ? formatNumeric(s.getValue(path),
-          grouping: true, decimalLimit: decimalLimit, locale: locale)
+          grouping: grouping, decimalLimit: decimalLimit, locale: locale)
       : s.getValue(path)?.toString() ?? '';
   if (!focus.hasFocus && controller.text != engineValue) {
     controller.text = engineValue;
@@ -248,12 +261,16 @@ Widget buildTextLeaf(
     focusNode: focus,
     readOnly: readOnly,
     obscureText: type == 'password',
-    keyboardType: _keyboardTypeFor(type),
+    keyboardType: integerOnly
+        ? const TextInputType.numberWithOptions(decimal: false)
+        : _keyboardTypeFor(type),
     // Regroups digits live; without it separators only appeared on blur.
-    inputFormatters: grouping
+    inputFormatters: (grouping || integerOnly)
         ? [
             GroupedNumberInputFormatter(
-                locale: locale, decimalLimit: decimalLimit),
+                locale: locale,
+                decimalLimit: decimalLimit,
+                grouping: grouping),
           ]
         : null,
     style: s.theme.inputTextStyle,
