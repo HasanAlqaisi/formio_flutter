@@ -292,6 +292,13 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
   String _childPath(String parent, String key) =>
       parent.isEmpty ? key : '$parent.$key';
 
+  /// A schema string that may not actually be a string, normalised to null when
+  /// absent or blank.
+  static String? _text(Object? value) {
+    final text = value?.toString();
+    return (text == null || text.isEmpty) ? null : text;
+  }
+
   /// Reads a Bootstrap grid value (`width`/`offset`/…) that may arrive as a
   /// number or a numeric string — schemas carry both, and casting to `num`
   /// throws on the string form.
@@ -491,15 +498,18 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
       case 'panel':
       case 'well':
       case 'fieldset':
-        // Form.io puts the header in `title` (panels/wells) or `legend`
-        // (fieldsets); `label` is the default component name ("Panel"), not a
-        // header. Fall back across the three, then to a non-default label.
-        final rawLabel = raw['label'] as String?;
+        // A fieldset's header is documented as `legend`; a panel's/well's is
+        // `title`. Prefer whichever belongs to this type, then fall back — and
+        // finally to `label`, except when it is the builder's default component
+        // name rather than a real header.
+        final isFieldset = type == 'fieldset';
+        final rawLabel = _text(raw['label']);
         final header = <String?>[
-          raw['title'] as String?,
-          raw['legend'] as String?,
+          if (isFieldset) _text(raw['legend']),
+          _text(raw['title']),
+          if (!isFieldset) _text(raw['legend']),
           (rawLabel == 'Panel' || rawLabel == 'Field Set') ? null : rawLabel,
-        ].firstWhere((h) => h != null && h.isNotEmpty, orElse: () => null);
+        ].firstWhere((h) => h != null, orElse: () => null);
         return cb.sectionCard(
           widget.theme,
           Column(
