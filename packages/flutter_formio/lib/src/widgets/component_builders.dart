@@ -682,6 +682,73 @@ Widget buildDataGrid(FieldScope s, Map<String, dynamic> raw, String path) {
   final loc = ComponentFactory.locale;
   final addLabel = _affixText(raw, 'addAnother') ??
       (rows.isEmpty ? loc.addEntry : loc.addAnother);
+  // Reordering neither adds nor removes a row, so `disableAddingRemovingRows`
+  // does not govern it — only a fully disabled grid does.
+  final reorderable =
+      raw['reorder'] == true && raw['disabled'] != true && rows.length > 1;
+
+  Widget rowCard(int i) => Container(
+        // ReorderableListView requires a key per child. Index-based is fine:
+        // the rows' own values live in the submission, not in widget state.
+        key: ValueKey('$path#row$i'),
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          border: Border.all(color: Theme.of(ctx).dividerColor),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text('#${i + 1}',
+                    style: const TextStyle(fontWeight: FontWeight.w500)),
+                const Spacer(),
+                if (reorderable)
+                  // An explicit handle rather than a draggable row: the rows hold
+                  // text fields, where a long-press means "select text", and the
+                  // grid sits inside a scroll view that would otherwise win the
+                  // drag.
+                  ReorderableDragStartListener(
+                    index: i,
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: Icon(Icons.drag_handle, size: 20),
+                    ),
+                  ),
+                if (!locked)
+                  IconButton(
+                    tooltip: _affixText(raw, 'removeRow') ?? loc.removeRow,
+                    icon: const Icon(Icons.delete_outline, size: 20),
+                    onPressed: () {
+                      final next = [...rows]..removeAt(i);
+                      s.setValue(path, next, immediate: true);
+                    },
+                  ),
+              ],
+            ),
+            for (final c in children)
+              if (c is Map<String, dynamic>) s.renderChild(c, '$path[$i]'),
+          ],
+        ),
+      );
+
+  /// [ReorderableListView.onReorderItem] already reports [newIndex] against the
+  /// list with the dragged row removed, so no off-by-one adjustment is needed.
+  ///
+  /// The write waits for the end of the frame. The list still holds the dragged
+  /// row in its overlay when this fires, and rebuilding the grid now would write
+  /// the reordered values into text controllers whose fields are mid-teardown —
+  /// "Cannot get renderObject of inactive element". One frame later the list has
+  /// settled and the rebuild is ordinary.
+  void reorder(int oldIndex, int newIndex) {
+    final next = [...rows];
+    next.insert(newIndex, next.removeAt(oldIndex));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      s.setValue(path, next, immediate: true);
+    });
+  }
 
   return sectionCard(
     s.theme,
@@ -694,38 +761,19 @@ Widget buildDataGrid(FieldScope s, Map<String, dynamic> raw, String path) {
             child: Text(labelText(raw, requiredSuffix: s.theme.requiredSuffix),
                 style: s.theme.resolvedPanelTitleStyle(ctx)),
           ),
-        for (var i = 0; i < rows.length; i++)
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 4),
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              border: Border.all(color: Theme.of(ctx).dividerColor),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('#${i + 1}',
-                        style: const TextStyle(fontWeight: FontWeight.w500)),
-                    if (!locked)
-                      IconButton(
-                        tooltip: _affixText(raw, 'removeRow') ?? loc.removeRow,
-                        icon: const Icon(Icons.delete_outline, size: 20),
-                        onPressed: () {
-                          final next = [...rows]..removeAt(i);
-                          s.setValue(path, next, immediate: true);
-                        },
-                      ),
-                  ],
-                ),
-                for (final c in children)
-                  if (c is Map<String, dynamic>) s.renderChild(c, '$path[$i]'),
-              ],
-            ),
-          ),
+        if (reorderable)
+          ReorderableListView.builder(
+            // The grid lives inside the form's own scroll view, so this list
+            // contributes its natural height and never scrolls itself.
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            buildDefaultDragHandles: false,
+            itemCount: rows.length,
+            itemBuilder: (_, i) => rowCard(i),
+            onReorderItem: reorder,
+          )
+        else
+          for (var i = 0; i < rows.length; i++) rowCard(i),
         if (!locked)
           Align(
             alignment: AlignmentDirectional.centerStart,
