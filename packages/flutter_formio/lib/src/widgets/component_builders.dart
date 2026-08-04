@@ -39,21 +39,32 @@ Widget buildField(
   final desc = raw['description'] as String?;
   final error = s.errorFor(path);
 
+  // A side `labelPosition` carries two things: `left-right` puts the label on
+  // the left with its text right-aligned (against the field it belongs to).
+  // Only the side used to be read, so every side-label rendered left-aligned.
+  final side = pos.split('-').first;
+  final labelAlign = pos.split('-').length > 1 ? pos.split('-')[1] : null;
+
   final labelWidget = label.isEmpty
       ? null
       : Text(required ? '$label${s.theme.requiredSuffix}' : label,
+          // start/end rather than left/right so the alignment still means
+          // "leading"/"trailing" under RTL.
+          textAlign: labelAlign == 'right' ? TextAlign.end : TextAlign.start,
           style: s.theme.resolvedLabelStyle(ctx));
 
   Widget labeled;
   if (labelWidget == null) {
     labeled = control;
-  } else if (pos.startsWith('left') || pos.startsWith('right')) {
+  } else if (side == 'left' || side == 'right') {
     final lw = (raw['labelWidth'] as num?)?.toInt().clamp(10, 90) ?? 30;
-    final labelCell = Expanded(flex: lw, child: labelWidget);
+    // The label must fill its cell for textAlign to have anywhere to move it.
+    final labelCell = Expanded(
+        flex: lw, child: SizedBox(width: double.infinity, child: labelWidget));
     final fieldCell = Expanded(flex: 100 - lw, child: control);
     labeled = Row(
       crossAxisAlignment: CrossAxisAlignment.center,
-      children: pos.startsWith('left')
+      children: side == 'left'
           ? [labelCell, const SizedBox(width: 8), fieldCell]
           : [fieldCell, const SizedBox(width: 8), labelCell],
     );
