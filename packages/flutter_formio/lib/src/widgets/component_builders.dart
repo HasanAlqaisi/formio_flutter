@@ -347,53 +347,72 @@ Widget buildTextLeaf(
 
 // ---- select / selectboxes / checkbox / radio -----------------------------
 
-List<Map<String, dynamic>> selectOptions(Map<String, dynamic> raw) {
-  final data = raw['data'];
-  final values = (raw['values'] as List?) ??
-      (data is Map ? data['values'] as List? : null) ??
-      const [];
-  return [
-    for (final v in values)
-      if (v is Map<String, dynamic>) v,
-  ];
-}
+/// Options a component can show without a network call — inline `values`, or an
+/// inline array for `dataSrc: json`. A `url` source resolves to nothing here and
+/// is fetched by [RemoteSelectOptions] instead.
+List<Map<String, dynamic>> selectOptions(Map<String, dynamic> raw) =>
+    localSelectOptions(raw);
 
 Widget buildSelect(FieldScope s, Map<String, dynamic> raw, String path) {
-  final options = selectOptions(raw);
-  final multiple = raw['multiple'] == true;
-  final disabled = raw['disabled'] == true;
-  final current = s.getValue(path);
-
-  if (multiple) {
-    final selected = (current is List ? current : const [])
-        .map((e) => e?.toString())
-        .whereType<String>()
-        .where((e) => e.isNotEmpty)
-        .toSet();
-    return MultiSelectField(
-      options: options,
-      selected: selected,
-      hint: raw['placeholder'] as String?,
-      enabled: !disabled,
-      onChanged: (vals) => s.setValue(path, vals, immediate: true),
+  print('buildSelect: ${raw['key']}');
+  // A url-backed select has to fetch first; everything else resolves inline.
+  if (selectDataSourceOf(raw) == SelectDataSource.url) {
+    return RemoteSelectOptions(
+      component: raw,
+      formData: s.data,
+      builder: (context, state) {
+        print('RemoteSelectOptions builder: $state');
+        if (state.loading && state.options.isEmpty) {
+          return const Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          );
+        }
+        if (state.error != null && state.options.isEmpty) {
+          return Text(ComponentFactory.locale.dataSourceError,
+              style: s.theme.resolvedErrorStyle(s.context));
+        }
+        return _selectControl(s, raw, path, state.options);
+      },
     );
   }
+  return _selectControl(s, raw, path, selectOptions(raw));
+}
 
-  final currentStr = current?.toString();
-  final valueInItems = options.any((o) => o['value']?.toString() == currentStr);
-  return DropdownButton<String>(
-    isExpanded: true,
-    value: valueInItems ? currentStr : null,
-    hint: Text(raw['placeholder'] as String? ?? 'Select…'),
-    items: [
+Widget _selectControl(
+  FieldScope s,
+  Map<String, dynamic> raw,
+  String path,
+  List<Map<String, dynamic>> options, {
+  bool loading = false,
+  Object? error,
+}) {
+  final disabled = raw['disabled'] == true;
+  final spec = FormioSelectSpec(
+    component: raw,
+    options: [
       for (final o in options)
-        DropdownMenuItem(
-          value: o['value']?.toString(),
-          child: Text(o['label']?.toString() ?? ''),
-        ),
+        FormioOption(label: o['label']?.toString() ?? '', value: o['value']),
     ],
-    onChanged: disabled ? null : (v) => s.setValue(path, v, immediate: true),
+    value: s.getValue(path),
+    onChanged: (value) => s.setValue(path, value, immediate: true),
+    label: raw['label']?.toString() ?? '',
+    placeholder: raw['placeholder']?.toString(),
+    enabled: !disabled,
+    multiple: raw['multiple'] == true,
+    required: raw['validate']?['required'] == true,
+    loading: loading,
+    error: error,
   );
+
+  // A host widget receives the schema already resolved, so it never needs to
+  // know about dataSrc/valueProperty/template or do its own fetching.
+  return s.controls.select?.call(s.context, spec) ??
+      FormioBuiltInSelect(spec: spec);
 }
 
 /// Pulls a checkbox/radio label in next to its control.

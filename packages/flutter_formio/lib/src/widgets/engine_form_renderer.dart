@@ -17,12 +17,14 @@ import 'package:flutter/material.dart';
 
 import '../core/form_logic_engine.dart';
 import 'component_builders.dart' as cb;
+import 'control_builders.dart';
 import 'components/tabs_section.dart';
 import 'form_field_context.dart';
 import 'form_field_scope.dart';
 import 'form_theme.dart';
 
 export 'form_field_context.dart' show FormioFieldContext, FormioFieldBuilder;
+export 'control_builders.dart';
 export 'form_theme.dart' show FormioTheme, FormioThemeScope;
 
 typedef EngineFormSubmit = void Function(Map<String, dynamic> data);
@@ -36,6 +38,7 @@ class EngineFormRenderer extends StatefulWidget {
     this.onSubmit,
     this.onChanged,
     this.customComponents,
+    this.controls = const FormioControlBuilders(),
     this.textDirection,
     this.theme = const FormioTheme(),
     this.debounce = const Duration(milliseconds: 450),
@@ -48,8 +51,15 @@ class EngineFormRenderer extends StatefulWidget {
   final ValueChanged<Map<String, dynamic>>? onChanged;
 
   /// Host-registered builders for custom component types (or overrides of
-  /// built-in types), keyed by the Form.io component `type`.
+  /// built-in types), keyed by the Form.io component `type`. These replace a
+  /// component entirely, schema handling included.
   final Map<String, FormioFieldBuilder>? customComponents;
+
+  /// Host widgets for built-in controls, where the package keeps the behaviour.
+  /// Prefer this over [customComponents] when only the look differs — a
+  /// `customComponents['select']` override has to reimplement `dataSrc`,
+  /// `valueProperty`, `template` and remote loading to work at all.
+  final FormioControlBuilders controls;
 
   /// Text/layout direction for the whole form. When null, the ambient
   /// [Directionality] is used (e.g. from `MaterialApp`'s locale). Set
@@ -207,6 +217,7 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
           return f;
         }),
         renderChild: _render,
+        controls: widget.controls,
       );
 
   // ---- nested data access (supports list indices: a.b[0].c) -------------

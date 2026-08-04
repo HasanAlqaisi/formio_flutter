@@ -6,6 +6,7 @@ library;
 import 'package:flutter/widgets.dart';
 
 import '../core/form_logic_engine.dart';
+import 'control_builders.dart';
 import 'form_theme.dart';
 
 class FieldScope {
@@ -19,6 +20,7 @@ class FieldScope {
     required this.controllerFor,
     required this.focusFor,
     required this.renderChild,
+    this.controls = const FormioControlBuilders(),
   });
 
   final BuildContext context;
@@ -49,4 +51,8 @@ class FieldScope {
 
   /// Render a child component under [parentPath] (recursion for containers).
   final Widget Function(Map<String, dynamic> raw, String parentPath) renderChild;
+
+  /// Host-supplied widgets for built-in controls. The package still resolves the
+  /// schema and owns the behaviour; these only change what is rendered.
+  final FormioControlBuilders controls;
 }
