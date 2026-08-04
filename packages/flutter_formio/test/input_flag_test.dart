@@ -104,6 +104,33 @@ void main() {
     });
   });
 
+  group('container nesting', () {
+    testWidgets('a container without an `input` flag still nests its children',
+        (tester) async {
+      // Form.io's Container carries input: true and nests children under its
+      // key — that is the component's whole purpose, so a partial schema that
+      // omits the flag must still nest rather than flatten.
+      final data = pump(tester, [
+        {
+          'key': 'userInformation',
+          'type': 'container',
+          'components': [
+            {'key': 'firstName', 'type': 'textfield', 'label': 'First'},
+          ],
+        },
+      ]);
+      await data();
+
+      await tester.enterText(find.byType(TextField), 'Joe');
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(await data(),
+          containsPair('userInformation', containsPair('firstName', 'Joe')),
+          reason: 'flattening would put firstName at the submission root');
+    });
+  });
+
   group('explicit flags still win', () {
     testWidgets('`input: false` on a data component does not crash',
         (tester) async {
