@@ -5,8 +5,10 @@ library;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:formio/formio.dart';
 
+import 'components/input_mask.dart';
 import 'components/numeric_format.dart';
 import 'components/warning_card.dart';
 import 'form_field_scope.dart';
@@ -127,8 +129,41 @@ String messageForError(FormLogicError e) {
       return e.setting != null
           ? loc.getMaxValueMessage(e.setting!)
           : loc.invalidValue;
+
+    // A value that does not fit its required shape is a format problem, which
+    // is what `invalidFormat` already says.
+    case 'mask':
+    case 'invalidDate':
+    case 'invalidDay':
+    case 'time':
+      return loc.invalidFormat;
+
+    // Date/year bounds read naturally as value bounds.
+    case 'minDate':
+    case 'minYear':
+      return e.setting != null
+          ? loc.getMinValueMessage(e.setting!)
+          : loc.invalidValue;
+    case 'maxDate':
+    case 'maxYear':
+      return e.setting != null
+          ? loc.getMaxValueMessage(e.setting!)
+          : loc.invalidValue;
+
+    // The day component reports which of its parts is missing.
+    case 'requiredDayField':
+      return loc.getRequiredMessage(loc.day);
+    case 'requiredMonthField':
+      return loc.getRequiredMessage(loc.month);
+    case 'requiredYearField':
+      return loc.getRequiredMessage(loc.year);
+    case 'requiredDayEmpty':
+      return loc.fieldRequired;
+
     default:
-      // minWords / maxWords / unique / …
+      // array / nonarray / invalidOption / minWords / maxWords / unique /
+      // invalidValueProperty — no better wording available without adding
+      // strings to the public FormioLocalizations interface.
       return loc.invalidValue;
   }
 }
@@ -250,11 +285,23 @@ Widget buildTextLeaf(
     controller.text = engineValue;
   }
 
+  // Only an explicit mask is applied. Form.io's builder always writes one for a
+  // phone number, but defaulting to its US shape here would mangle every
+  // non-US number in a schema that omitted it.
+  final inputMask = isNumber ? null : _affixText(raw, 'inputMask');
+
   final prefix = _affixText(raw, 'prefix') ??
       // A currency's symbol goes in the prefix slot, unless the author set one.
       (isCurrency ? currencySymbolFor(raw['currency'], locale) : null);
   final suffix = _affixText(raw, 'suffix');
   final affixStyle = s.theme.resolvedAffixStyle(ctx);
+
+  final formatters = <TextInputFormatter>[
+    if (inputMask != null) MaskedInputFormatter(inputMask),
+    if (grouping || integerOnly)
+      GroupedNumberInputFormatter(
+          locale: locale, decimalLimit: decimalLimit, grouping: grouping),
+  ];
 
   return TextField(
     controller: controller,
@@ -265,14 +312,7 @@ Widget buildTextLeaf(
         ? const TextInputType.numberWithOptions(decimal: false)
         : _keyboardTypeFor(type),
     // Regroups digits live; without it separators only appeared on blur.
-    inputFormatters: (grouping || integerOnly)
-        ? [
-            GroupedNumberInputFormatter(
-                locale: locale,
-                decimalLimit: decimalLimit,
-                grouping: grouping),
-          ]
-        : null,
+    inputFormatters: formatters.isEmpty ? null : formatters,
     style: s.theme.inputTextStyle,
     maxLines: type == 'textarea' ? (raw['rows'] as num?)?.toInt() ?? 3 : 1,
     decoration: InputDecoration(
@@ -300,8 +340,8 @@ Widget buildTextLeaf(
     ),
     onChanged: readOnly
         ? null
-        : (v) => s.setValue(
-            path, isNumber ? parseNumeric(v, locale: locale) : v),
+        : (v) =>
+            s.setValue(path, isNumber ? parseNumeric(v, locale: locale) : v),
   );
 }
 
