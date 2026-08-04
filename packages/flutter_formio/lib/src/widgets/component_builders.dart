@@ -354,14 +354,12 @@ List<Map<String, dynamic>> selectOptions(Map<String, dynamic> raw) =>
     localSelectOptions(raw);
 
 Widget buildSelect(FieldScope s, Map<String, dynamic> raw, String path) {
-  print('buildSelect: ${raw['key']}');
   // A url-backed select has to fetch first; everything else resolves inline.
   if (selectDataSourceOf(raw) == SelectDataSource.url) {
     return RemoteSelectOptions(
       component: raw,
       formData: s.data,
       builder: (context, state) {
-        print('RemoteSelectOptions builder: $state');
         if (state.loading && state.options.isEmpty) {
           return const Align(
             alignment: AlignmentDirectional.centerStart,
@@ -405,6 +403,8 @@ Widget _selectControl(
     enabled: !disabled,
     multiple: raw['multiple'] == true,
     required: raw['validate']?['required'] == true,
+    // Form.io's own default is on, so only an explicit false turns search off.
+    searchable: raw['searchEnabled'] != false,
     loading: loading,
     error: error,
   );
@@ -642,7 +642,13 @@ Widget buildDataGrid(FieldScope s, Map<String, dynamic> raw, String path) {
   final children = (raw['components'] as List?) ?? const [];
   final rowsVal = s.getValue(path);
   final rows = rowsVal is List ? rowsVal : const [];
-  final disabled = raw['disabled'] == true;
+  // `disableAddingRemovingRows` fixes the row count without making the fields
+  // read-only, which `disabled` also does.
+  final locked =
+      raw['disabled'] == true || raw['disableAddingRemovingRows'] == true;
+  final loc = ComponentFactory.locale;
+  final addLabel = _affixText(raw, 'addAnother') ??
+      (rows.isEmpty ? loc.addEntry : loc.addAnother);
 
   return sectionCard(
     s.theme,
@@ -671,8 +677,9 @@ Widget buildDataGrid(FieldScope s, Map<String, dynamic> raw, String path) {
                   children: [
                     Text('#${i + 1}',
                         style: const TextStyle(fontWeight: FontWeight.w500)),
-                    if (!disabled)
+                    if (!locked)
                       IconButton(
+                        tooltip: _affixText(raw, 'removeRow') ?? loc.removeRow,
                         icon: const Icon(Icons.delete_outline, size: 20),
                         onPressed: () {
                           final next = [...rows]..removeAt(i);
@@ -686,12 +693,12 @@ Widget buildDataGrid(FieldScope s, Map<String, dynamic> raw, String path) {
               ],
             ),
           ),
-        if (!disabled)
+        if (!locked)
           Align(
             alignment: AlignmentDirectional.centerStart,
             child: TextButton.icon(
               icon: const Icon(Icons.add),
-              label: const Text('Add'),
+              label: Text(addLabel),
               onPressed: () => s.setValue(path, [...rows, <String, dynamic>{}],
                   immediate: true),
             ),

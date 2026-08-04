@@ -619,8 +619,11 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
       return cb.buildField(
           _scope, raw, path, cb.buildTextLeaf(_scope, raw, path, type!));
     }
+    // `minLength`/`maxLength` fail against the grid's own path, so the grid needs
+    // the error chrome too — without it a "at least 2 rows" rule blocks submit
+    // with nothing on screen to explain why.
     if (_arrayTypes.contains(type)) {
-      return cb.buildDataGrid(_scope, raw, path);
+      return _wrapError(cb.buildDataGrid(_scope, raw, path), path);
     }
 
     // Stock / custom-registered components render their own label; show only

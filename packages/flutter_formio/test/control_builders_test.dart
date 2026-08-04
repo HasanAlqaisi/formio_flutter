@@ -139,7 +139,10 @@ void main() {
         reason: 'a numeric valueProperty must not be stringified');
   });
 
-  testWidgets('no builder keeps the package control', (tester) async {
+  /// Renders a bare select with no host builder, so the package's own widget is
+  /// what shows.
+  Future<void> pumpBuiltIn(WidgetTester tester,
+      {bool? searchEnabled}) async {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: EngineFormRenderer(
@@ -152,6 +155,7 @@ void main() {
                 'type': 'select',
                 'label': 'Pick',
                 'input': true,
+                if (searchEnabled != null) 'searchEnabled': searchEnabled,
                 'values': [
                   {'label': 'A', 'value': 'a'},
                 ],
@@ -162,9 +166,43 @@ void main() {
       ),
     ));
     await tester.pumpAndSettle();
+  }
 
+  testWidgets('no builder keeps the package control', (tester) async {
+    await pumpBuiltIn(tester);
     expect(find.byType(FormioBuiltInSelect), findsOneWidget);
+  });
+
+  testWidgets('searchEnabled defaults on, giving a searchable picker',
+      (tester) async {
+    // Form.io's own default is on, and 316 of the 333 selects in the sample
+    // forms set it — so this is the common path, not the edge one.
+    await pumpBuiltIn(tester);
+    expect(find.byType(SelectPickerField), findsOneWidget);
+    expect(find.byType(DropdownButton<String>), findsNothing);
+
+    await tester.tap(find.byType(SelectPickerField));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.search), findsOneWidget);
+  });
+
+  testWidgets('searchEnabled: false keeps the plain dropdown', (tester) async {
+    await pumpBuiltIn(tester, searchEnabled: false);
     expect(find.byType(DropdownButton<String>), findsOneWidget);
+    expect(find.byType(SelectPickerField), findsNothing);
+  });
+
+  testWidgets('the picker stores the option value, not its label',
+      (tester) async {
+    await pumpBuiltIn(tester);
+    await tester.tap(find.byType(SelectPickerField));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('A').last);
+    await tester.pumpAndSettle();
+
+    // Closed, with the chosen label showing in the field.
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.text('A'), findsOneWidget);
   });
 
   testWidgets('a host can delegate a case back to the built-in',

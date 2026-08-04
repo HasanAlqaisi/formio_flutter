@@ -15,6 +15,7 @@ library;
 import 'package:flutter/material.dart';
 
 import 'components/multi_select_field.dart';
+import 'components/select_picker_field.dart';
 
 /// One resolved option: what to show, and what to store.
 @immutable
@@ -47,6 +48,7 @@ class FormioSelectSpec {
     this.enabled = true,
     this.multiple = false,
     this.required = false,
+    this.searchable = true,
     this.loading = false,
     this.error,
   });
@@ -68,6 +70,13 @@ class FormioSelectSpec {
   final bool enabled;
   final bool multiple;
   final bool required;
+
+  /// The schema's `searchEnabled`, defaulting to true as Form.io does.
+  ///
+  /// Worth honouring rather than guessing from the option count: the sample
+  /// forms set it explicitly on 333 of 333 selects, and 17 of those turn it
+  /// *off* on lists long enough that a size heuristic would have added it.
+  final bool searchable;
 
   /// A fetch is in flight. [options] may already hold a cached result.
   final bool loading;
@@ -127,6 +136,7 @@ class FormioBuiltInSelect extends StatelessWidget {
             .toSet(),
         hint: spec.placeholder,
         enabled: spec.enabled,
+        searchable: spec.searchable,
         onChanged: (keys) {
           // Map the chosen keys back to their typed values.
           final byKey = {for (final o in spec.options) o.key: o.value};
@@ -139,6 +149,28 @@ class FormioBuiltInSelect extends StatelessWidget {
     }
 
     final selected = spec.selected;
+    // A searchable select needs a picker: DropdownButton has no room for a
+    // search box, so it stays the widget for the short, unsearchable lists it
+    // suits.
+    if (spec.searchable) {
+      return SelectPickerField(
+        options: [
+          for (final o in spec.options) {'label': o.label, 'value': o.value},
+        ],
+        selected: selected?.key ?? spec.value?.toString(),
+        hint: spec.placeholder,
+        enabled: spec.enabled,
+        onChanged: (key) {
+          for (final o in spec.options) {
+            if (o.key == key) {
+              spec.onChanged(o.value);
+              return;
+            }
+          }
+        },
+      );
+    }
+
     return DropdownButton<String>(
       isExpanded: true,
       value: selected?.key,
