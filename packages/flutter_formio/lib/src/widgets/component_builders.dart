@@ -7,6 +7,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:formio/formio.dart';
+import 'package:intl/intl.dart';
 
 import 'components/input_mask.dart';
 import 'components/numeric_format.dart';
@@ -503,6 +504,35 @@ Widget buildRadio(FieldScope s, Map<String, dynamic> raw, String path) {
 
 String _two(int n) => n.toString().padLeft(2, '0');
 
+/// Renders [dt] with the schema's `format`, or null when there is no usable one.
+///
+/// Form.io writes display formats in the same token vocabulary ICU uses —
+/// `yyyy`, `MM`, `dd`, `HH` (24-hour), `hh` (12-hour), `mm`, `a` — so the
+/// schema's string goes straight to [DateFormat]. Before this, `format` was
+/// ignored outright and every value rendered as `yyyy-MM-dd HH:mm`, so a field
+/// asking for `hh:mm a` showed 24-hour time with no meridiem.
+///
+/// Returns null when the pattern yields nothing usable, so the field falls back
+/// to its default rendering.
+///
+/// [DateFormat] is lenient to a fault: it does not throw on a pattern it cannot
+/// read, it returns a blank string (an unterminated quote, or a lone `ZZZZZ`).
+/// A blank reads as an *unset* field, which is worse than a wrongly-formatted
+/// one — so an empty result is rejected, not just an exception.
+///
+/// A pattern ICU parses but disagrees with is left alone: `format` is authored
+/// content, and second-guessing a valid-but-odd pattern would be guessing.
+String? _formattedDate(Object? format, DateTime dt, String? locale) {
+  final pattern = format?.toString();
+  if (pattern == null || pattern.isEmpty) return null;
+  try {
+    final text = DateFormat(pattern, locale).format(dt);
+    return text.isEmpty ? null : text;
+  } catch (_) {
+    return null;
+  }
+}
+
 /// Presents an iOS-style wheel picker in a bottom sheet and resolves to the
 /// chosen [DateTime], or `null` if the sheet is dismissed without confirming.
 Future<DateTime?> _showCupertinoDateTime(
@@ -552,6 +582,9 @@ Widget buildDateTime(
 
   String display() {
     if (dt == null) return raw['placeholder'] as String? ?? 'Select…';
+    final authored = _formattedDate(
+        raw['format'], dt, Localizations.maybeLocaleOf(ctx)?.toString());
+    if (authored != null) return authored;
     final d = '${dt.year}-${_two(dt.month)}-${_two(dt.day)}';
     final t = '${_two(dt.hour)}:${_two(dt.minute)}';
     if (enableDate && enableTime) return '$d $t';
