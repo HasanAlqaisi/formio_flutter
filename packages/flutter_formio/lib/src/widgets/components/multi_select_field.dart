@@ -71,7 +71,6 @@ class MultiSelectField extends StatelessWidget {
                       (o['label']?.toString() ?? '').toLowerCase().contains(q))
                   .toList();
           return AlertDialog(
-            title: Text(hint ?? ComponentFactory.locale.searchPlaceholder),
             content: SizedBox(
               width: double.maxFinite,
               child: Column(
