@@ -6,21 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:formio/formio.dart';
 
-class _PassthroughEngine implements FormEngine {
-  @override
-  void setForm(Map<String, dynamic> form) {}
-  @override
-  FormLogicResult processData(Map<String, dynamic> submissionData,
-          {bool validate = true}) =>
-      FormLogicResult(data: submissionData, hidden: const {}, errors: const []);
-}
+import 'support/fake_engine.dart';
 
 void main() {
   Future<ButtonStyle?> pump(WidgetTester tester, FormioTheme theme) async {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: EngineFormRenderer(
-          engine: _PassthroughEngine(),
+          engine: FakeEngine(),
           theme: theme,
           form: const {
             'display': 'form',
@@ -94,15 +87,14 @@ void main() {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: EngineFormRenderer(
-          engine: _PassthroughEngine(),
+          engine: FakeEngine(),
           onSubmit: (_) {},
           form: const {'display': 'form', 'components': []},
         ),
       ),
     ));
     await tester.pumpAndSettle();
-    expect(
-        tester.widget<ElevatedButton>(find.byType(ElevatedButton)).onPressed,
+    expect(tester.widget<ElevatedButton>(find.byType(ElevatedButton)).onPressed,
         isNotNull);
   });
 }

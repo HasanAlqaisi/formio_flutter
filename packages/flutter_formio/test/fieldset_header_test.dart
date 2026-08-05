@@ -5,22 +5,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:formio/formio.dart';
 
-class _PassthroughEngine implements FormEngine {
-  @override
-  void setForm(Map<String, dynamic> form) {}
-  @override
-  FormLogicResult processData(Map<String, dynamic> submissionData,
-          {bool validate = true}) =>
-      FormLogicResult(data: submissionData, hidden: const {}, errors: const []);
-}
+import 'support/fake_engine.dart';
 
 void main() {
   Future<void> pump(WidgetTester tester, Map<String, dynamic> section) async {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: EngineFormRenderer(
-          engine: _PassthroughEngine(),
-          form: {'display': 'form', 'components': [section]},
+          engine: FakeEngine(),
+          form: {
+            'display': 'form',
+            'components': [section]
+          },
         ),
       ),
     ));
@@ -28,8 +24,12 @@ void main() {
   }
 
   testWidgets('a fieldset shows its legend', (tester) async {
-    await pump(tester,
-        {'type': 'fieldset', 'key': 'fs', 'legend': 'Personal', 'components': []});
+    await pump(tester, {
+      'type': 'fieldset',
+      'key': 'fs',
+      'legend': 'Personal',
+      'components': []
+    });
 
     expect(find.text('Personal'), findsOneWidget);
   });
@@ -62,8 +62,12 @@ void main() {
 
   testWidgets('the builder default label is not used as a header',
       (tester) async {
-    await pump(tester,
-        {'type': 'fieldset', 'key': 'fs', 'label': 'Field Set', 'components': []});
+    await pump(tester, {
+      'type': 'fieldset',
+      'key': 'fs',
+      'label': 'Field Set',
+      'components': []
+    });
 
     expect(find.text('Field Set'), findsNothing);
   });

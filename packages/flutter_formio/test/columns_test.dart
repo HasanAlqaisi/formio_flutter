@@ -7,16 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:formio/formio.dart';
 
-class _PassthroughEngine implements FormEngine {
-  @override
-  void setForm(Map<String, dynamic> form) {}
-
-  @override
-  FormLogicResult processData(Map<String, dynamic> submissionData,
-          {bool validate = true}) =>
-      FormLogicResult(
-          data: submissionData, hidden: const {}, errors: const []);
-}
+import 'support/fake_engine.dart';
 
 Map<String, dynamic> field(String key, String label) => {
       'key': key,
@@ -31,7 +22,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: EngineFormRenderer(
-          engine: _PassthroughEngine(),
+          engine: FakeEngine(),
           // Low breakpoint so columns stay side by side and widths are testable.
           theme: FormioTheme(columnBreakpoint: breakpoint),
           form: {
@@ -58,8 +49,14 @@ void main() {
 
   testWidgets('an explicit width sizes the column', (tester) async {
     await pump(tester, [
-      {'width': 3, 'components': [field('a', 'A')]},
-      {'width': 9, 'components': [field('b', 'B')]},
+      {
+        'width': 3,
+        'components': [field('a', 'A')]
+      },
+      {
+        'width': 9,
+        'components': [field('b', 'B')]
+      },
     ]);
 
     final a = columnWidth(tester, 'A');
@@ -72,8 +69,14 @@ void main() {
     // Regression: `c['width'] as num?` threw on "6" — the same unsafe-cast
     // class as a textarea's integer `rows`.
     await pump(tester, [
-      {'width': '3', 'components': [field('a', 'A')]},
-      {'width': '9', 'components': [field('b', 'B')]},
+      {
+        'width': '3',
+        'components': [field('a', 'A')]
+      },
+      {
+        'width': '9',
+        'components': [field('b', 'B')]
+      },
     ]);
 
     expect(tester.takeException(), isNull);
@@ -83,15 +86,20 @@ void main() {
 
   testWidgets('a missing width defaults to 6, not full width', (tester) async {
     await pump(tester, [
-      {'components': [field('a', 'A')]},
-      {'components': [field('b', 'B')]},
+      {
+        'components': [field('a', 'A')]
+      },
+      {
+        'components': [field('b', 'B')]
+      },
     ]);
 
     final a = columnWidth(tester, 'A');
     final b = columnWidth(tester, 'B');
     expect(a, closeTo(b, 1.0), reason: 'two default columns should be equal');
     // Half of the ~800px viewport, not all of it.
-    expect(a, lessThan(500), reason: 'default width 12 made columns full-width');
+    expect(a, lessThan(500),
+        reason: 'default width 12 made columns full-width');
   });
 
   testWidgets('columns stack when narrower than the breakpoint',
@@ -99,8 +107,14 @@ void main() {
     await pump(
       tester,
       [
-        {'width': 6, 'components': [field('a', 'A')]},
-        {'width': 6, 'components': [field('b', 'B')]},
+        {
+          'width': 6,
+          'components': [field('a', 'A')]
+        },
+        {
+          'width': 6,
+          'components': [field('b', 'B')]
+        },
       ],
       // Force the collapse path.
       breakpoint: 4000,

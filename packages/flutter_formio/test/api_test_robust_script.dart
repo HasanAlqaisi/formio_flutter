@@ -14,7 +14,8 @@ class TestApiClient {
       : dio = Dio(BaseOptions(
           baseUrl: baseUrl,
           headers: {'Content-Type': 'application/json'},
-          validateStatus: (status) => status! < 500, // Don't throw on 4xx errors
+          validateStatus: (status) =>
+              status! < 500, // Don't throw on 4xx errors
         ));
 
   void setAuthToken(String token) {
@@ -59,7 +60,6 @@ class TestResults {
 }
 
 void main() async {
-
   // Configuration - Replace with your Form.io server credentials
   const baseUrl = 'https://examples.form.io';
   const email = 'test@example.com';
@@ -126,12 +126,14 @@ void main() async {
 
         // Find a non-system form for testing
         testForm = forms.firstWhere(
-          (f) => !(f['path'] as String).contains('admin') && !(f['path'] as String).contains('user') && !(f['path'] as String).contains('role'),
+          (f) =>
+              !(f['path'] as String).contains('admin') &&
+              !(f['path'] as String).contains('user') &&
+              !(f['path'] as String).contains('role'),
           orElse: () => forms.isNotEmpty ? forms.first : null,
         );
 
-        if (testForm != null) {
-        }
+        if (testForm != null) {}
       } else {
         results.fail('List forms', 'Invalid response');
       }
@@ -219,7 +221,8 @@ void main() async {
           if (response.statusCode == 200) {
             results.pass('Update submission (PUT)');
           } else {
-            results.fail('Update submission (PUT)', 'Status: ${response.statusCode}');
+            results.fail(
+                'Update submission (PUT)', 'Status: ${response.statusCode}');
           }
         } catch (e) {
           results.fail('Update submission (PUT)', e);
@@ -239,7 +242,8 @@ void main() async {
           if (response.statusCode == 200) {
             results.pass('Partial update (PATCH)');
           } else {
-            results.fail('Partial update (PATCH)', 'Status: ${response.statusCode}');
+            results.fail(
+                'Partial update (PATCH)', 'Status: ${response.statusCode}');
           }
         } catch (e) {
           results.fail('Partial update (PATCH)', e);
@@ -254,7 +258,8 @@ void main() async {
           if (response.statusCode == 200) {
             results.pass('Get submission by ID');
           } else {
-            results.fail('Get submission by ID', 'Status: ${response.statusCode}');
+            results.fail(
+                'Get submission by ID', 'Status: ${response.statusCode}');
           }
         } catch (e) {
           results.fail('Get submission by ID', e);
@@ -376,7 +381,8 @@ void main() async {
 
         // Test 4.4: Delete Action
         try {
-          final response = await client.dio.delete('/form/$formId/action/$actionId');
+          final response =
+              await client.dio.delete('/form/$formId/action/$actionId');
           if (response.statusCode == 200 || response.statusCode == 204) {
             results.pass('Delete action');
           } else {

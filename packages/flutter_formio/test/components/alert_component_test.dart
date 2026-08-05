@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:formio/formio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-
 void main() {
   group('AlertComponent', () {
     testWidgets('renders error alert', (WidgetTester tester) async {

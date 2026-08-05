@@ -6,20 +6,11 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:formio/formio.dart';
+
+import '../support/fake_engine.dart';
 import 'package:formio/src/widgets/component_builders.dart'
     show messageForError;
 import 'package:formio/src/widgets/components/input_mask.dart';
-
-class _PassthroughEngine implements FormEngine {
-  @override
-  void setForm(Map<String, dynamic> form) {}
-
-  @override
-  FormLogicResult processData(Map<String, dynamic> submissionData,
-          {bool validate = true}) =>
-      FormLogicResult(
-          data: submissionData, hidden: const {}, errors: const []);
-}
 
 void main() {
   group('the formatter', () {
@@ -79,7 +70,7 @@ void main() {
       late final Future<void> pumped = tester.pumpWidget(MaterialApp(
         home: Scaffold(
           body: EngineFormRenderer(
-            engine: _PassthroughEngine(),
+            engine: FakeEngine(),
             onChanged: (d) => latest = d,
             form: {
               'display': 'form',

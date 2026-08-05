@@ -8,8 +8,8 @@ void main() {
   setUp(() => ComponentFactory.setLocale(const DefaultFormioLocalizations()));
 
   test('messageForError maps engine rules to localized (default) messages', () {
-    String m(String rule, {String? messageKey}) =>
-        cb.messageForError(FormLogicError(path: 'x', rule: rule, messageKey: messageKey));
+    String m(String rule, {String? messageKey}) => cb.messageForError(
+        FormLogicError(path: 'x', rule: rule, messageKey: messageKey));
 
     expect(m('required'), 'This field is required');
     expect(m('email'), 'Invalid email address');

@@ -15,14 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:formio/formio.dart';
 
-class _PassthroughEngine implements FormEngine {
-  @override
-  void setForm(Map<String, dynamic> form) {}
-  @override
-  FormLogicResult processData(Map<String, dynamic> submissionData,
-          {bool validate = true}) =>
-      FormLogicResult(data: submissionData, hidden: const {}, errors: const []);
-}
+import 'support/fake_engine.dart';
 
 void main() {
   // Mirrors fms's dark palette: a dark maroon fill and a light pink text accent.
@@ -53,7 +46,7 @@ void main() {
       ),
       home: Scaffold(
         body: EngineFormRenderer(
-          engine: _PassthroughEngine(),
+          engine: FakeEngine(),
           theme: formioTheme ?? theme,
           form: form,
         ),

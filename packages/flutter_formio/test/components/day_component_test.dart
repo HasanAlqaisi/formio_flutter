@@ -29,8 +29,8 @@ void main() {
       await tester.pumpWidget(host('00/00/0000'));
       expect(tester.takeException(), isNull);
       expect(find.byType(TextFormField), findsNWidgets(3));
-      for (final f in tester.widgetList<TextFormField>(
-          find.byType(TextFormField))) {
+      for (final f
+          in tester.widgetList<TextFormField>(find.byType(TextFormField))) {
         expect(f.controller!.text, isEmpty);
       }
     });

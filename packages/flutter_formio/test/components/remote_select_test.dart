@@ -7,14 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:formio/formio.dart';
 
-class _PassthroughEngine implements FormEngine {
-  @override
-  void setForm(Map<String, dynamic> form) {}
-  @override
-  FormLogicResult processData(Map<String, dynamic> submissionData,
-          {bool validate = true}) =>
-      FormLogicResult(data: submissionData, hidden: const {}, errors: const []);
-}
+import '../support/fake_engine.dart';
 
 /// Serves canned responses so no real network is involved.
 class _StubAdapter implements HttpClientAdapter {
@@ -40,8 +33,9 @@ void main() {
       Dio()..httpClientAdapter = _StubAdapter(handler);
 
   ResponseBody json(String body, {int status = 200}) =>
-      ResponseBody.fromString(body, status,
-          headers: {Headers.contentTypeHeader: [Headers.jsonContentType]});
+      ResponseBody.fromString(body, status, headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType]
+      });
 
   Future<void> pumpRemote(
     WidgetTester tester, {
@@ -77,8 +71,8 @@ void main() {
   }
 
   testWidgets('fetches and maps options', (tester) async {
-    final client = stub((_) => json(
-        '[{"id":1,"name":"Baghdad"},{"id":2,"name":"Basra"}]'));
+    final client = stub(
+        (_) => json('[{"id":1,"name":"Baghdad"},{"id":2,"name":"Basra"}]'));
 
     await pumpRemote(tester, client: client);
     expect(find.text('LOADING'), findsOneWidget,
@@ -127,10 +121,11 @@ void main() {
   });
 
   testWidgets('locates the array via selectValues', (tester) async {
-    final client = stub((_) => json('{"data":{"items":[{"id":"a","name":"A"}]}}'));
+    final client =
+        stub((_) => json('{"data":{"items":[{"id":"a","name":"A"}]}}'));
 
-    await pumpRemote(tester, client: client,
-        extra: {'selectValues': 'data.items'});
+    await pumpRemote(tester,
+        client: client, extra: {'selectValues': 'data.items'});
     await tester.pumpAndSettle();
 
     expect(find.text('A=a'), findsOneWidget);
@@ -158,7 +153,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: EngineFormRenderer(
-          engine: _PassthroughEngine(),
+          engine: FakeEngine(),
           form: {
             'display': 'form',
             'components': [

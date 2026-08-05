@@ -6,25 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:formio/formio.dart';
 
-/// Returns a fixed hidden map and error list, like the other renderer tests.
-class _FakeEngine implements FormEngine {
-  _FakeEngine({this.hidden = const {}, this.errors = const []});
-
-  final Map<String, dynamic> hidden;
-  final List<FormLogicError> errors;
-
-  @override
-  void setForm(Map<String, dynamic> form) {}
-
-  @override
-  FormLogicResult processData(Map<String, dynamic> submissionData,
-          {bool validate = true}) =>
-      FormLogicResult(
-        data: submissionData,
-        hidden: hidden,
-        errors: validate ? errors : const [],
-      );
-}
+import 'support/fake_engine.dart';
 
 Map<String, dynamic> field(String key, String label) => {
       'key': key,
@@ -50,7 +32,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: EngineFormRenderer(
-          engine: engine ?? _FakeEngine(),
+          engine: engine ?? FakeEngine(),
           form: form,
           theme: theme,
         ),
@@ -121,7 +103,8 @@ void main() {
     await pump(tester, twoTabs);
     await swipeLeft(tester);
 
-    final controller = tester.widget<TabBarView>(find.byType(TabBarView)).controller!;
+    final controller =
+        tester.widget<TabBarView>(find.byType(TabBarView)).controller!;
     expect(controller.index, 1,
         reason: 'the bar and the pages share one TabController');
   });
@@ -162,8 +145,7 @@ void main() {
   });
 
   testWidgets('a tab the engine hides by key is dropped', (tester) async {
-    await pump(tester, twoTabs,
-        engine: _FakeEngine(hidden: {'tabB': true}));
+    await pump(tester, twoTabs, engine: FakeEngine(hidden: {'tabB': true}));
 
     expect(find.byType(Tab), findsNWidgets(1));
     expect(find.text('Details'), findsOneWidget);
@@ -176,7 +158,7 @@ void main() {
     await pump(
       tester,
       twoTabs,
-      engine: _FakeEngine(errors: [
+      engine: FakeEngine(errors: [
         const FormLogicError(path: 'b', rule: 'required'),
       ]),
     );
@@ -216,7 +198,7 @@ void main() {
     ]);
 
     await pump(tester, nested,
-        engine: _FakeEngine(errors: [
+        engine: FakeEngine(errors: [
           const FormLogicError(path: 'deep', rule: 'required'),
         ]));
     await tester.tap(find.text('Submit'));
@@ -261,7 +243,8 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('a non-list `columns` value is ignored, not cast', (tester) async {
+  testWidgets('a non-list `columns` value is ignored, not cast',
+      (tester) async {
     final oddColumns = tabsForm([
       {
         'key': 'tabA',
@@ -315,8 +298,9 @@ void main() {
       );
 
       // Same treatment panels get: a decorated container instead of a Card.
-      expect(find.descendant(
-            of: find.byType(TabBarView), matching: find.byType(Card)),
+      expect(
+          find.descendant(
+              of: find.byType(TabBarView), matching: find.byType(Card)),
           findsNothing);
       final decorated = tester
           .widgetList<Container>(find.descendant(

@@ -8,18 +8,9 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:formio/formio.dart';
+
+import '../support/fake_engine.dart';
 import 'package:formio/src/widgets/components/numeric_format.dart';
-
-class _PassthroughEngine implements FormEngine {
-  @override
-  void setForm(Map<String, dynamic> form) {}
-
-  @override
-  FormLogicResult processData(Map<String, dynamic> submissionData,
-          {bool validate = true}) =>
-      FormLogicResult(
-          data: submissionData, hidden: const {}, errors: const []);
-}
 
 void main() {
   group('formatting helpers', () {
@@ -38,7 +29,8 @@ void main() {
         '1,234.50',
       );
       expect(
-        formatNumeric(1234.5, grouping: false, decimalLimit: 2, locale: 'en_US'),
+        formatNumeric(1234.5,
+            grouping: false, decimalLimit: 2, locale: 'en_US'),
         '1234.50',
       );
     });
@@ -76,7 +68,7 @@ void main() {
         supportedLocales: const [Locale('en', 'US')],
         home: Scaffold(
           body: EngineFormRenderer(
-            engine: _PassthroughEngine(),
+            engine: FakeEngine(),
             initialData: initial,
             onChanged: (d) => latest = d,
             form: {
@@ -118,8 +110,8 @@ void main() {
     });
 
     testWidgets('formats a stored value while idle', (tester) async {
-      final data = pump(tester, {'currency': 'USD'},
-          initial: {'amount': 1234.5});
+      final data =
+          pump(tester, {'currency': 'USD'}, initial: {'amount': 1234.5});
       await data();
 
       expect(find.text('1,234.50'), findsOneWidget);
@@ -197,8 +189,7 @@ void main() {
     });
 
     testWidgets('clearing the field stores null', (tester) async {
-      final data = pump(tester, {'currency': 'USD'},
-          initial: {'amount': 10});
+      final data = pump(tester, {'currency': 'USD'}, initial: {'amount': 10});
       await data();
 
       await tester.enterText(find.byType(TextField), '');
@@ -210,8 +201,8 @@ void main() {
     testWidgets('a plain number is not reformatted unless asked',
         (tester) async {
       // Form.io defaults number's `delimiter` to false.
-      final data = pump(tester, const {}, type: 'number',
-          initial: {'amount': 1234.5});
+      final data =
+          pump(tester, const {}, type: 'number', initial: {'amount': 1234.5});
       await data();
 
       expect(find.text('1234.5'), findsOneWidget);
@@ -231,7 +222,11 @@ void main() {
     testWidgets('validate.integer rejects a decimal as typed', (tester) async {
       // @formio/core has no `integer` rule — it relies on the browser's number
       // input — so the field is the only thing that can enforce it.
-      final data = pump(tester, {'validate': {'integer': true}},
+      final data = pump(
+          tester,
+          {
+            'validate': {'integer': true}
+          },
           type: 'number');
       await data();
 
@@ -245,7 +240,11 @@ void main() {
 
     testWidgets('validate.integer uses a keyboard without a decimal key',
         (tester) async {
-      final data = pump(tester, {'validate': {'integer': true}},
+      final data = pump(
+          tester,
+          {
+            'validate': {'integer': true}
+          },
           type: 'number');
       await data();
 

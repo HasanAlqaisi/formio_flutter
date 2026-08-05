@@ -9,14 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:formio/formio.dart';
 
-class _PassthroughEngine implements FormEngine {
-  @override
-  void setForm(Map<String, dynamic> form) {}
-  @override
-  FormLogicResult processData(Map<String, dynamic> submissionData,
-          {bool validate = true}) =>
-      FormLogicResult(data: submissionData, hidden: const {}, errors: const []);
-}
+import '../support/fake_engine.dart';
 
 void main() {
   Future<void> pump(WidgetTester tester, String? labelPosition,
@@ -26,7 +19,7 @@ void main() {
         textDirection: direction,
         child: Scaffold(
           body: EngineFormRenderer(
-            engine: _PassthroughEngine(),
+            engine: FakeEngine(),
             form: {
               'display': 'form',
               'components': [

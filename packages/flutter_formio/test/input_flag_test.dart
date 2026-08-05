@@ -11,17 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:formio/formio.dart';
 
-/// Passes data straight through; these tests only exercise path binding.
-class _PassthroughEngine implements FormEngine {
-  @override
-  void setForm(Map<String, dynamic> form) {}
-
-  @override
-  FormLogicResult processData(Map<String, dynamic> submissionData,
-          {bool validate = true}) =>
-      FormLogicResult(
-          data: submissionData, hidden: const {}, errors: const []);
-}
+import 'support/fake_engine.dart';
 
 void main() {
   /// Renders [components] and exposes the latest submission data.
@@ -33,7 +23,7 @@ void main() {
     late final Future<void> pumped = tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: EngineFormRenderer(
-          engine: _PassthroughEngine(),
+          engine: FakeEngine(),
           form: {'display': 'form', 'components': components},
           onChanged: (d) => latest = d,
         ),
@@ -165,8 +155,11 @@ void main() {
 
       final result = await data();
       expect(result, containsPair('amount', '7'));
-      expect(result, isNot(contains('blurb')),
-          reason: 'content is presentational and must not collect data',);
+      expect(
+        result,
+        isNot(contains('blurb')),
+        reason: 'content is presentational and must not collect data',
+      );
     });
   });
 }

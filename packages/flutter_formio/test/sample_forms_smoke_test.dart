@@ -14,18 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:formio/formio.dart';
 
-/// Passes data through unchanged. The real engine needs flutter_js, which a
-/// widget test has no host for — and rendering is what is under test here.
-class _PassthroughEngine implements FormEngine {
-  @override
-  void setForm(Map<String, dynamic> form) {}
-
-  @override
-  FormLogicResult processData(Map<String, dynamic> submissionData,
-          {bool validate = true}) =>
-      FormLogicResult(
-          data: submissionData, hidden: const {}, errors: const []);
-}
+import 'support/fake_engine.dart';
 
 /// Form.io exports sometimes wrap the schema in a stringified `template`.
 Map<String, dynamic>? _loadForm(File file) {
@@ -40,8 +29,10 @@ Map<String, dynamic>? _loadForm(File file) {
 void main() {
   final directory = Directory('../../example/assets/form-samples');
   final samples = directory.existsSync()
-      ? (directory.listSync().whereType<File>().where(
-              (f) => f.path.endsWith('.json'))
+      ? (directory
+          .listSync()
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.json'))
           .toList()
         ..sort((a, b) => a.path.compareTo(b.path)))
       : <File>[];
@@ -56,7 +47,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: EngineFormRenderer(
-          engine: _PassthroughEngine(),
+          engine: FakeEngine(),
           form: form,
           // A real host theme, so themed paths are exercised too.
           theme: FormioTheme(

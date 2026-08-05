@@ -31,7 +31,8 @@ void main() {
     /// The Clear button is enabled only while a stroke exists, so it stands in
     /// for "the canvas received the gesture" without needing PNG encoding
     /// (`toImage`/`toByteData` require `runAsync`, out of scope here).
-    bool strokeRecorded(WidgetTester tester) => tester
+    bool strokeRecorded(WidgetTester tester) =>
+        tester
             .widget<TextButton>(find.ancestor(
               of: find.byIcon(Icons.clear),
               matching: find.byType(TextButton),

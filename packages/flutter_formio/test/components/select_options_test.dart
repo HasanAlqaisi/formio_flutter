@@ -10,7 +10,8 @@ void main() {
   group('dataSrc detection', () {
     test('absent or "values" is the inline source', () {
       expect(selectDataSourceOf({}), SelectDataSource.inline);
-      expect(selectDataSourceOf({'dataSrc': 'values'}), SelectDataSource.inline);
+      expect(
+          selectDataSourceOf({'dataSrc': 'values'}), SelectDataSource.inline);
     });
 
     test('recognises the remote sources', () {
@@ -18,8 +19,8 @@ void main() {
       expect(selectDataSourceOf({'dataSrc': 'url'}), SelectDataSource.url);
       expect(selectDataSourceOf({'dataSrc': 'resource'}),
           SelectDataSource.resource);
-      expect(selectDataSourceOf({'dataSrc': 'custom'}),
-          SelectDataSource.custom);
+      expect(
+          selectDataSourceOf({'dataSrc': 'custom'}), SelectDataSource.custom);
     });
   });
 
@@ -38,7 +39,11 @@ void main() {
 
     test('a missing or mistyped segment gives null, not a throw', () {
       expect(readPath({'a': 1}, 'a.b.c'), isNull);
-      expect(readPath({'a': [1]}, 'a.nope'), isNull);
+      expect(
+          readPath({
+            'a': [1]
+          }, 'a.nope'),
+          isNull);
       expect(readPath(null, 'a'), isNull);
     });
 
@@ -91,7 +96,9 @@ void main() {
     test('valueProperty selects a field, including a nested one', () {
       expect(valueForItem({'id': 5, 'name': 'x'}, valueProperty: 'id'), 5);
       expect(
-        valueForItem({'meta': {'code': 'IQ'}}, valueProperty: 'meta.code'),
+        valueForItem({
+          'meta': {'code': 'IQ'}
+        }, valueProperty: 'meta.code'),
         'IQ',
       );
     });
@@ -171,7 +178,12 @@ void main() {
 
     test('a wrapped payload with no selectValues finds the array', () {
       final options = optionsFromPayload(
-        {'total': 2, 'items': [{'label': 'A', 'value': 'a'}]},
+        {
+          'total': 2,
+          'items': [
+            {'label': 'A', 'value': 'a'}
+          ]
+        },
         const {},
       );
       expect(options.single['value'], 'a');
@@ -180,8 +192,12 @@ void main() {
     test('a correct selectValues still wins over the search', () {
       final options = optionsFromPayload(
         {
-          'wrong': [{'label': 'W', 'value': 'w'}],
-          'right': [{'label': 'R', 'value': 'r'}],
+          'wrong': [
+            {'label': 'W', 'value': 'w'}
+          ],
+          'right': [
+            {'label': 'R', 'value': 'r'}
+          ],
         },
         {'selectValues': 'right'},
       );
@@ -246,14 +262,20 @@ void main() {
 
     test('malformed json gives no options rather than throwing', () {
       expect(
-        localSelectOptions({'dataSrc': 'json', 'data': {'json': '{not json'}}),
+        localSelectOptions({
+          'dataSrc': 'json',
+          'data': {'json': '{not json'}
+        }),
         isEmpty,
       );
     });
 
     test('a url source has nothing available locally', () {
       expect(
-        localSelectOptions({'dataSrc': 'url', 'data': {'url': 'https://x'}}),
+        localSelectOptions({
+          'dataSrc': 'url',
+          'data': {'url': 'https://x'}
+        }),
         isEmpty,
       );
     });

@@ -6,7 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('UnknownComponent', () {
-    testWidgets('renders warning for unsupported component type', (WidgetTester tester) async {
+    testWidgets('renders warning for unsupported component type',
+        (WidgetTester tester) async {
       // Arrange
       final component = ComponentModel.fromJson({
         'key': 'custom',
@@ -28,7 +29,8 @@ void main() {
       expect(find.textContaining('custom'), findsOneWidget);
     });
 
-    testWidgets('displays component label when available', (WidgetTester tester) async {
+    testWidgets('displays component label when available',
+        (WidgetTester tester) async {
       // Arrange
       final component = ComponentModel.fromJson({
         'key': 'test',

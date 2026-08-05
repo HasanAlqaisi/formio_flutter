@@ -37,10 +37,10 @@ void main() {
     test('should allow setting custom JS evaluator', () {
       final customEvaluator = _TestJsEvaluator();
       JavaScriptEvaluator.setEvaluator(customEvaluator);
-      
+
       final result = JavaScriptEvaluator.evaluate('test', {});
       expect(result, equals('custom_result'));
-      
+
       // Reset to no-op
       JavaScriptEvaluator.setEvaluator(const NoOpJsEvaluator());
     });

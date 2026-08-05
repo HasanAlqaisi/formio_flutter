@@ -10,14 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:formio/formio.dart';
 
-class _PassthroughEngine implements FormEngine {
-  @override
-  void setForm(Map<String, dynamic> form) {}
-  @override
-  FormLogicResult processData(Map<String, dynamic> submissionData,
-          {bool validate = true}) =>
-      FormLogicResult(data: submissionData, hidden: const {}, errors: const []);
-}
+import 'support/fake_engine.dart';
 
 void main() {
   setUp(RemoteSelectOptions.clearCache);
@@ -33,7 +26,7 @@ void main() {
     late final Future<void> pumped = tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: EngineFormRenderer(
-          engine: _PassthroughEngine(),
+          engine: FakeEngine(),
           onChanged: (d) => latest = d,
           controls: FormioControlBuilders(
             select: (context, spec) {
@@ -141,12 +134,11 @@ void main() {
 
   /// Renders a bare select with no host builder, so the package's own widget is
   /// what shows.
-  Future<void> pumpBuiltIn(WidgetTester tester,
-      {bool? searchEnabled}) async {
+  Future<void> pumpBuiltIn(WidgetTester tester, {bool? searchEnabled}) async {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: EngineFormRenderer(
-          engine: _PassthroughEngine(),
+          engine: FakeEngine(),
           form: {
             'display': 'form',
             'components': [
@@ -210,7 +202,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: EngineFormRenderer(
-          engine: _PassthroughEngine(),
+          engine: FakeEngine(),
           controls: FormioControlBuilders(
             // Style single-select, hand multi-select back to the package.
             select: (context, spec) => spec.multiple

@@ -6,16 +6,8 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:formio/formio.dart';
 
-class _PassthroughEngine implements FormEngine {
-  @override
-  void setForm(Map<String, dynamic> form) {}
-  @override
-  FormLogicResult processData(Map<String, dynamic> submissionData,
-          {bool validate = true}) =>
-      FormLogicResult(data: submissionData, hidden: const {}, errors: const []);
-}
+import '../support/pump_form.dart';
 
 void main() {
   Future<Map<String, dynamic>> pump(
@@ -29,46 +21,20 @@ void main() {
       {'name': 'Hedy'},
     ],
   }) async {
-    final latest = <String, dynamic>{};
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        // No scroll wrapper: the renderer provides its own scroll view, which is
-        // exactly why the reorderable list must not scroll itself.
-        body: EngineFormRenderer(
-          engine: _PassthroughEngine(),
-          initialData: {'people': rows},
-          onChanged: (d) {
-            latest
-              ..clear()
-              ..addAll(d);
-          },
-          form: {
-            'display': 'form',
-            'components': [
-              {
-                'key': 'people',
-                'type': 'datagrid',
-                'label': 'People',
-                'input': true,
-                'reorder': reorder,
-                'disabled': disabled,
-                'disableAddingRemovingRows': disableAddingRemovingRows,
-                'components': [
-                  {
-                    'key': 'name',
-                    'type': 'textfield',
-                    'label': 'Name',
-                    'input': true,
-                  },
-                ],
-              },
-            ],
-          },
-        ),
-      ),
-    ));
-    await tester.pumpAndSettle();
-    return latest;
+    return pumpForm(
+      tester,
+      initialData: {'people': rows},
+      // No scroll wrapper: the renderer provides its own scroll view, which is
+      // exactly why the reorderable list must not scroll itself.
+      form: formOf([
+        field('datagrid', 'people', label: 'People', extra: {
+          'reorder': reorder,
+          'disabled': disabled,
+          'disableAddingRemovingRows': disableAddingRemovingRows,
+          'components': [field('textfield', 'name', label: 'Name')],
+        }),
+      ]),
+    );
   }
 
   List<String?> namesIn(Map<String, dynamic> data) => [

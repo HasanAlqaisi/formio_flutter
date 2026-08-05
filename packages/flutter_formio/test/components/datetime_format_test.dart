@@ -7,18 +7,9 @@
 /// string goes straight to `DateFormat`.
 library;
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:formio/formio.dart';
 
-class _PassthroughEngine implements FormEngine {
-  @override
-  void setForm(Map<String, dynamic> form) {}
-  @override
-  FormLogicResult processData(Map<String, dynamic> submissionData,
-          {bool validate = true}) =>
-      FormLogicResult(data: submissionData, hidden: const {}, errors: const []);
-}
+import '../support/pump_form.dart';
 
 void main() {
   Future<void> pump(
@@ -27,30 +18,17 @@ void main() {
     String? format,
     bool enableTime = false,
     required String stored,
-  }) async {
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: EngineFormRenderer(
-          engine: _PassthroughEngine(),
-          initialData: {'when': stored},
-          form: {
-            'display': 'form',
-            'components': [
-              {
-                'key': 'when',
-                'type': type,
-                'label': 'When',
-                'input': true,
-                'enableTime': enableTime,
-                if (format != null) 'format': format,
-              },
-            ],
-          },
-        ),
-      ),
-    ));
-    await tester.pumpAndSettle();
-  }
+  }) =>
+      pumpForm(
+        tester,
+        initialData: {'when': stored},
+        form: formOf([
+          field(type, 'when', label: 'When', extra: {
+            'enableTime': enableTime,
+            if (format != null) 'format': format,
+          }),
+        ]),
+      );
 
   testWidgets('a datetime honours its authored format', (tester) async {
     await pump(tester,
