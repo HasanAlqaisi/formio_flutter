@@ -366,13 +366,19 @@ List<Map<String, dynamic>> selectOptions(Map<String, dynamic> raw) =>
     localSelectOptions(raw);
 
 Widget buildSelect(FieldScope s, Map<String, dynamic> raw, String path) {
-  // A url-backed select has to fetch first; everything else resolves inline.
-  if (selectDataSourceOf(raw) == SelectDataSource.url) {
+  // `url` and `resource` both have to fetch first; everything else resolves
+  // inline.
+  if (selectNeedsFetch(raw)) {
+    // Under `lazyLoad` the control must stay on screen while it loads: it is the
+    // thing that triggered the fetch, and swapping it for a spinner would unmount
+    // the picker the user just opened.
+    final lazy = raw['lazyLoad'] == true;
     return RemoteSelectOptions(
       component: raw,
       formData: s.data,
+      resourceSource: s.resourceSource,
       builder: (context, state) {
-        if (state.loading && state.options.isEmpty) {
+        if (!lazy && state.loading && state.options.isEmpty) {
           return const Align(
             alignment: AlignmentDirectional.centerStart,
             child: SizedBox(
@@ -382,11 +388,21 @@ Widget buildSelect(FieldScope s, Map<String, dynamic> raw, String path) {
             ),
           );
         }
-        if (state.error != null && state.options.isEmpty) {
+        if (!lazy && state.error != null && state.options.isEmpty) {
           return Text(ComponentFactory.locale.dataSourceError,
               style: s.theme.resolvedErrorStyle(s.context));
         }
-        return _selectControl(s, raw, path, state.options);
+        return _selectControl(
+          s,
+          raw,
+          path,
+          state.options,
+          loading: state.loading,
+          error: state.error,
+          // Only a lazy source needs the loader; an eager one has already run,
+          // and handing it over would invite a pointless second round trip.
+          ensureOptions: lazy ? state.ensureLoaded : null,
+        );
       },
     );
   }
@@ -400,6 +416,7 @@ Widget _selectControl(
   List<Map<String, dynamic>> options, {
   bool loading = false,
   Object? error,
+  Future<List<Map<String, dynamic>>> Function()? ensureOptions,
 }) {
   final disabled = raw['disabled'] == true;
   final spec = FormioSelectSpec(
@@ -417,6 +434,13 @@ Widget _selectControl(
     required: raw['validate']?['required'] == true,
     // Form.io's own default is on, so only an explicit false turns search off.
     searchable: raw['searchEnabled'] != false,
+    ensureOptions: ensureOptions == null
+        ? null
+        : () async => [
+              for (final o in await ensureOptions())
+                FormioOption(
+                    label: o['label']?.toString() ?? '', value: o['value']),
+            ],
     loading: loading,
     error: error,
   );

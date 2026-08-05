@@ -23,6 +23,7 @@ final Map<String, List<Map<String, dynamic>>> _cache = {};
 class RemoteOptionsState {
   const RemoteOptionsState({
     required this.options,
+    required this.ensureLoaded,
     this.loading = false,
     this.error,
   });
@@ -30,6 +31,16 @@ class RemoteOptionsState {
   final List<Map<String, dynamic>> options;
   final bool loading;
   final Object? error;
+
+  /// Fetches if it has not happened yet, and resolves with the options.
+  ///
+  /// It *returns* them rather than only triggering, because a lazy control opens
+  /// a picker on its own route: options arriving afterwards never reach that
+  /// route, so the caller has to be handed the list it should render.
+  ///
+  /// Idempotent — concurrent callers share one request — and safe to call during
+  /// a build.
+  final Future<List<Map<String, dynamic>>> Function() ensureLoaded;
 }
 
 class RemoteSelectOptions extends StatefulWidget {
@@ -39,6 +50,7 @@ class RemoteSelectOptions extends StatefulWidget {
     required this.formData,
     required this.builder,
     this.client,
+    this.resourceSource,
   });
 
   /// The component's raw schema.
@@ -51,6 +63,11 @@ class RemoteSelectOptions extends StatefulWidget {
 
   /// Injectable for tests; a plain [Dio] otherwise.
   final Dio? client;
+
+  /// Project URL and credentials for `dataSrc: "resource"`. Null means resource
+  /// components cannot be fetched, which is reported as an error rather than an
+  /// empty list.
+  final FormioResourceSource? resourceSource;
 
   /// Drops every cached response. Call between tests, or after a sign-in that
   /// changes what the endpoints return.
@@ -65,20 +82,60 @@ class _RemoteSelectOptionsState extends State<RemoteSelectOptions> {
   bool _loading = false;
   Object? _error;
 
+  /// The in-flight (or finished) request, so repeated calls share one fetch.
+  /// Null until something asks — under `lazyLoad`, nothing does until a control
+  /// opens.
+  Future<List<Map<String, dynamic>>>? _pending;
+
+  /// Form.io's `lazyLoad`: hold the request until the control needs its options,
+  /// instead of firing one per select the moment the form is built.
+  bool get _lazy => widget.component['lazyLoad'] == true;
+
   @override
   void initState() {
     super.initState();
-    _load();
+    // Eager: start now, not a microtask later, so the very first frame can show
+    // that a wait is happening.
+    if (!_lazy) _pending = _run();
   }
 
   @override
   void didUpdateWidget(RemoteSelectOptions oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // An interpolated url can change when the data it references changes.
-    if (_resolvedUrl(oldWidget) != _resolvedUrl(widget)) _load();
+    // An interpolated url can change when the data it references changes. Only
+    // refetch if something already asked for these options — a lazy select that
+    // was never opened stays untouched.
+    if (_pending != null && _resolvedUrl(oldWidget) != _resolvedUrl(widget)) {
+      _pending = null;
+      _ensureLoaded();
+    }
   }
 
+  Future<List<Map<String, dynamic>>> _ensureLoaded() =>
+      _pending ??= _deferredRun();
+
+  /// Yields past the current build before touching state, so a caller may invoke
+  /// this from its own `build` without a setState-during-build.
+  Future<List<Map<String, dynamic>>> _deferredRun() async {
+    await Future<void>.delayed(Duration.zero);
+    if (!mounted) return const [];
+    return _run();
+  }
+
+  Future<List<Map<String, dynamic>>> _run() async {
+    await _load();
+    return _options;
+  }
+
+  /// The endpoint for this component, whichever source it uses, or null when it
+  /// has none.
   String? _resolvedUrl(RemoteSelectOptions w) {
+    if (selectDataSourceOf(w.component) == SelectDataSource.resource) {
+      final id = resourceIdOf(w.component);
+      final source = w.resourceSource;
+      if (id == null || source == null) return null;
+      return source.submissionsUrl(id, limit: selectLimit(w.component));
+    }
     final data = w.component['data'];
     final url = data is Map ? data['url']?.toString() : null;
     if (url == null || url.trim().isEmpty) return null;
@@ -88,8 +145,10 @@ class _RemoteSelectOptionsState extends State<RemoteSelectOptions> {
   Map<String, dynamic> _headers() {
     final data = widget.component['data'];
     final configured = data is Map ? data['headers'] : null;
-    if (configured is! List) return const {};
-    final headers = <String, dynamic>{};
+    // A resource request carries the project's credentials; the schema has no
+    // place to put them.
+    final headers = <String, dynamic>{...?widget.resourceSource?.headers};
+    if (configured is! List) return headers;
     for (final entry in configured) {
       if (entry is! Map) continue;
       final key = entry['key']?.toString();
@@ -102,7 +161,21 @@ class _RemoteSelectOptionsState extends State<RemoteSelectOptions> {
 
   Future<void> _load() async {
     final url = _resolvedUrl(widget);
-    if (url == null) return;
+    if (url == null) {
+      // A resource component with no configured project is misconfigured, not
+      // empty. Saying so beats offering a list that will never fill.
+      if (selectDataSourceOf(widget.component) == SelectDataSource.resource) {
+        if (kDebugMode) {
+          debugPrint('⚠️ Select "${widget.component['key']}" uses '
+              'dataSrc: "resource" but no FormioResourceSource was supplied, '
+              'so its options cannot be fetched.');
+        }
+        if (mounted) {
+          setState(() => _error = StateError('No FormioResourceSource'));
+        }
+      }
+      return;
+    }
 
     final cached = _cache[url];
     if (cached != null) {
@@ -150,6 +223,7 @@ class _RemoteSelectOptionsState extends State<RemoteSelectOptions> {
           options: _options,
           loading: _loading,
           error: _error,
+          ensureLoaded: _ensureLoaded,
         ),
       );
 }

@@ -51,6 +51,7 @@ class FormioSelectSpec {
     this.searchable = true,
     this.loading = false,
     this.error,
+    this.ensureOptions,
   });
 
   /// The raw schema, for anything not surfaced here.
@@ -83,6 +84,29 @@ class FormioSelectSpec {
 
   /// The fetch failed. Worth showing rather than offering an empty list.
   final Object? error;
+
+  /// Loads the options, for a remote source that sets `lazyLoad`.
+  ///
+  /// Null when the options are already resolved. When it is not null, [options]
+  /// is empty until this has run: `lazyLoad` exists so a form with thirty
+  /// remote selects makes no requests until one is opened.
+  ///
+  /// It resolves *with* the options rather than only triggering the fetch,
+  /// because a control that opens a picker on its own route cannot receive them
+  /// afterwards. Await it, then render what it returns.
+  ///
+  /// Idempotent — concurrent callers share one request — and safe to call from a
+  /// `build`.
+  final Future<List<FormioOption>> Function()? ensureOptions;
+
+  /// [ensureOptions] in the `{label, value}` shape the built-in pickers take.
+  Future<List<Map<String, dynamic>>> Function()? get _rawLoader {
+    final load = ensureOptions;
+    if (load == null) return null;
+    return () async => [
+          for (final o in await load()) {'label': o.label, 'value': o.value},
+        ];
+  }
 
   /// The option matching [value], or null when the stored value is not among
   /// them — which happens when a saved value predates a change to the source.
@@ -137,6 +161,7 @@ class FormioBuiltInSelect extends StatelessWidget {
         hint: spec.placeholder,
         enabled: spec.enabled,
         searchable: spec.searchable,
+        loadOptions: spec._rawLoader,
         onChanged: (keys) {
           // Map the chosen keys back to their typed values.
           final byKey = {for (final o in spec.options) o.key: o.value};
@@ -160,6 +185,7 @@ class FormioBuiltInSelect extends StatelessWidget {
         selected: selected?.key ?? spec.value?.toString(),
         hint: spec.placeholder,
         enabled: spec.enabled,
+        loadOptions: spec._rawLoader,
         onChanged: (key) {
           for (final o in spec.options) {
             if (o.key == key) {
@@ -173,6 +199,9 @@ class FormioBuiltInSelect extends StatelessWidget {
 
     return DropdownButton<String>(
       isExpanded: true,
+      // A plain dropdown cannot await, so a lazy source is simply asked to
+      // start loading; the menu fills on the following build.
+      onTap: spec.ensureOptions == null ? null : () => spec.ensureOptions!(),
       value: selected?.key,
       hint: Text(spec.placeholder ?? 'Select…'),
       items: [

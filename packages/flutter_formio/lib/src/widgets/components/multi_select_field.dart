@@ -18,6 +18,7 @@ class MultiSelectField extends StatelessWidget {
     this.hint,
     this.enabled = true,
     this.searchable = true,
+    this.loadOptions,
   });
 
   /// Available options as `{label, value}` maps.
@@ -37,6 +38,12 @@ class MultiSelectField extends StatelessWidget {
   /// Whether the checklist offers a search field (`searchEnabled`).
   final bool searchable;
 
+  /// Loads the options as the checklist opens, for a `lazyLoad` source.
+  ///
+  /// Awaited before the list is shown, and its result is what gets rendered —
+  /// the dialog is on its own route, so a later arrival would never reach it.
+  final Future<List<Map<String, dynamic>>> Function()? loadOptions;
+
   String _labelFor(String value) {
     for (final o in options) {
       if (o['value']?.toString() == value) {
@@ -47,6 +54,8 @@ class MultiSelectField extends StatelessWidget {
   }
 
   Future<void> _open(BuildContext context) async {
+    final available = await loadOptions?.call() ?? options;
+    if (!context.mounted) return;
     final temp = {...selected};
     var query = '';
     final result = await showDialog<List<String>>(
@@ -55,8 +64,8 @@ class MultiSelectField extends StatelessWidget {
         builder: (ctx, setState) {
           final q = query.toLowerCase();
           final filtered = q.isEmpty
-              ? options
-              : options
+              ? available
+              : available
                   .where((o) =>
                       (o['label']?.toString() ?? '').toLowerCase().contains(q))
                   .toList();

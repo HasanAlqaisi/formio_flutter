@@ -12,7 +12,8 @@ library;
 
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
+import 'package:flutter/foundation.dart'
+    show debugPrint, immutable, kDebugMode;
 
 /// Where a component's options come from.
 enum SelectDataSource {
@@ -26,8 +27,9 @@ enum SelectDataSource {
   /// Fetched from `data.url`.
   url,
 
-  /// A Form.io resource id in `data.resource`. Needs an authenticated project
-  /// API, so it is left to the host.
+  /// A Form.io resource id in `data.resource`, fetched from the project's
+  /// submissions endpoint. Needs a [FormioResourceSource] — an id alone is not
+  /// addressable.
   resource,
 
   /// A JavaScript expression in `data.custom`.
@@ -175,6 +177,59 @@ List<Object?> _rowsIn(Object? payload, String? selectValues) {
     }
   }
   return const [];
+}
+
+/// Where `dataSrc: "resource"` components fetch from, and with what credentials.
+///
+/// A resource component carries only a form id (`data.resource`); the project it
+/// belongs to is deployment configuration, not schema, so the host supplies it.
+/// Without one, a resource-backed select has no addressable endpoint and reports
+/// a data-source error rather than an empty list.
+@immutable
+class FormioResourceSource {
+  const FormioResourceSource({required this.projectUrl, this.headers = const {}});
+
+  /// Base URL of the Form.io project, e.g. `https://abc.form.io`. A trailing
+  /// slash is tolerated.
+  final String projectUrl;
+
+  /// Sent with every resource request — typically `x-jwt-token` for an
+  /// authenticated project.
+  final Map<String, String> headers;
+
+  /// The submissions endpoint for [resourceId].
+  ///
+  /// [limit] comes from the component's own `limit` (Form.io's builder writes
+  /// 100). Passing it matters: the endpoint's own default page size is small,
+  /// so omitting it silently truncates the options.
+  String submissionsUrl(String resourceId, {int? limit}) {
+    final base = projectUrl.endsWith('/')
+        ? projectUrl.substring(0, projectUrl.length - 1)
+        : projectUrl;
+    final query = limit == null ? '' : '?limit=$limit';
+    return '$base/form/$resourceId/submission$query';
+  }
+}
+
+/// `limit` from the schema, for paging a remote source.
+int? selectLimit(Map<String, dynamic> raw) {
+  final limit = raw['limit'];
+  if (limit is num) return limit.toInt();
+  if (limit is String) return int.tryParse(limit.trim());
+  return null;
+}
+
+/// The resource id of a `dataSrc: "resource"` component, or null.
+String? resourceIdOf(Map<String, dynamic> raw) {
+  final data = raw['data'];
+  final id = data is Map ? data['resource']?.toString() : null;
+  return (id == null || id.trim().isEmpty) ? null : id.trim();
+}
+
+/// Whether [raw] needs a network call before it has any options.
+bool selectNeedsFetch(Map<String, dynamic> raw) {
+  final source = selectDataSourceOf(raw);
+  return source == SelectDataSource.url || source == SelectDataSource.resource;
 }
 
 /// Options available without a network call: the inline `values` list, or the

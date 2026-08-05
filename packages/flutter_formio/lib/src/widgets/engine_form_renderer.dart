@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import '../core/form_logic_engine.dart';
 import 'component_builders.dart' as cb;
 import 'control_builders.dart';
+import 'components/select_options.dart' show FormioResourceSource;
 import 'components/tabs_section.dart';
 import 'form_field_context.dart';
 import 'form_field_scope.dart';
@@ -39,6 +40,7 @@ class EngineFormRenderer extends StatefulWidget {
     this.onChanged,
     this.customComponents,
     this.controls = const FormioControlBuilders(),
+    this.resourceSource,
     this.textDirection,
     this.theme = const FormioTheme(),
     this.debounce = const Duration(milliseconds: 450),
@@ -60,6 +62,15 @@ class EngineFormRenderer extends StatefulWidget {
   /// `customComponents['select']` override has to reimplement `dataSrc`,
   /// `valueProperty`, `template` and remote loading to work at all.
   final FormioControlBuilders controls;
+
+  /// Project URL and credentials for `dataSrc: "resource"` selects (and the
+  /// `resource` component type, which is one).
+  ///
+  /// A resource component carries only a form id, so the project it lives in is
+  /// deployment configuration rather than schema. Leave null if no form uses a
+  /// resource source; those components then report a data-source error instead
+  /// of an empty list that would never fill.
+  final FormioResourceSource? resourceSource;
 
   /// Text/layout direction for the whole form. When null, the ambient
   /// [Directionality] is used (e.g. from `MaterialApp`'s locale). Set
@@ -99,6 +110,7 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
     ..._arrayTypes,
     ..._nestingTypes,
     'select',
+    'resource',
     'selectboxes',
     'checkbox',
     'radio',
@@ -217,6 +229,7 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
           return f;
         }),
         renderChild: _render,
+        resourceSource: widget.resourceSource,
         controls: widget.controls,
       );
 
@@ -595,7 +608,12 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
   Widget _renderControl(Map<String, dynamic> raw, String path, String? type) {
     // Control components (delegated to stateless builders).
     switch (type) {
+      // Form.io's `resource` component *is* a select whose options come from a
+      // resource; it carries the same data/template/valueProperty keys. Without
+      // this it fell through to the unknown-component placeholder and its value
+      // never reached the submission.
       case 'select':
+      case 'resource':
         return cb.buildField(
             _scope, raw, path, cb.buildSelect(_scope, raw, path));
       case 'selectboxes':

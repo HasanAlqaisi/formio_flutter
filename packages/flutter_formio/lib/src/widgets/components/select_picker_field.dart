@@ -21,6 +21,7 @@ class SelectPickerField extends StatelessWidget {
     this.hint,
     this.enabled = true,
     this.searchable = true,
+    this.loadOptions,
   });
 
   /// Available options as `{label, value}` maps.
@@ -38,6 +39,13 @@ class SelectPickerField extends StatelessWidget {
   /// Whether the picker offers a search field (`searchEnabled`).
   final bool searchable;
 
+  /// Loads the options as the picker opens, for a `lazyLoad` source.
+  ///
+  /// Awaited *before* the list is shown, and its result is what gets rendered:
+  /// the dialog sits on its own route, so options arriving later would never
+  /// reach it. Null for a source that is already resolved.
+  final Future<List<Map<String, dynamic>>> Function()? loadOptions;
+
   String? _labelFor(String value) {
     for (final o in options) {
       if (o['value']?.toString() == value) {
@@ -48,6 +56,9 @@ class SelectPickerField extends StatelessWidget {
   }
 
   Future<void> _open(BuildContext context) async {
+    // Fresh from the loader when there is one; otherwise what we were given.
+    final available = await loadOptions?.call() ?? options;
+    if (!context.mounted) return;
     var query = '';
     final chosen = await showDialog<String>(
       context: context,
@@ -55,8 +66,8 @@ class SelectPickerField extends StatelessWidget {
         builder: (ctx, setState) {
           final q = query.toLowerCase();
           final filtered = q.isEmpty
-              ? options
-              : options
+              ? available
+              : available
                   .where((o) =>
                       (o['label']?.toString() ?? '').toLowerCase().contains(q))
                   .toList();
