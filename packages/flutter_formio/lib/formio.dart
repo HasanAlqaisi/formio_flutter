@@ -79,6 +79,7 @@ export 'src/widgets/components/file_component.dart';
 export 'src/widgets/components/hidden_component.dart';
 export 'src/widgets/components/html_element_component.dart';
 export 'src/widgets/components/multi_select_field.dart';
+export 'src/widgets/components/option_picker.dart';
 export 'src/widgets/components/remote_select_options.dart';
 export 'src/widgets/components/select_options.dart';
 export 'src/widgets/components/select_picker_field.dart';

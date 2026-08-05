@@ -458,10 +458,7 @@ Widget _selectControl(
   final disabled = raw['disabled'] == true;
   final spec = FormioSelectSpec(
     component: raw,
-    options: [
-      for (final o in options)
-        FormioOption(label: o['label']?.toString() ?? '', value: o['value']),
-    ],
+    options: typedOptions(options),
     value: s.getValue(path),
     onChanged: (value) => s.setValue(path, value, immediate: true),
     label: raw['label']?.toString() ?? '',
@@ -473,11 +470,7 @@ Widget _selectControl(
     searchable: raw['searchEnabled'] != false,
     ensureOptions: ensureOptions == null
         ? null
-        : () async => [
-              for (final o in await ensureOptions())
-                FormioOption(
-                    label: o['label']?.toString() ?? '', value: o['value']),
-            ],
+        : () async => typedOptions(await ensureOptions()),
     loading: loading,
     error: error,
   );

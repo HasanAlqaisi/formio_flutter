@@ -3,11 +3,16 @@
 ///
 /// Shows the current selection as chips inside a tappable, dropdown-like field
 /// and opens a searchable checklist to change it. This mirrors Form.io's own
-/// `choicesjs` multi-select and scales to large option sets
+/// `choicesjs` multi-select and scales to large option sets.
+///
+/// The field shell and the chooser are shared with [SelectPickerField]; only the
+/// closed-state display and the confirm step differ.
 library;
 
 import 'package:flutter/material.dart';
-import 'package:formio/formio.dart';
+
+import 'option_picker.dart';
+import 'select_options.dart' show FormioOption;
 
 class MultiSelectField extends StatelessWidget {
   const MultiSelectField({
@@ -21,14 +26,14 @@ class MultiSelectField extends StatelessWidget {
     this.loadOptions,
   });
 
-  /// Available options as `{label, value}` maps.
-  final List<Map<String, dynamic>> options;
+  final List<FormioOption> options;
 
-  /// Currently-selected option values (as strings).
-  final Set<String> selected;
+  /// The current selection. Entries need not appear in [options]: a stored value
+  /// can outlive a change to its option source, and dropping it silently would
+  /// lose data.
+  final List<FormioOption> selected;
 
-  /// Called with the new selection whenever it changes.
-  final ValueChanged<List<String>> onChanged;
+  final ValueChanged<List<FormioOption>> onChanged;
 
   /// Placeholder shown when nothing is selected.
   final String? hint;
@@ -39,138 +44,46 @@ class MultiSelectField extends StatelessWidget {
   final bool searchable;
 
   /// Loads the options as the checklist opens, for a `lazyLoad` source.
-  ///
-  /// Awaited before the list is shown, and its result is what gets rendered —
-  /// the dialog is on its own route, so a later arrival would never reach it.
-  final Future<List<Map<String, dynamic>>> Function()? loadOptions;
-
-  String _labelFor(String value) {
-    for (final o in options) {
-      if (o['value']?.toString() == value) {
-        return o['label']?.toString() ?? value;
-      }
-    }
-    return value;
-  }
+  final Future<List<FormioOption>> Function()? loadOptions;
 
   Future<void> _open(BuildContext context) async {
-    final available = await loadOptions?.call() ?? options;
-    if (!context.mounted) return;
-    final theme = FormioThemeScope.of(context);
-    final temp = {...selected};
-    var query = '';
-    final result = await showDialog<List<String>>(
+    final result = await showOptionPicker(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setState) {
-          final q = query.toLowerCase();
-          final filtered = q.isEmpty
-              ? available
-              : available
-                  .where((o) =>
-                      (o['label']?.toString() ?? '').toLowerCase().contains(q))
-                  .toList();
-          return AlertDialog(
-            content: SizedBox(
-              width: double.maxFinite,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (searchable)
-                    TextField(
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.search),
-                        hintText: ComponentFactory.locale.searchPlaceholder,
-                      ),
-                      onChanged: (v) => setState(() => query = v),
-                    ),
-                  if (searchable) const SizedBox(height: 8),
-                  Flexible(
-                    child: filtered.isEmpty
-                        ? Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Text(ComponentFactory.locale.noOptions),
-                          )
-                        : ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: filtered.length,
-                            itemBuilder: (_, i) {
-                              final val = filtered[i]['value']?.toString();
-                              return CheckboxListTile(
-                                dense: true,
-                                value: val != null && temp.contains(val),
-                                title: Text(
-                                    filtered[i]['label']?.toString() ?? ''),
-                                onChanged: val == null
-                                    ? null
-                                    : (sel) => setState(() => sel == true
-                                        ? temp.add(val)
-                                        : temp.remove(val)),
-                              );
-                            },
-                          ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                style: theme.resolvedSecondaryActionStyle(context),
-                onPressed: () => Navigator.pop(ctx),
-                child: Text(ComponentFactory.locale.cancel),
-              ),
-              FilledButton(
-                style: theme.resolvedPrimaryActionStyle(context),
-                onPressed: () => Navigator.pop(ctx, temp.toList()),
-                child: Text(ComponentFactory.locale.save),
-              ),
-            ],
-          );
-        },
-      ),
+      options: options,
+      selectedKeys: {for (final option in selected) option.key},
+      multiple: true,
+      searchable: searchable,
+      title: hint,
+      loadOptions: loadOptions,
     );
     if (result != null) onChanged(result);
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = FormioThemeScope.of(context);
-
-    return InkWell(
-      onTap: enabled ? () => _open(context) : null,
-      child: InputDecorator(
-        decoration: InputDecoration(
-          isDense: theme.isDense,
-          border: theme.resolvedInputBorder(context),
-          enabledBorder: theme.inputBorder,
-          contentPadding: theme.inputContentPadding,
-          fillColor: theme.inputFillColor,
-          filled: theme.inputFillColor != null,
-          suffixIcon: const Icon(Icons.arrow_drop_down),
-        ),
-        child: selected.isEmpty
-            ? Text(
-                hint ?? '',
-                style: theme.hintStyle ??
-                    TextStyle(color: Theme.of(context).hintColor),
-              )
-            : Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                children: [
-                  for (final v in selected)
-                    Chip(
-                      label: Text(_labelFor(v)),
-                      visualDensity: VisualDensity.compact,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      onDeleted: enabled
-                          ? () =>
-                              onChanged(selected.where((x) => x != v).toList())
-                          : null,
-                    ),
-                ],
-              ),
-      ),
+    return OptionFieldShell(
+      enabled: enabled,
+      onTap: () => _open(context),
+      child: selected.isEmpty
+          ? optionPlaceholder(context, hint)
+          : Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                for (final option in selected)
+                  Chip(
+                    label: Text(option.label),
+                    visualDensity: VisualDensity.compact,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    onDeleted: enabled
+                        ? () => onChanged([
+                              for (final other in selected)
+                                if (other.key != option.key) other,
+                            ])
+                        : null,
+                  ),
+              ],
+            ),
     );
   }
 }

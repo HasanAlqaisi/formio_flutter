@@ -15,25 +15,12 @@ library;
 import 'package:flutter/material.dart';
 
 import 'components/multi_select_field.dart';
+import 'components/select_options.dart';
 import 'components/select_picker_field.dart';
 
-/// One resolved option: what to show, and what to store.
-@immutable
-class FormioOption {
-  const FormioOption({required this.label, required this.value});
-
-  final String label;
-
-  /// The value to store, with its schema type intact — a `valueProperty` of
-  /// `id` over numeric ids yields `int`, not `"1"`.
-  final Object? value;
-
-  /// Stable key for widgets that address options by string.
-  String get key => value?.toString() ?? '';
-
-  @override
-  String toString() => 'FormioOption($label -> $value)';
-}
+// `FormioOption` moved to select_options.dart, next to the resolvers that build
+// it. Re-exported so `FormioSelectSpec`'s own library still supplies it.
+export 'components/select_options.dart' show FormioOption;
 
 /// A select, resolved and ready to render.
 @immutable
@@ -99,13 +86,22 @@ class FormioSelectSpec {
   /// `build`.
   final Future<List<FormioOption>> Function()? ensureOptions;
 
-  /// [ensureOptions] in the `{label, value}` shape the built-in pickers take.
-  Future<List<Map<String, dynamic>>> Function()? get _rawLoader {
-    final load = ensureOptions;
-    if (load == null) return null;
-    return () async => [
-          for (final o in await load()) {'label': o.label, 'value': o.value},
-        ];
+  /// The options matching [value] when [multiple], in source order.
+  ///
+  /// A stored key with no matching option is kept as a bare label rather than
+  /// dropped: a saved answer that outlived a change to its option source is data,
+  /// and silently discarding it loses the user's work.
+  List<FormioOption> get selectedMany {
+    final current = value;
+    final keys = {
+      for (final entry in current is List ? current : const [])
+        if (entry != null && entry.toString().isNotEmpty) entry.toString(),
+    };
+    final known = {for (final option in options) option.key: option};
+    return [
+      for (final key in keys)
+        known[key] ?? FormioOption(label: key, value: key),
+    ];
   }
 
   /// The option matching [value], or null when the stored value is not among
@@ -147,28 +143,16 @@ class FormioBuiltInSelect extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (spec.multiple) {
-      final current = spec.value;
       return MultiSelectField(
-        options: [
-          for (final o in spec.options) {'label': o.label, 'value': o.value},
-        ],
-        selected: (current is List ? current : const [])
-            .map((e) => e?.toString())
-            .whereType<String>()
-            .where((e) => e.isNotEmpty)
-            .toSet(),
+        options: spec.options,
+        selected: spec.selectedMany,
         hint: spec.placeholder,
         enabled: spec.enabled,
         searchable: spec.searchable,
-        loadOptions: spec._rawLoader,
-        onChanged: (keys) {
-          // Map the chosen keys back to their typed values.
-          final byKey = {for (final o in spec.options) o.key: o.value};
-          spec.onChanged([
-            for (final key in keys)
-              if (byKey.containsKey(key)) byKey[key] else key,
-          ]);
-        },
+        loadOptions: spec.ensureOptions,
+        // Each option's own value, so its schema type survives the round trip.
+        onChanged: (chosen) =>
+            spec.onChanged([for (final option in chosen) option.value]),
       );
     }
 
@@ -178,21 +162,14 @@ class FormioBuiltInSelect extends StatelessWidget {
     // suits.
     if (spec.searchable) {
       return SelectPickerField(
-        options: [
-          for (final o in spec.options) {'label': o.label, 'value': o.value},
-        ],
-        selected: selected?.key ?? spec.value?.toString(),
+        options: spec.options,
+        selected: selected,
+        storedValue: spec.value,
         hint: spec.placeholder,
         enabled: spec.enabled,
-        loadOptions: spec._rawLoader,
-        onChanged: (key) {
-          for (final o in spec.options) {
-            if (o.key == key) {
-              spec.onChanged(o.value);
-              return;
-            }
-          }
-        },
+        searchable: spec.searchable,
+        loadOptions: spec.ensureOptions,
+        onChanged: (option) => spec.onChanged(option.value),
       );
     }
 

@@ -14,6 +14,36 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart' show debugPrint, immutable, kDebugMode;
 
+/// One resolved option: what to show, and what to store.
+///
+/// Lives here rather than beside the control builders because it is plain data
+/// that both the resolvers and the picker widgets need — keeping it next to the
+/// widgets forced them into an import cycle, and forced the pickers to take
+/// untyped `{label, value}` maps instead.
+@immutable
+class FormioOption {
+  const FormioOption({required this.label, required this.value});
+
+  final String label;
+
+  /// The value to store, with its schema type intact — a `valueProperty` of
+  /// `id` over numeric ids yields `int`, not `"1"`.
+  final Object? value;
+
+  /// Stable key for widgets that address options by string.
+  String get key => value?.toString() ?? '';
+
+  @override
+  String toString() => 'FormioOption($label -> $value)';
+}
+
+/// [optionsFromPayload]'s `{label, value}` rows as typed options.
+List<FormioOption> typedOptions(List<Map<String, dynamic>> rows) => [
+      for (final row in rows)
+        FormioOption(
+            label: row['label']?.toString() ?? '', value: row['value']),
+    ];
+
 /// Where a component's options come from.
 enum SelectDataSource {
   /// Inline `values` (or `data.values`) — the default. Not named `values`,
