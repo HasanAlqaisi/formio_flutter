@@ -7,8 +7,6 @@ library;
 import 'package:flutter/foundation.dart';
 import 'package:formio/formio.dart';
 
-
-
 class FormioValidators {
   /// Validates that a field is not empty if required.
   ///
@@ -410,20 +408,25 @@ class FormioValidators {
       final validators = <String? Function()>[];
 
       // Required
-      if (validateConfig['required'] == true || validateConfig['required'] == 'true') {
+      if (validateConfig['required'] == true ||
+          validateConfig['required'] == 'true') {
         validators.add(() => required(value, fieldName: fieldName));
       }
 
       // String length
       if (validateConfig['minLength'] != null) {
-        final min = validateConfig['minLength'] is int ? validateConfig['minLength'] as int : int.tryParse(validateConfig['minLength'].toString()) ?? 0;
+        final min = validateConfig['minLength'] is int
+            ? validateConfig['minLength'] as int
+            : int.tryParse(validateConfig['minLength'].toString()) ?? 0;
         if (min > 0) {
           validators.add(() => minLength(value, min, fieldName: fieldName));
         }
       }
 
       if (validateConfig['maxLength'] != null) {
-        final max = validateConfig['maxLength'] is int ? validateConfig['maxLength'] as int : int.tryParse(validateConfig['maxLength'].toString()) ?? 0;
+        final max = validateConfig['maxLength'] is int
+            ? validateConfig['maxLength'] as int
+            : int.tryParse(validateConfig['maxLength'].toString()) ?? 0;
         if (max > 0) {
           validators.add(() => maxLength(value, max, fieldName: fieldName));
         }
@@ -431,14 +434,18 @@ class FormioValidators {
 
       // Word count
       if (validateConfig['minWords'] != null) {
-        final min = validateConfig['minWords'] is int ? validateConfig['minWords'] as int : int.tryParse(validateConfig['minWords'].toString()) ?? 0;
+        final min = validateConfig['minWords'] is int
+            ? validateConfig['minWords'] as int
+            : int.tryParse(validateConfig['minWords'].toString()) ?? 0;
         if (min > 0) {
           validators.add(() => minWords(value, min, fieldName: fieldName));
         }
       }
 
       if (validateConfig['maxWords'] != null) {
-        final max = validateConfig['maxWords'] is int ? validateConfig['maxWords'] as int : int.tryParse(validateConfig['maxWords'].toString()) ?? 0;
+        final max = validateConfig['maxWords'] is int
+            ? validateConfig['maxWords'] as int
+            : int.tryParse(validateConfig['maxWords'].toString()) ?? 0;
         if (max > 0) {
           validators.add(() => maxWords(value, max, fieldName: fieldName));
         }
@@ -468,7 +475,8 @@ class FormioValidators {
   }
 
   /// Validates minimum date.
-  static String? minDate(DateTime? value, DateTime minDate, {String? fieldName}) {
+  static String? minDate(DateTime? value, DateTime minDate,
+      {String? fieldName}) {
     if (value == null) return null;
 
     if (value.isBefore(minDate)) {
@@ -479,7 +487,8 @@ class FormioValidators {
   }
 
   /// Validates maximum date.
-  static String? maxDate(DateTime? value, DateTime maxDate, {String? fieldName}) {
+  static String? maxDate(DateTime? value, DateTime maxDate,
+      {String? fieldName}) {
     if (value == null) return null;
 
     if (value.isAfter(maxDate)) {
@@ -490,16 +499,20 @@ class FormioValidators {
   }
 
   /// Validates date range.
-  static String? dateRange(DateTime? value, DateTime? minDate, DateTime? maxDate, {String? fieldName}) {
+  static String? dateRange(
+      DateTime? value, DateTime? minDate, DateTime? maxDate,
+      {String? fieldName}) {
     if (value == null) return null;
 
     if (minDate != null) {
-      final error = FormioValidators.minDate(value, minDate, fieldName: fieldName);
+      final error =
+          FormioValidators.minDate(value, minDate, fieldName: fieldName);
       if (error != null) return error;
     }
 
     if (maxDate != null) {
-      final error = FormioValidators.maxDate(value, maxDate, fieldName: fieldName);
+      final error =
+          FormioValidators.maxDate(value, maxDate, fieldName: fieldName);
       if (error != null) return error;
     }
 
@@ -529,7 +542,8 @@ class FormioValidators {
   }
 
   /// Validates file size (in bytes).
-  static String? fileSize(int? sizeBytes, {int? minSize, int? maxSize, String? fieldName}) {
+  static String? fileSize(int? sizeBytes,
+      {int? minSize, int? maxSize, String? fieldName}) {
     if (sizeBytes == null) return null;
 
     if (minSize != null && sizeBytes < minSize) {
@@ -544,14 +558,17 @@ class FormioValidators {
   }
 
   /// Validates file type/pattern.
-  static String? filePattern(String? fileName, String pattern, {String? message}) {
+  static String? filePattern(String? fileName, String pattern,
+      {String? message}) {
     if (fileName == null || fileName.isEmpty) return null;
 
     // Pattern can be comma-separated extensions: ".pdf,.doc,.docx"
     // or mime types: "application/pdf,application/msword"
     final patterns = pattern.split(',').map((p) => p.trim()).toList();
 
-    final extension = fileName.contains('.') ? '.${fileName.split('.').last.toLowerCase()}' : '';
+    final extension = fileName.contains('.')
+        ? '.${fileName.split('.').last.toLowerCase()}'
+        : '';
 
     // Check if any pattern matches
     final matches = patterns.any((p) {
@@ -582,7 +599,8 @@ class FormioValidators {
   static String _formatFileSize(int bytes) {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    if (bytes < 1024 * 1024 * 1024) return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    if (bytes < 1024 * 1024 * 1024)
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
 
@@ -591,11 +609,14 @@ class FormioValidators {
     final mimeMap = {
       '.pdf': 'application/pdf',
       '.doc': 'application/msword',
-      '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      '.docx':
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       '.xls': 'application/vnd.ms-excel',
-      '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      '.xlsx':
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       '.ppt': 'application/vnd.ms-powerpoint',
-      '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      '.pptx':
+          'application/vnd.openxmlformats-officedocument.presentationml.presentation',
       '.jpg': 'image/jpeg',
       '.jpeg': 'image/jpeg',
       '.png': 'image/png',

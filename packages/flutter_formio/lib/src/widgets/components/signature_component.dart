@@ -186,6 +186,8 @@ class _SignatureComponentState extends State<SignatureComponent> {
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             TextButton.icon(
+              style: FormioThemeScope.of(context)
+                  .resolvedSecondaryActionStyle(context),
               onPressed: _points.isEmpty ? null : _clear,
               icon: const Icon(Icons.clear),
               label: Text(widget.locale.clear),

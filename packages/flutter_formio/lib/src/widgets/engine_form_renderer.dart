@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 
 import '../core/form_logic_engine.dart';
 import 'component_builders.dart' as cb;
+import 'component_factory.dart' show ComponentFactory;
 import 'control_builders.dart';
 import 'components/select_options.dart' show FormioResourceSource;
 import 'components/tabs_section.dart';
@@ -738,6 +739,10 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
       return const Center(child: CircularProgressIndicator());
     }
     _scope = _makeScope(context);
+    final submitStyle = widget.theme.resolvedSubmitButtonStyle(context);
+    final submitForeground =
+        submitStyle.foregroundColor?.resolve(const <WidgetState>{}) ??
+            widget.theme.resolvedOnAccentColor(context);
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -750,14 +755,20 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
         SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(12),
-            child: FilledButton(
+            child: ElevatedButton(
+              style: submitStyle,
               onPressed: _submitting ? null : _submit,
               child: _submitting
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Submit'),
+                      // The button's own foreground: a spinner left to default
+                      // paints in the ambient primary, which on a primary-filled
+                      // button is invisible.
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: submitForeground),
+                    )
+                  : Text(ComponentFactory.locale.submit),
             ),
           ),
         ),

@@ -68,7 +68,8 @@ class ComponentModel {
       label: json['label']?.toString() ?? '',
       hideLabel: json['hideLabel'] == true,
       placeholder: json['placeholder']?.toString(),
-      required: validate?['required'] == true || validate?['required'] == 'true',
+      required:
+          validate?['required'] == true || validate?['required'] == 'true',
       disabled: json['disabled'] == true,
       description: json['description']?.toString(),
       prefix: json['prefix']?.toString(),

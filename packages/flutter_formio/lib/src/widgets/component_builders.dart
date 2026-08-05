@@ -112,6 +112,18 @@ String labelText(Map<String, dynamic> raw, {String requiredSuffix = ' *'}) {
 /// message in [FormLogicError.messageKey] and are shown as-is.
 String messageForError(FormLogicError e) {
   final loc = ComponentFactory.locale;
+  // Optional, so a host localization predating these rules still compiles and
+  // simply keeps the generic fallback. See [FormioValidationMessages].
+  final extra = switch (loc) {
+    final FormioValidationMessages m => m,
+    _ => null,
+  };
+
+  /// A message that needs the rule's limit, degrading when the engine did not
+  /// report one.
+  String withSetting(String Function(String limit) message) =>
+      e.setting != null ? message(e.setting!) : loc.invalidValue;
+
   switch (e.rule) {
     case 'required':
       return loc.fieldRequired;
@@ -126,21 +138,13 @@ String messageForError(FormLogicError e) {
     case 'custom':
       return e.messageKey ?? loc.invalidValue;
     case 'minLength':
-      return e.setting != null
-          ? loc.getMinLengthMessage(e.setting!)
-          : loc.invalidValue;
+      return withSetting(loc.getMinLengthMessage);
     case 'maxLength':
-      return e.setting != null
-          ? loc.getMaxLengthMessage(e.setting!)
-          : loc.invalidValue;
+      return withSetting(loc.getMaxLengthMessage);
     case 'min':
-      return e.setting != null
-          ? loc.getMinValueMessage(e.setting!)
-          : loc.invalidValue;
+      return withSetting(loc.getMinValueMessage);
     case 'max':
-      return e.setting != null
-          ? loc.getMaxValueMessage(e.setting!)
-          : loc.invalidValue;
+      return withSetting(loc.getMaxValueMessage);
 
     // A value that does not fit its required shape is a format problem, which
     // is what `invalidFormat` already says.
@@ -153,14 +157,10 @@ String messageForError(FormLogicError e) {
     // Date/year bounds read naturally as value bounds.
     case 'minDate':
     case 'minYear':
-      return e.setting != null
-          ? loc.getMinValueMessage(e.setting!)
-          : loc.invalidValue;
+      return withSetting(loc.getMinValueMessage);
     case 'maxDate':
     case 'maxYear':
-      return e.setting != null
-          ? loc.getMaxValueMessage(e.setting!)
-          : loc.invalidValue;
+      return withSetting(loc.getMaxValueMessage);
 
     // The day component reports which of its parts is missing.
     case 'requiredDayField':
@@ -172,10 +172,44 @@ String messageForError(FormLogicError e) {
     case 'requiredDayEmpty':
       return loc.fieldRequired;
 
+    // The value is not among the source's options. Three engine rules, one thing
+    // to say to whoever is filling the form.
+    case 'invalidOption':
+    case 'select':
+    case 'onlyAvailableItems':
+      return extra?.invalidOption ?? loc.invalidValue;
+
+    case 'unique':
+      return extra?.valueMustBeUnique ?? loc.invalidValue;
+    case 'array':
+      return extra?.valueMustBeList ?? loc.invalidValue;
+    case 'nonarray':
+      return extra?.valueMustNotBeList ?? loc.invalidValue;
+    case 'invalidValueProperty':
+      return extra?.invalidValueProperty ?? loc.invalidValue;
+
+    case 'minWords':
+      return extra == null
+          ? loc.invalidValue
+          : withSetting(extra.getMinWordsMessage);
+    case 'maxWords':
+      return extra == null
+          ? loc.invalidValue
+          : withSetting(extra.getMaxWordsMessage);
+    case 'minSelectedCount':
+      return extra == null
+          ? loc.invalidValue
+          : withSetting(extra.getMinSelectedMessage);
+    case 'maxSelectedCount':
+      return extra == null
+          ? loc.invalidValue
+          : withSetting(extra.getMaxSelectedMessage);
+
+    // Like `custom`: a JSON-logic rule carries the author's own message.
+    case 'json':
+      return e.messageKey ?? loc.invalidValue;
+
     default:
-      // array / nonarray / invalidOption / minWords / maxWords / unique /
-      // invalidValueProperty — no better wording available without adding
-      // strings to the public FormioLocalizations interface.
       return loc.invalidValue;
   }
 }
@@ -379,12 +413,15 @@ Widget buildSelect(FieldScope s, Map<String, dynamic> raw, String path) {
       resourceSource: s.resourceSource,
       builder: (context, state) {
         if (!lazy && state.loading && state.options.isEmpty) {
-          return const Align(
+          return Align(
             alignment: AlignmentDirectional.centerStart,
             child: SizedBox(
               width: 16,
               height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: s.theme.resolvedAccentColor(s.context),
+              ),
             ),
           );
         }
@@ -729,8 +766,11 @@ Widget buildDataGrid(FieldScope s, Map<String, dynamic> raw, String path) {
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          border: Border.all(color: Theme.of(ctx).dividerColor),
-          borderRadius: BorderRadius.circular(6),
+          // The themed input border, not the ambient divider colour: a divider
+          // is brighter than a form's own borders, so a row card outshone the
+          // fields inside it.
+          border: Border.all(color: s.theme.resolvedBorderColor(ctx)),
+          borderRadius: s.theme.resolvedInputRadius(),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -813,6 +853,10 @@ Widget buildDataGrid(FieldScope s, Map<String, dynamic> raw, String path) {
           Align(
             alignment: AlignmentDirectional.centerStart,
             child: TextButton.icon(
+              // Accent rather than the ambient primary, which is a fill colour
+              // and reads as too dark for text on a dark form.
+              style: TextButton.styleFrom(
+                  foregroundColor: s.theme.resolvedAccentColor(ctx)),
               icon: const Icon(Icons.add),
               label: Text(addLabel),
               onPressed: () => s.setValue(path, [...rows, <String, dynamic>{}],

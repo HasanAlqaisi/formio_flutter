@@ -88,7 +88,8 @@ class _DataTableComponentState extends State<DataTableComponent> {
         )
         .trim()
         .split(' ')
-        .map((word) => word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1))
+        .map((word) =>
+            word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1))
         .join(' ');
   }
 
@@ -194,7 +195,8 @@ class _DataTableComponentState extends State<DataTableComponent> {
             ),
             Row(
               children: [
-                Text('${ComponentFactory.locale.rowsPerPage}:', style: Theme.of(context).textTheme.bodySmall),
+                Text('${ComponentFactory.locale.rowsPerPage}:',
+                    style: Theme.of(context).textTheme.bodySmall),
                 const SizedBox(width: 8),
                 DropdownButton<int>(
                   value: _rowsPerPage,
@@ -216,12 +218,16 @@ class _DataTableComponentState extends State<DataTableComponent> {
                 const SizedBox(width: 16),
                 IconButton(
                   icon: const Icon(Icons.chevron_left),
-                  onPressed: _currentPage > 0 ? () => setState(() => _currentPage--) : null,
+                  onPressed: _currentPage > 0
+                      ? () => setState(() => _currentPage--)
+                      : null,
                 ),
                 Text('${_currentPage + 1} / $totalPages'),
                 IconButton(
                   icon: const Icon(Icons.chevron_right),
-                  onPressed: _currentPage < totalPages - 1 ? () => setState(() => _currentPage++) : null,
+                  onPressed: _currentPage < totalPages - 1
+                      ? () => setState(() => _currentPage++)
+                      : null,
                 ),
               ],
             ),
@@ -233,7 +239,8 @@ class _DataTableComponentState extends State<DataTableComponent> {
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(
-              ComponentFactory.locale.getSelectedRowsMessage(_selectedRows.length),
+              ComponentFactory.locale
+                  .getSelectedRowsMessage(_selectedRows.length),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.bold,

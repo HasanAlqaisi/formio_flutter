@@ -75,7 +75,11 @@ class _AddressComponentState extends State<AddressComponent> {
           hintText: _getPlaceholder(key),
         ),
         onChanged: (val) => _updateField(key, val),
-        validator: required ? (val) => (val == null || val.isEmpty) ? ComponentFactory.locale.getRequiredMessage(label) : null : null,
+        validator: required
+            ? (val) => (val == null || val.isEmpty)
+                ? ComponentFactory.locale.getRequiredMessage(label)
+                : null
+            : null,
       ),
     );
   }

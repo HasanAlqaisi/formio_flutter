@@ -141,7 +141,8 @@ class FormLogicEngine implements FormEngine {
     final loaded = runtime.evaluate(source);
     if (loaded.isError) {
       runtime.dispose();
-      throw FormLogicEngineException('Failed to load engine: ${loaded.stringResult}');
+      throw FormLogicEngineException(
+          'Failed to load engine: ${loaded.stringResult}');
     }
     _runtime = runtime;
   }

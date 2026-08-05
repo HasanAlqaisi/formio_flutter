@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:formio/formio.dart';
 import 'package:formio/formio.dart' show FileData;
 
-
 /// Callback type for custom file picker implementations.
 ///
 /// Users of the formio_flutter package should implement this callback

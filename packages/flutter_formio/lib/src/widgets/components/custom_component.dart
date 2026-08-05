@@ -10,7 +10,8 @@ import 'package:flutter/material.dart';
 
 import 'package:formio/formio.dart';
 
-typedef CustomComponentBuilder = Widget Function(ComponentModel component, dynamic value, ValueChanged<dynamic> onChanged);
+typedef CustomComponentBuilder = Widget Function(
+    ComponentModel component, dynamic value, ValueChanged<dynamic> onChanged);
 
 class CustomComponent extends StatelessWidget {
   /// The Form.io component definition (includes custom options/code).
@@ -25,7 +26,12 @@ class CustomComponent extends StatelessWidget {
   /// Optional external builder to render the actual custom component UI.
   final CustomComponentBuilder? customBuilder;
 
-  const CustomComponent({super.key, required this.component, required this.value, required this.onChanged, this.customBuilder});
+  const CustomComponent(
+      {super.key,
+      required this.component,
+      required this.value,
+      required this.onChanged,
+      this.customBuilder});
 
   /// Optional JavaScript logic defined in Form.io for custom logic.
   String? get _customCode => component.raw['customCode'];
@@ -39,12 +45,15 @@ class CustomComponent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(component.label, style: FormioThemeScope.of(context).resolvedLabelStyle(context)),
+        Text(component.label,
+            style: FormioThemeScope.of(context).resolvedLabelStyle(context)),
         const SizedBox(height: 6),
         Container(
           padding: const EdgeInsets.all(12),
-          decoration:
-              FormioThemeScope.of(context).resolvedContainerDecoration(context).copyWith(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+          decoration: FormioThemeScope.of(context)
+              .resolvedContainerDecoration(context)
+              .copyWith(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest),
           child: Text(
             'Custom component not implemented.\n'
             'You can handle "${component.key}" manually.\n\n'

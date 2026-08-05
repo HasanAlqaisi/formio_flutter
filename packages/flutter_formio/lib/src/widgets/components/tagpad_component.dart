@@ -54,7 +54,8 @@ class _TagpadComponentState extends State<TagpadComponent> {
   bool get _isRequired => widget.component.required;
   String? get _placeholder => widget.component.raw['placeholder'] as String?;
   int? get _maxTags => widget.component.raw['maxTags'] as int?;
-  List<String>? get _suggestions => (widget.component.raw['data']?['values'] as List?)?.cast<String>();
+  List<String>? get _suggestions =>
+      (widget.component.raw['data']?['values'] as List?)?.cast<String>();
 
   void _addTag(String tag) {
     final trimmed = tag.trim();
@@ -123,7 +124,10 @@ class _TagpadComponentState extends State<TagpadComponent> {
           focusNode: _focusNode,
           decoration: InputDecoration(
             hintText: _placeholder ?? 'Type and press Enter to add tag',
-            errorText: hasError ? ComponentFactory.locale.getRequiredMessage(widget.component.label) : null,
+            errorText: hasError
+                ? ComponentFactory.locale
+                    .getRequiredMessage(widget.component.label)
+                : null,
             suffixIcon: _controller.text.isNotEmpty
                 ? IconButton(
                     icon: const Icon(Icons.add),
@@ -146,9 +150,11 @@ class _TagpadComponentState extends State<TagpadComponent> {
                   .where((s) => !_tags.contains(s))
                   .take(5)
                   .map((suggestion) => ActionChip(
-                        label: Text(suggestion, style: const TextStyle(fontSize: 12)),
+                        label: Text(suggestion,
+                            style: const TextStyle(fontSize: 12)),
                         onPressed: () => _addTag(suggestion),
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 0),
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ))
                   .toList(),
@@ -163,7 +169,12 @@ class _TagpadComponentState extends State<TagpadComponent> {
               '${_tags.length}/$_maxTags tags',
               style: TextStyle(
                 fontSize: 12,
-                color: _tags.length >= _maxTags! ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                color: _tags.length >= _maxTags!
+                    ? Theme.of(context).colorScheme.error
+                    : Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.6),
               ),
             ),
           ),

@@ -61,11 +61,16 @@ class ActionModel {
       title: json['title'] as String? ?? '',
       name: json['name'] as String? ?? '',
       handler: json['handler'] as String? ?? '',
-      method: (json['method'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      method: (json['method'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       priority: json['priority'] as int? ?? 0,
       enabled: json['enabled'] as bool? ?? true,
       settings: Map<String, dynamic>.from(json['settings'] ?? {}),
-      condition: json['condition'] != null ? Map<String, dynamic>.from(json['condition']) : null,
+      condition: json['condition'] != null
+          ? Map<String, dynamic>.from(json['condition'])
+          : null,
     );
   }
 
@@ -93,5 +98,6 @@ class ActionModel {
   }
 
   @override
-  String toString() => 'ActionModel(id: $id, title: $title, handler: $handler, enabled: $enabled)';
+  String toString() =>
+      'ActionModel(id: $id, title: $title, handler: $handler, enabled: $enabled)';
 }

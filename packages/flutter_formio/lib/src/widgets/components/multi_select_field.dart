@@ -56,6 +56,7 @@ class MultiSelectField extends StatelessWidget {
   Future<void> _open(BuildContext context) async {
     final available = await loadOptions?.call() ?? options;
     if (!context.mounted) return;
+    final theme = FormioThemeScope.of(context);
     final temp = {...selected};
     var query = '';
     final result = await showDialog<List<String>>(
@@ -115,10 +116,12 @@ class MultiSelectField extends StatelessWidget {
             ),
             actions: [
               TextButton(
+                style: theme.resolvedSecondaryActionStyle(context),
                 onPressed: () => Navigator.pop(ctx),
                 child: Text(ComponentFactory.locale.cancel),
               ),
               FilledButton(
+                style: theme.resolvedPrimaryActionStyle(context),
                 onPressed: () => Navigator.pop(ctx, temp.toList()),
                 child: Text(ComponentFactory.locale.save),
               ),
@@ -132,19 +135,25 @@ class MultiSelectField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = FormioThemeScope.of(context);
+
     return InkWell(
       onTap: enabled ? () => _open(context) : null,
       child: InputDecorator(
-        decoration: const InputDecoration(
-          border: OutlineInputBorder(),
-          isDense: true,
-          suffixIcon: Icon(Icons.arrow_drop_down),
-          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: InputDecoration(
+          isDense: theme.isDense,
+          border: theme.resolvedInputBorder(context),
+          enabledBorder: theme.inputBorder,
+          contentPadding: theme.inputContentPadding,
+          fillColor: theme.inputFillColor,
+          filled: theme.inputFillColor != null,
+          suffixIcon: const Icon(Icons.arrow_drop_down),
         ),
         child: selected.isEmpty
             ? Text(
                 hint ?? '',
-                style: TextStyle(color: Theme.of(context).hintColor),
+                style: theme.hintStyle ??
+                    TextStyle(color: Theme.of(context).hintColor),
               )
             : Wrap(
                 spacing: 6,

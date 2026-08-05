@@ -12,8 +12,7 @@ library;
 
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart'
-    show debugPrint, immutable, kDebugMode;
+import 'package:flutter/foundation.dart' show debugPrint, immutable, kDebugMode;
 
 /// Where a component's options come from.
 enum SelectDataSource {
@@ -187,7 +186,8 @@ List<Object?> _rowsIn(Object? payload, String? selectValues) {
 /// a data-source error rather than an empty list.
 @immutable
 class FormioResourceSource {
-  const FormioResourceSource({required this.projectUrl, this.headers = const {}});
+  const FormioResourceSource(
+      {required this.projectUrl, this.headers = const {}});
 
   /// Base URL of the Form.io project, e.g. `https://abc.form.io`. A trailing
   /// slash is tolerated.

@@ -29,6 +29,8 @@ class FormioTheme {
     this.sectionDecoration,
     this.requiredSuffix = ' *',
     this.columnBreakpoint = 170.0,
+    this.submitButtonStyle,
+    this.accentColor,
   });
 
   /// Style for field labels.
@@ -88,6 +90,18 @@ class FormioTheme {
   /// Minimum width per column before layouts stack vertically.
   final double columnBreakpoint;
 
+  /// Style for the form's submit button.
+  final ButtonStyle? submitButtonStyle;
+
+  /// Colour for emphasis *on the form's own background* — the active tab and its
+  /// indicator, the add-row action.
+  ///
+  /// Deliberately separate from the ambient `colorScheme.primary`, which is a
+  /// *fill* colour chosen to sit under white text. A design system usually has a
+  /// second, lighter accent for text and indicators, and using the fill colour
+  /// for them leaves an active tab looking disabled on a dark ground.
+  final Color? accentColor;
+
   TextStyle resolvedLabelStyle(BuildContext c) =>
       labelStyle ?? const TextStyle(fontWeight: FontWeight.w500);
 
@@ -107,6 +121,65 @@ class FormioTheme {
   InputBorder resolvedInputBorder(BuildContext c) =>
       inputBorder ?? const OutlineInputBorder();
 
+  /// Style for the submit button.
+  ///
+  /// Falls back to a full-width button whose corner radius matches the inputs,
+  /// so the form ends on something that looks like it belongs to the fields
+  /// above it rather than a stock pill. Colours are left to the ambient
+  /// [ElevatedButton] theme.
+  ButtonStyle resolvedSubmitButtonStyle(BuildContext c) =>
+      submitButtonStyle ??
+      ElevatedButton.styleFrom(
+        minimumSize: const Size.fromHeight(48),
+        shape: RoundedRectangleBorder(borderRadius: resolvedInputRadius()),
+      );
+
+  Color resolvedAccentColor(BuildContext c) =>
+      accentColor ?? Theme.of(c).colorScheme.primary;
+
+  /// A foreground that actually reads on [resolvedAccentColor].
+  ///
+  /// Computed from the accent's own brightness rather than taken from
+  /// `colorScheme.onPrimary`: the accent may not be the ambient primary, and a
+  /// host whose `onPrimary` is dark produced dark text on a dark filled button.
+  Color resolvedOnAccentColor(BuildContext c) =>
+      ThemeData.estimateBrightnessForColor(resolvedAccentColor(c)) ==
+              Brightness.dark
+          ? Colors.white
+          : Colors.black;
+
+  /// The form's confirming action — a dialog's Save, a filled affirmative.
+  ButtonStyle resolvedPrimaryActionStyle(BuildContext c) =>
+      FilledButton.styleFrom(
+        backgroundColor: resolvedAccentColor(c),
+        foregroundColor: resolvedOnAccentColor(c),
+      );
+
+  /// The form's lower-emphasis actions — Cancel, Clear, Add, Upload.
+  ///
+  /// Accent-on-background rather than the ambient primary, which is a fill colour
+  /// and comes out too dark to read as text on a dark form.
+  ButtonStyle resolvedSecondaryActionStyle(BuildContext c) =>
+      TextButton.styleFrom(foregroundColor: resolvedAccentColor(c));
+
+  /// The border colour the inputs use, for widgets that paint their own edge.
+  ///
+  /// Falls back to the ambient divider colour, which is brighter than a themed
+  /// input border and is what made repeated-row cards stand out from the fields
+  /// inside them.
+  Color resolvedBorderColor(BuildContext c) {
+    final border = inputBorder;
+    if (border is OutlineInputBorder) return border.borderSide.color;
+    return Theme.of(c).dividerColor;
+  }
+
+  /// The corner radius the inputs use, so other surfaces can match it.
+  BorderRadius resolvedInputRadius() {
+    final border = inputBorder;
+    if (border is OutlineInputBorder) return border.borderRadius;
+    return BorderRadius.circular(8);
+  }
+
   /// The input border expressed as a [BoxDecoration], for widgets that paint
   /// their own container instead of using an [InputDecoration] — a signature
   /// canvas, a survey table — so their edge matches the text inputs.
@@ -115,19 +188,14 @@ class FormioTheme {
   /// unset, which is what those widgets already drew.
   BoxDecoration resolvedContainerDecoration(BuildContext c) {
     final border = inputBorder;
-    if (border is OutlineInputBorder) {
-      return BoxDecoration(
-        border: Border.all(
-          color: border.borderSide.color,
-          width: border.borderSide.width,
-        ),
-        borderRadius: border.borderRadius,
-        color: inputFillColor,
-      );
-    }
     return BoxDecoration(
-      border: Border.all(color: Theme.of(c).dividerColor),
-      borderRadius: BorderRadius.circular(8),
+      border: border is OutlineInputBorder
+          ? Border.all(
+              color: border.borderSide.color,
+              width: border.borderSide.width,
+            )
+          : Border.all(color: Theme.of(c).dividerColor),
+      borderRadius: resolvedInputRadius(),
       color: inputFillColor,
     );
   }

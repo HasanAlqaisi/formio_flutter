@@ -18,7 +18,11 @@ class HiddenComponent extends StatelessWidget {
   /// Callback triggered to set or update the value (if necessary).
   final ValueChanged<dynamic> onChanged;
 
-  const HiddenComponent({super.key, required this.component, required this.value, required this.onChanged});
+  const HiddenComponent(
+      {super.key,
+      required this.component,
+      required this.value,
+      required this.onChanged});
 
   /// Determines the value to use: current value, defaultValue, or a fixed value.
 

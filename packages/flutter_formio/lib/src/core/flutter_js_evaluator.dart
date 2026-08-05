@@ -28,7 +28,7 @@ class FlutterJsEvaluator implements JsEvaluator {
 
       // Execute code
       final result = runtime.evaluate(code);
-      
+
       if (result.isError) {
         throw JsEvaluationException(
           'JavaScript execution error',
@@ -55,7 +55,8 @@ class FlutterJsEvaluator implements JsEvaluator {
 
     for (final keyword in dangerous) {
       if (code.contains(keyword)) {
-        throw JsEvaluationException('Dangerous code pattern detected: $keyword');
+        throw JsEvaluationException(
+            'Dangerous code pattern detected: $keyword');
       }
     }
   }
@@ -73,7 +74,8 @@ class FlutterJsEvaluator implements JsEvaluator {
     if (value is num || value is bool) return value.toString();
     if (value is Map) {
       final entries = value.entries
-          .map((e) => '"${_escapeString(e.key.toString())}": ${_encodeValue(e.value)}')
+          .map((e) =>
+              '"${_escapeString(e.key.toString())}": ${_encodeValue(e.value)}')
           .join(', ');
       return '{$entries}';
     }

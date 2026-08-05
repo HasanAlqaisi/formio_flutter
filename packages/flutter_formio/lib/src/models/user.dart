@@ -112,10 +112,15 @@ class UserModel {
       id: json['_id'] as String?,
       email: userData['email'] as String?,
       token: json['token'] as String?,
-      data: userData is Map<String, dynamic> ? Map<String, dynamic>.from(userData) : null,
-      roles: (json['roles'] as List<dynamic>?)?.map((e) => e.toString()).toList(),
-      created: json['created'] != null ? DateTime.tryParse(json['created']) : null,
-      modified: json['modified'] != null ? DateTime.tryParse(json['modified']) : null,
+      data: userData is Map<String, dynamic>
+          ? Map<String, dynamic>.from(userData)
+          : null,
+      roles:
+          (json['roles'] as List<dynamic>?)?.map((e) => e.toString()).toList(),
+      created:
+          json['created'] != null ? DateTime.tryParse(json['created']) : null,
+      modified:
+          json['modified'] != null ? DateTime.tryParse(json['modified']) : null,
     );
   }
 
@@ -142,4 +147,3 @@ class UserModel {
   String toString() =>
       'UserModel(id: $id, email: $email, roles: $roles, created: $created)';
 }
-

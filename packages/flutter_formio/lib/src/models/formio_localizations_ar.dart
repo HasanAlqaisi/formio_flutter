@@ -189,10 +189,43 @@ class ArabicFormioLocalizations extends DefaultFormioLocalizations {
   String getMaxLengthMessage(String limit) => 'يجب ألا يزيد عن $limit حرفًا';
 
   @override
-  String getMinValueMessage(String limit) => 'يجب أن تكون القيمة $limit أو أكثر';
+  String getMinValueMessage(String limit) =>
+      'يجب أن تكون القيمة $limit أو أكثر';
 
   @override
   String getMaxValueMessage(String limit) => 'يجب أن تكون القيمة $limit أو أقل';
+
+  // ---- FormioValidationMessages ----
+
+  @override
+  String get invalidOption => 'اختر أحد الخيارات المتاحة';
+
+  @override
+  String get valueMustBeUnique => 'هذه القيمة مستخدمة بالفعل';
+
+  @override
+  String get valueMustBeList => 'المتوقع قائمة من القيم';
+
+  @override
+  String get valueMustNotBeList => 'المتوقع قيمة واحدة';
+
+  @override
+  String get invalidValueProperty =>
+      'هذا الحقل غير مهيأ بشكل صحيح: لا توجد قيمة مطابقة في خياراته';
+
+  @override
+  String getMinWordsMessage(String limit) =>
+      'يجب أن يحتوي على $limit كلمة على الأقل';
+
+  @override
+  String getMaxWordsMessage(String limit) =>
+      'يجب أن يحتوي على $limit كلمة على الأكثر';
+
+  @override
+  String getMinSelectedMessage(String limit) => 'اختر $limit على الأقل';
+
+  @override
+  String getMaxSelectedMessage(String limit) => 'اختر $limit على الأكثر';
 
   /// Provides Arabic resource values for Form.io widgets.
   static Future<FormioLocalizations> load(Locale locale) {

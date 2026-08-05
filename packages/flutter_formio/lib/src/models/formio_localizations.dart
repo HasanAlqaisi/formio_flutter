@@ -23,6 +23,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
+import 'formio_validation_messages.dart';
+
 /// Abstract class that defines all localizable strings for Form.io components.
 ///
 /// Implement this class to provide translations for your language.
@@ -128,7 +130,8 @@ abstract class FormioLocalizations {
   }
 
   /// Get showing range message for DataTable
-  String getShowingMessage(int start, int end, int total) => '$showing $start-$end $of $total';
+  String getShowingMessage(int start, int end, int total) =>
+      '$showing $start-$end $of $total';
 
   /// Get selected rows message
   String getSelectedRowsMessage(int count) {
@@ -137,13 +140,16 @@ abstract class FormioLocalizations {
   }
 
   /// Get step progress message
-  String getStepMessage(int current, int total) => '$step $current $stepOf $total';
+  String getStepMessage(int current, int total) =>
+      '$step $current $stepOf $total';
 
   /// "Must be at least [limit] characters" (minLength validation).
-  String getMinLengthMessage(String limit) => 'Must be at least $limit characters';
+  String getMinLengthMessage(String limit) =>
+      'Must be at least $limit characters';
 
   /// "Must be at most [limit] characters" (maxLength validation).
-  String getMaxLengthMessage(String limit) => 'Must be at most $limit characters';
+  String getMaxLengthMessage(String limit) =>
+      'Must be at most $limit characters';
 
   /// "Must be [limit] or more" (min validation).
   String getMinValueMessage(String limit) => 'Must be $limit or more';
@@ -153,7 +159,8 @@ abstract class FormioLocalizations {
 }
 
 /// Default English implementation of [FormioLocalizations].
-class DefaultFormioLocalizations implements FormioLocalizations {
+class DefaultFormioLocalizations
+    implements FormioLocalizations, FormioValidationMessages {
   const DefaultFormioLocalizations();
 
   @override
@@ -309,7 +316,8 @@ class DefaultFormioLocalizations implements FormioLocalizations {
   }
 
   @override
-  String getShowingMessage(int start, int end, int total) => '$showing $start-$end $of $total';
+  String getShowingMessage(int start, int end, int total) =>
+      '$showing $start-$end $of $total';
 
   @override
   String getSelectedRowsMessage(int count) {
@@ -318,13 +326,16 @@ class DefaultFormioLocalizations implements FormioLocalizations {
   }
 
   @override
-  String getStepMessage(int current, int total) => '$step $current $stepOf $total';
+  String getStepMessage(int current, int total) =>
+      '$step $current $stepOf $total';
 
   @override
-  String getMinLengthMessage(String limit) => 'Must be at least $limit characters';
+  String getMinLengthMessage(String limit) =>
+      'Must be at least $limit characters';
 
   @override
-  String getMaxLengthMessage(String limit) => 'Must be at most $limit characters';
+  String getMaxLengthMessage(String limit) =>
+      'Must be at most $limit characters';
 
   @override
   String getMinValueMessage(String limit) => 'Must be $limit or more';
@@ -332,23 +343,58 @@ class DefaultFormioLocalizations implements FormioLocalizations {
   @override
   String getMaxValueMessage(String limit) => 'Must be $limit or less';
 
+  // ---- FormioValidationMessages ----
+
+  @override
+  String get invalidOption => 'Select one of the available options';
+
+  @override
+  String get valueMustBeUnique => 'This value is already used';
+
+  @override
+  String get valueMustBeList => 'Expected a list of values';
+
+  @override
+  String get valueMustNotBeList => 'Expected a single value';
+
+  @override
+  String get invalidValueProperty =>
+      'This field is misconfigured: its options have no matching value';
+
+  @override
+  String getMinWordsMessage(String limit) => 'Must be at least $limit words';
+
+  @override
+  String getMaxWordsMessage(String limit) => 'Must be at most $limit words';
+
+  @override
+  String getMinSelectedMessage(String limit) => 'Select at least $limit';
+
+  @override
+  String getMaxSelectedMessage(String limit) => 'Select at most $limit';
+
   /// Creates an object that provides English resource values for Form.io widgets.
   static Future<FormioLocalizations> load(Locale locale) {
-    return SynchronousFuture<FormioLocalizations>(const DefaultFormioLocalizations());
+    return SynchronousFuture<FormioLocalizations>(
+        const DefaultFormioLocalizations());
   }
 
   /// A [LocalizationsDelegate] for English Form.io localizations.
-  static const LocalizationsDelegate<FormioLocalizations> delegate = _DefaultFormioLocalizationsDelegate();
+  static const LocalizationsDelegate<FormioLocalizations> delegate =
+      _DefaultFormioLocalizationsDelegate();
 }
 
-class _DefaultFormioLocalizationsDelegate extends LocalizationsDelegate<FormioLocalizations> {
+class _DefaultFormioLocalizationsDelegate
+    extends LocalizationsDelegate<FormioLocalizations> {
   const _DefaultFormioLocalizationsDelegate();
 
   @override
-  bool isSupported(Locale locale) => true; // Default supports all locales as fallback
+  bool isSupported(Locale locale) =>
+      true; // Default supports all locales as fallback
 
   @override
-  Future<FormioLocalizations> load(Locale locale) => DefaultFormioLocalizations.load(locale);
+  Future<FormioLocalizations> load(Locale locale) =>
+      DefaultFormioLocalizations.load(locale);
 
   @override
   bool shouldReload(_DefaultFormioLocalizationsDelegate old) => false;

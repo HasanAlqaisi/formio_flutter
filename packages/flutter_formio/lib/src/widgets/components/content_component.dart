@@ -20,7 +20,11 @@ class ContentComponent extends StatelessWidget {
   /// Whether to enable clicking on links.
   final bool enableLinks;
 
-  const ContentComponent({super.key, required this.component, this.formData, this.enableLinks = true});
+  const ContentComponent(
+      {super.key,
+      required this.component,
+      this.formData,
+      this.enableLinks = true});
 
   /// Extracts the raw HTML or text content from the component and performs interpolation.
   String get _content => InterpolationUtils.interpolate(
@@ -41,7 +45,10 @@ class ContentComponent extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Html(
         data: _content,
-        style: {'p': Style(fontSize: FontSize.medium), 'h2': Style(fontSize: FontSize.larger, fontWeight: FontWeight.w600)},
+        style: {
+          'p': Style(fontSize: FontSize.medium),
+          'h2': Style(fontSize: FontSize.larger, fontWeight: FontWeight.w600)
+        },
         onLinkTap: (url, _, __) {
           if (enableLinks) openFormLink(url);
         },

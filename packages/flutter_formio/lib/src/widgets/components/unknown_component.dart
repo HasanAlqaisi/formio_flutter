@@ -66,12 +66,16 @@ class UnknownComponent extends StatelessWidget {
             const Divider(),
             Text(
               'Raw JSON:',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: colors.detail),
+              style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: colors.detail),
             ),
             const SizedBox(height: 4),
             Text(
               component.raw.toString(),
-              style: TextStyle(fontSize: 10, color: colors.detail, fontFamily: 'monospace'),
+              style: TextStyle(
+                  fontSize: 10, color: colors.detail, fontFamily: 'monospace'),
               maxLines: 5,
               overflow: TextOverflow.ellipsis,
             ),

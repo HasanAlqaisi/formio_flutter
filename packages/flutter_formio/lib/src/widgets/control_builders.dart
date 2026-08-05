@@ -150,8 +150,7 @@ class FormioBuiltInSelect extends StatelessWidget {
       final current = spec.value;
       return MultiSelectField(
         options: [
-          for (final o in spec.options)
-            {'label': o.label, 'value': o.value},
+          for (final o in spec.options) {'label': o.label, 'value': o.value},
         ],
         selected: (current is List ? current : const [])
             .map((e) => e?.toString())

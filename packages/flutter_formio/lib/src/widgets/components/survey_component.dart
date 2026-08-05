@@ -19,7 +19,11 @@ class SurveyComponent extends StatefulWidget {
   /// Callback triggered when a survey row is answered.
   final ValueChanged<Map<String, String>> onChanged;
 
-  const SurveyComponent({super.key, required this.component, required this.value, required this.onChanged});
+  const SurveyComponent(
+      {super.key,
+      required this.component,
+      required this.value,
+      required this.onChanged});
 
   @override
   State<SurveyComponent> createState() => _SurveyComponentState();
@@ -37,14 +41,16 @@ class _SurveyComponentState extends State<SurveyComponent> {
 
     // Synchronize header scroll with content
     _headerScrollController.addListener(() {
-      if (_contentScrollController.hasClients && _contentScrollController.offset != _headerScrollController.offset) {
+      if (_contentScrollController.hasClients &&
+          _contentScrollController.offset != _headerScrollController.offset) {
         _contentScrollController.jumpTo(_headerScrollController.offset);
       }
     });
 
     // Synchronize content scroll with header
     _contentScrollController.addListener(() {
-      if (_headerScrollController.hasClients && _headerScrollController.offset != _contentScrollController.offset) {
+      if (_headerScrollController.hasClients &&
+          _headerScrollController.offset != _contentScrollController.offset) {
         _headerScrollController.jumpTo(_contentScrollController.offset);
       }
     });
@@ -61,13 +67,16 @@ class _SurveyComponentState extends State<SurveyComponent> {
   bool get _isRequired => widget.component.required;
 
   /// The list of rows/questions in the survey.
-  List<Map<String, dynamic>> get _rows => List<Map<String, dynamic>>.from(widget.component.raw['questions'] ?? []);
+  List<Map<String, dynamic>> get _rows =>
+      List<Map<String, dynamic>>.from(widget.component.raw['questions'] ?? []);
 
   /// Whether any row has a non-empty label.
-  bool get _hasVisibleLabels => _rows.any((row) => (row['label'] ?? '').toString().trim().isNotEmpty);
+  bool get _hasVisibleLabels =>
+      _rows.any((row) => (row['label'] ?? '').toString().trim().isNotEmpty);
 
   /// The list of answer options (columns).
-  List<Map<String, dynamic>> get _columns => List<Map<String, dynamic>>.from(widget.component.raw['values'] ?? []);
+  List<Map<String, dynamic>> get _columns =>
+      List<Map<String, dynamic>>.from(widget.component.raw['values'] ?? []);
 
   /// Returns the current selected value for a given row/question.
   String? _selectedFor(String rowKey) => widget.value[rowKey];
@@ -75,7 +84,8 @@ class _SurveyComponentState extends State<SurveyComponent> {
   /// Validates if all required questions are answered.
   String? _validator() {
     if (_isRequired) {
-      final answered = widget.value.entries.where((e) => e.value.isNotEmpty).length;
+      final answered =
+          widget.value.entries.where((e) => e.value.isNotEmpty).length;
       if (answered < _rows.length) {
         return 'Please complete all survey questions.';
       }
@@ -97,7 +107,8 @@ class _SurveyComponentState extends State<SurveyComponent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.component.label, style: FormioThemeScope.of(context).resolvedLabelStyle(context)),
+        Text(widget.component.label,
+            style: FormioThemeScope.of(context).resolvedLabelStyle(context)),
         const SizedBox(height: 8),
 
         // StickyHeader with synchronized horizontal scrolling
@@ -123,10 +134,12 @@ class _SurveyComponentState extends State<SurveyComponent> {
                         padding: const EdgeInsets.all(12.0),
                         decoration: BoxDecoration(
                           border: Border(
-                            right: BorderSide(color: Theme.of(context).colorScheme.outline),
+                            right: BorderSide(
+                                color: Theme.of(context).colorScheme.outline),
                           ),
                         ),
-                        child: const Text('', style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: const Text('',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     // Header cells for each option
                     ..._columns.map((col) => Container(
@@ -134,7 +147,8 @@ class _SurveyComponentState extends State<SurveyComponent> {
                           padding: const EdgeInsets.all(8.0),
                           decoration: BoxDecoration(
                             border: Border(
-                              right: BorderSide(color: Theme.of(context).colorScheme.outline),
+                              right: BorderSide(
+                                  color: Theme.of(context).colorScheme.outline),
                             ),
                           ),
                           child: Text(
@@ -159,9 +173,12 @@ class _SurveyComponentState extends State<SurveyComponent> {
             child: Container(
               decoration: BoxDecoration(
                 border: Border(
-                  left: BorderSide(color: Theme.of(context).colorScheme.outline),
-                  right: BorderSide(color: Theme.of(context).colorScheme.outline),
-                  bottom: BorderSide(color: Theme.of(context).colorScheme.outline),
+                  left:
+                      BorderSide(color: Theme.of(context).colorScheme.outline),
+                  right:
+                      BorderSide(color: Theme.of(context).colorScheme.outline),
+                  bottom:
+                      BorderSide(color: Theme.of(context).colorScheme.outline),
                 ),
               ),
               child: Column(
@@ -170,7 +187,8 @@ class _SurveyComponentState extends State<SurveyComponent> {
                   return Container(
                     decoration: BoxDecoration(
                       border: Border(
-                        top: BorderSide(color: Theme.of(context).colorScheme.outline),
+                        top: BorderSide(
+                            color: Theme.of(context).colorScheme.outline),
                       ),
                     ),
                     child: Row(
@@ -182,7 +200,9 @@ class _SurveyComponentState extends State<SurveyComponent> {
                             padding: const EdgeInsets.all(12.0),
                             decoration: BoxDecoration(
                               border: Border(
-                                right: BorderSide(color: Theme.of(context).colorScheme.outline),
+                                right: BorderSide(
+                                    color:
+                                        Theme.of(context).colorScheme.outline),
                               ),
                             ),
                             child: Text(
@@ -195,10 +215,13 @@ class _SurveyComponentState extends State<SurveyComponent> {
                           final colValue = col['value']?.toString() ?? '';
                           return Container(
                             width: 80,
-                            padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 4.0, vertical: 8.0),
                             decoration: BoxDecoration(
                               border: Border(
-                                right: BorderSide(color: Theme.of(context).colorScheme.outline),
+                                right: BorderSide(
+                                    color:
+                                        Theme.of(context).colorScheme.outline),
                               ),
                             ),
                             child: Center(
@@ -209,7 +232,8 @@ class _SurveyComponentState extends State<SurveyComponent> {
                                 },
                                 child: Radio<String>(
                                   value: colValue,
-                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
                                   visualDensity: VisualDensity.compact,
                                 ),
                               ),

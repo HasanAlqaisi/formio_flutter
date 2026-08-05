@@ -28,7 +28,8 @@ class AuthService {
   ///
   /// Throws [DioError] on failure (invalid credentials, server error, etc).
   Future<UserModel> login(UserModel credentials) async {
-    final response = await client.dio.post('/user/login', data: credentials.toLoginJson());
+    final response =
+        await client.dio.post('/user/login', data: credentials.toLoginJson());
     return UserModel.fromJson(response.data as Map<String, dynamic>);
   }
 
@@ -42,7 +43,8 @@ class AuthService {
   ///
   /// Throws [DioError] on failure.
   Future<UserModel> register(UserModel user) async {
-    final response = await client.dio.post('/user/register', data: user.toRegisterJson());
+    final response =
+        await client.dio.post('/user/register', data: user.toRegisterJson());
     return UserModel.fromJson(response.data as Map<String, dynamic>);
   }
 

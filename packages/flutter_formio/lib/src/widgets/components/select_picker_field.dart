@@ -59,6 +59,7 @@ class SelectPickerField extends StatelessWidget {
     // Fresh from the loader when there is one; otherwise what we were given.
     final available = await loadOptions?.call() ?? options;
     if (!context.mounted) return;
+    final formioTheme = FormioThemeScope.of(context);
     var query = '';
     final chosen = await showDialog<String>(
       context: context,
@@ -103,6 +104,11 @@ class SelectPickerField extends StatelessWidget {
                               return ListTile(
                                 dense: true,
                                 selected: isSelected,
+                                // Without this the selected row takes
+                                // `colorScheme.primary`, which is a fill colour
+                                // and unreadable as text on a dark sheet.
+                                selectedColor:
+                                    formioTheme.resolvedAccentColor(context),
                                 title: Text(
                                     filtered[i]['label']?.toString() ?? ''),
                                 trailing:
@@ -121,6 +127,7 @@ class SelectPickerField extends StatelessWidget {
             ),
             actions: [
               TextButton(
+                style: formioTheme.resolvedSecondaryActionStyle(context),
                 onPressed: () => Navigator.pop(ctx),
                 child: Text(ComponentFactory.locale.cancel),
               ),

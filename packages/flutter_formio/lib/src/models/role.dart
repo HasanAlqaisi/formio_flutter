@@ -45,8 +45,10 @@ class RoleModel {
       description: json['description'] as String?,
       isDefault: json['default'] as bool? ?? false,
       admin: json['admin'] as bool? ?? false,
-      created: json['created'] != null ? DateTime.tryParse(json['created']) : null,
-      modified: json['modified'] != null ? DateTime.tryParse(json['modified']) : null,
+      created:
+          json['created'] != null ? DateTime.tryParse(json['created']) : null,
+      modified:
+          json['modified'] != null ? DateTime.tryParse(json['modified']) : null,
     );
   }
 
@@ -70,5 +72,6 @@ class RoleModel {
   }
 
   @override
-  String toString() => 'RoleModel(id: $id, title: $title, admin: $admin, default: $isDefault)';
+  String toString() =>
+      'RoleModel(id: $id, title: $title, admin: $admin, default: $isDefault)';
 }

@@ -20,7 +20,11 @@ class HtmlElementComponent extends StatelessWidget {
   /// Whether to enable clicking on links.
   final bool enableLinks;
 
-  const HtmlElementComponent({super.key, required this.component, this.formData, this.enableLinks = true});
+  const HtmlElementComponent(
+      {super.key,
+      required this.component,
+      this.formData,
+      this.enableLinks = true});
 
   /// Tags that cannot wrap content, so they render standalone.
   static const _voidTags = {'hr', 'br', 'img', 'input', 'wbr'};
@@ -40,8 +44,8 @@ class HtmlElementComponent extends StatelessWidget {
   /// bare — which meant the tag-based styling below never matched anything.
   String get _htmlContent {
     final tag = _tag;
-    final content =
-        InterpolationUtils.interpolate(component.raw['content']?.toString() ?? '', formData);
+    final content = InterpolationUtils.interpolate(
+        component.raw['content']?.toString() ?? '', formData);
     if (_voidTags.contains(tag)) return '<$tag/>';
     if (content.trim().isEmpty) return '';
     return '<$tag>$content</$tag>';

@@ -37,18 +37,17 @@ class DataSourceComponent extends StatefulWidget {
 }
 
 class _DataSourceComponentState extends State<DataSourceComponent> {
-
   @override
   void initState() {
     super.initState();
-    
+
     // print('🔍 DataSourceComponent.initState()');
     // print('   Component key: ${widget.component.key}');
-    
+
     // Fetch on init if trigger.init is true (default)
     final trigger = widget.component.raw['trigger'] as Map<String, dynamic>?;
     final shouldFetchOnInit = trigger?['init'] ?? true;
-    
+
     if (shouldFetchOnInit) {
       // print('   ✅ Fetching on init');
       WidgetsBinding.instance.addPostFrameCallback((_) => _fetchData());
@@ -60,13 +59,13 @@ class _DataSourceComponentState extends State<DataSourceComponent> {
   @override
   void didUpdateWidget(DataSourceComponent oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     // Check if refreshOnBlur field changed
     final refreshOn = widget.component.raw['refreshOnBlur']?.toString();
     if (refreshOn != null && refreshOn.isNotEmpty) {
       final oldValue = oldWidget.formData?[refreshOn];
       final newValue = widget.formData?[refreshOn];
-      
+
       if (oldValue != newValue) {
         // print('🔄 DataSource: Field "$refreshOn" changed from "$oldValue" to "$newValue"');
         // print('   Triggering re-fetch...');
@@ -81,7 +80,8 @@ class _DataSourceComponentState extends State<DataSourceComponent> {
     });
 
     try {
-      final fetchConfig = widget.component.raw['fetch'] as Map<String, dynamic>?;
+      final fetchConfig =
+          widget.component.raw['fetch'] as Map<String, dynamic>?;
       if (fetchConfig == null) {
         throw 'No fetch configuration';
       }
@@ -94,7 +94,6 @@ class _DataSourceComponentState extends State<DataSourceComponent> {
 
       // Store in form state
       widget.onChanged(transformedData);
-      
     } catch (e) {
       // print('   ❌ Error: $e');
       setState(() {

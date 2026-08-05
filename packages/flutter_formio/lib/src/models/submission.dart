@@ -20,15 +20,18 @@ class SubmissionModel {
   /// ID of the user who created this submission, if authenticated.
   final String? owner;
 
-  SubmissionModel({this.id, required this.data, this.created, this.modified, this.owner});
+  SubmissionModel(
+      {this.id, required this.data, this.created, this.modified, this.owner});
 
   /// Creates a [SubmissionModel] from Form.io JSON response.
   factory SubmissionModel.fromJson(Map<String, dynamic> json) {
     return SubmissionModel(
       id: json['_id'] as String?,
       data: Map<String, dynamic>.from(json['data'] ?? {}),
-      created: json['created'] != null ? DateTime.tryParse(json['created']) : null,
-      modified: json['modified'] != null ? DateTime.tryParse(json['modified']) : null,
+      created:
+          json['created'] != null ? DateTime.tryParse(json['created']) : null,
+      modified:
+          json['modified'] != null ? DateTime.tryParse(json['modified']) : null,
       owner: json['owner'] as String?,
     );
   }

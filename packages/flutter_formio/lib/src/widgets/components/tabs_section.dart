@@ -145,6 +145,11 @@ class _FormioTabsSectionState extends State<FormioTabsSection>
       ],
     );
 
+    final formioTheme = FormioThemeScope.of(context);
+    final accent = formioTheme.resolvedAccentColor(context);
+    final labelBase = formioTheme.resolvedLabelStyle(context);
+    final mutedLabel = labelBase.color ?? Theme.of(context).hintColor;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -155,6 +160,21 @@ class _FormioTabsSectionState extends State<FormioTabsSection>
           tabAlignment: TabAlignment.start,
           indicatorSize: TabBarIndicatorSize.tab,
           dividerHeight: 0,
+          // The active tab gets the accent; the inactive ones get the muted
+          // label colour. It used to be handed the field-label style for
+          // `labelStyle`, which in TabBar governs the *selected* tab — so the
+          // active tab wore the secondary grey and read as disabled while the
+          // inactive ones kept the brighter default.
+          //
+          // Colour is set on the styles *and* the label colours, so it does not
+          // matter which of the two TabBar gives precedence to.
+          labelColor: accent,
+          unselectedLabelColor: mutedLabel,
+          indicatorColor: accent,
+          labelStyle:
+              labelBase.copyWith(color: accent, fontWeight: FontWeight.w600),
+          unselectedLabelStyle: labelBase.copyWith(color: mutedLabel),
+
           tabs: [
             for (var i = 0; i < widget.labels.length; i++)
               Tab(

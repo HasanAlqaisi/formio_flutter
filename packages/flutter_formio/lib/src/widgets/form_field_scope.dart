@@ -52,7 +52,8 @@ class FieldScope {
   final FocusNode Function(String path) focusFor;
 
   /// Render a child component under [parentPath] (recursion for containers).
-  final Widget Function(Map<String, dynamic> raw, String parentPath) renderChild;
+  final Widget Function(Map<String, dynamic> raw, String parentPath)
+      renderChild;
 
   /// Where `dataSrc: "resource"` selects fetch from. Null means they cannot be
   /// resolved, which surfaces as a data-source error.
