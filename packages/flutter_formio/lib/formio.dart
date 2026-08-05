@@ -50,7 +50,6 @@ export 'src/services/user_service.dart';
 // Core Flutter-specific
 export 'src/core/flutter_js_evaluator.dart';
 export 'src/core/form_logic_engine.dart';
-export 'src/core/validators.dart';
 // Models - Flutter-specific
 export 'src/models/file_typedefs.dart';
 export 'src/models/formio_localizations.dart';
