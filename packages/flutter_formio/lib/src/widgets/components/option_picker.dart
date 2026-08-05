@@ -101,7 +101,7 @@ Future<List<FormioOption>?> showOptionPicker({
               ];
 
         return AlertDialog(
-          title: title == null ? null : Text(title),
+          title: title?.isNotEmpty == true ? Text(title!) : null,
           content: SizedBox(
             width: double.maxFinite,
             child: Column(
