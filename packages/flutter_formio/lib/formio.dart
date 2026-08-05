@@ -33,7 +33,6 @@ export 'src/models/action.dart';
 export 'src/models/component.dart';
 export 'src/models/file_data.dart';
 export 'src/models/form.dart';
-export 'src/models/formio_locale_interface.dart';
 export 'src/models/role.dart';
 export 'src/models/submission.dart';
 export 'src/models/user.dart';

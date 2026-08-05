@@ -25,14 +25,12 @@ class SignatureComponent extends StatefulWidget {
   final ValueChanged<String?> onChanged;
 
   /// Localization strings
-  final FormioLocale locale;
 
   const SignatureComponent({
     super.key,
     required this.component,
     required this.value,
     required this.onChanged,
-    this.locale = const DefaultFormioLocale(),
   });
 
   @override
@@ -190,7 +188,7 @@ class _SignatureComponentState extends State<SignatureComponent> {
                   .resolvedSecondaryActionStyle(context),
               onPressed: _points.isEmpty ? null : _clear,
               icon: const Icon(Icons.clear),
-              label: Text(widget.locale.clear),
+              label: Text(ComponentFactory.locale.clear),
             ),
           ],
         ),

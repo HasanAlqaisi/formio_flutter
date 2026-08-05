@@ -24,7 +24,7 @@ void main() {
     });
 
     test('should provide default locale', () {
-      const locale = DefaultFormioLocale();
+      const locale = DefaultFormioLocalizations();
       expect(locale.submit, equals('Submit'));
       expect(locale.fieldRequired, equals('This field is required'));
     });
