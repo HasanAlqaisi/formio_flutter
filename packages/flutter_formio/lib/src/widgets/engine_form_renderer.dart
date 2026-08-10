@@ -17,12 +17,17 @@ import 'package:flutter/material.dart';
 
 import '../core/form_logic_engine.dart';
 import 'component_builders.dart' as cb;
+import 'component_factory.dart' show ComponentFactory;
+import 'control_builders.dart';
+import 'components/select_options.dart' show FormioResourceSource;
+import 'components/tabs_section.dart';
 import 'form_field_context.dart';
 import 'form_field_scope.dart';
 import 'form_theme.dart';
 
 export 'form_field_context.dart' show FormioFieldContext, FormioFieldBuilder;
-export 'form_theme.dart' show FormioTheme;
+export 'control_builders.dart';
+export 'form_theme.dart' show FormioTheme, FormioThemeScope;
 
 typedef EngineFormSubmit = void Function(Map<String, dynamic> data);
 
@@ -35,6 +40,8 @@ class EngineFormRenderer extends StatefulWidget {
     this.onSubmit,
     this.onChanged,
     this.customComponents,
+    this.controls = const FormioControlBuilders(),
+    this.resourceSource,
     this.textDirection,
     this.theme = const FormioTheme(),
     this.debounce = const Duration(milliseconds: 450),
@@ -47,8 +54,24 @@ class EngineFormRenderer extends StatefulWidget {
   final ValueChanged<Map<String, dynamic>>? onChanged;
 
   /// Host-registered builders for custom component types (or overrides of
-  /// built-in types), keyed by the Form.io component `type`.
+  /// built-in types), keyed by the Form.io component `type`. These replace a
+  /// component entirely, schema handling included.
   final Map<String, FormioFieldBuilder>? customComponents;
+
+  /// Host widgets for built-in controls, where the package keeps the behaviour.
+  /// Prefer this over [customComponents] when only the look differs — a
+  /// `customComponents['select']` override has to reimplement `dataSrc`,
+  /// `valueProperty`, `template` and remote loading to work at all.
+  final FormioControlBuilders controls;
+
+  /// Project URL and credentials for `dataSrc: "resource"` selects (and the
+  /// `resource` component type, which is one).
+  ///
+  /// A resource component carries only a form id, so the project it lives in is
+  /// deployment configuration rather than schema. Leave null if no form uses a
+  /// resource source; those components then report a data-source error instead
+  /// of an empty list that would never fill.
+  final FormioResourceSource? resourceSource;
 
   /// Text/layout direction for the whole form. When null, the ambient
   /// [Directionality] is used (e.g. from `MaterialApp`'s locale). Set
@@ -76,6 +99,26 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
   };
   static const _nestingTypes = {'container', 'creatioContainer'};
   static const _arrayTypes = {'datagrid', 'editgrid'};
+
+  /// Types this renderer dispatches to a data-bound control (see
+  /// [_renderControl]). Form.io's component classes carry `input: true` in their
+  /// own `defaultSchema`, so a hand-written or partial schema that omits the
+  /// flag still describes a data component — these default to `input: true`
+  /// rather than requiring it, otherwise the component renders an editable
+  /// control bound to an empty path and the first edit has nowhere to write.
+  static const _dataTypes = {
+    ...cb.kTextTypes,
+    ..._arrayTypes,
+    ..._nestingTypes,
+    'select',
+    'resource',
+    'selectboxes',
+    'checkbox',
+    'radio',
+    'date',
+    'datetime',
+    'time',
+  };
 
   Map<String, dynamic> _data = {};
   Map<String, dynamic> _hidden = {};
@@ -187,6 +230,8 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
           return f;
         }),
         renderChild: _render,
+        resourceSource: widget.resourceSource,
+        controls: widget.controls,
       );
 
   // ---- nested data access (supports list indices: a.b[0].c) -------------
@@ -222,6 +267,18 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
   }
 
   void _setPath(String path, dynamic value, {bool immediate = false}) {
+    // A path-less write means the component rendered an editable control with
+    // no data path — a schema/registration problem (e.g. an explicit
+    // `input: false` on a data component, or a custom builder writing to ''),
+    // not something the user can act on. Warn loudly in debug, but never take
+    // the form down over it in release; `_getPath` returns null in the same case.
+    if (path.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('⚠️ Ignored a write with no data path (value: $value). '
+            'The component is editable but has no `key`/`input` to bind to.');
+      }
+      return;
+    }
     final tokens = _parsePath(path);
     dynamic cur = _data;
     for (var i = 0; i < tokens.length - 1; i++) {
@@ -260,6 +317,84 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
   String _childPath(String parent, String key) =>
       parent.isEmpty ? key : '$parent.$key';
 
+  /// A schema string that may not actually be a string, normalised to null when
+  /// absent or blank.
+  static String? _text(Object? value) {
+    final text = value?.toString();
+    return (text == null || text.isEmpty) ? null : text;
+  }
+
+  /// Reads a Bootstrap grid value (`width`/`offset`/…) that may arrive as a
+  /// number or a numeric string — schemas carry both, and casting to `num`
+  /// throws on the string form.
+  static int? _gridUnits(Object? value) {
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value.trim());
+    return null;
+  }
+
+  /// Whether the engine hid a structural component with this [key].
+  bool _hiddenByKey(String? key) =>
+      key != null && key.isNotEmpty && _hidden[key] == true;
+
+  /// The error to display for [path], gated by the same touched/submitted policy
+  /// the fields themselves use.
+  FormLogicError? _visibleErrorFor(String path) =>
+      (_submitted || _touched.contains(path)) ? _errors[path] : null;
+
+  /// Whether anything inside [raw] currently shows a validation error.
+  ///
+  /// Used to flag a tab: with only the active tab built, an invalid field behind
+  /// another tab would otherwise be invisible and unfindable. Walks the same
+  /// nesting `_render` does (`components`, plus `columns` and table `rows`) and
+  /// derives paths the same way, so it agrees with what the fields show.
+  bool _subtreeHasVisibleError(Map<String, dynamic> raw, String parentPath) {
+    final type = raw['type'] as String?;
+    final key = raw['key'] as String?;
+    final isLayout = _layoutTypes.contains(type);
+    final declaredInput = raw['input'];
+    final input =
+        declaredInput is bool ? declaredInput : _dataTypes.contains(type);
+    final path = (isLayout || !input || key == null)
+        ? parentPath
+        : _childPath(parentPath, key);
+
+    if (path.isNotEmpty && _visibleErrorFor(path) != null) return true;
+
+    // Every access below is type-checked rather than cast: this walker visits
+    // *all* component types, and these keys mean different things per type — a
+    // textarea's `rows` is an int (its line count), not a table's list of rows.
+    bool anyIn(Object? children) {
+      if (children is! List) return false;
+      for (final c in children) {
+        if (c is Map<String, dynamic> && _subtreeHasVisibleError(c, path)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    if (anyIn(raw['components'])) return true;
+
+    final columns = raw['columns'];
+    if (columns is List) {
+      for (final column in columns) {
+        if (column is Map && anyIn(column['components'])) return true;
+      }
+    }
+
+    final rows = raw['rows'];
+    if (rows is List) {
+      for (final row in rows) {
+        if (row is! List) continue;
+        for (final cell in row) {
+          if (cell is Map && anyIn(cell['components'])) return true;
+        }
+      }
+    }
+    return false;
+  }
+
   Widget _renderList(List<dynamic> comps, String parentPath) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -272,7 +407,11 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
     final type = raw['type'] as String?;
     final key = raw['key'] as String?;
     final isLayout = _layoutTypes.contains(type);
-    final input = raw['input'] == true;
+    // An explicit flag always wins; otherwise derive it from the type so a
+    // schema missing `input: true` still binds to its data path.
+    final declaredInput = raw['input'];
+    final input =
+        declaredInput is bool ? declaredInput : _dataTypes.contains(type);
     final path = (isLayout || !input || key == null)
         ? parentPath
         : _childPath(parentPath, key);
@@ -282,8 +421,7 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
     // keyed by their `key`. Only checking the input/path case left
     // conditionally-hidden panels on screen as dead, engine-reverted shells.
     final hiddenByPath = path.isNotEmpty && _hidden[path] == true;
-    final hiddenByKey =
-        !input && key != null && key.isNotEmpty && _hidden[key] == true;
+    final hiddenByKey = !input && _hiddenByKey(key);
     if (hiddenByPath || hiddenByKey) {
       return const SizedBox.shrink();
     }
@@ -299,89 +437,140 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
     // Layout containers (structural recursion stays here).
     switch (type) {
       case 'columns':
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (final col in (raw['columns'] as List?) ?? const [])
-              if (col is Map<String, dynamic>)
-                Expanded(
-                  flex: (col['width'] as num?)?.toInt() ?? 1,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: _renderList(
+        final cols = [
+          for (final col in (raw['columns'] as List?) ?? const [])
+            if (col is Map<String, dynamic>) col,
+        ];
+        if (cols.isEmpty) return const SizedBox.shrink();
+        // Form.io columns use a 12-unit Bootstrap grid. Render responsively:
+        // stack full-width on narrow screens; otherwise size each column to its
+        // grid width and let a Wrap flow rows (widths summing to >12 wrap, just
+        // like Bootstrap) instead of crushing everything into one Row.
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final avail = constraints.maxWidth;
+            final units = [
+              for (final c in cols)
+                // Form.io defaults a column's width to 6 (half), not full.
+                (_gridUnits(c['width']) ?? 6).clamp(1, 12),
+            ];
+            final narrowest = units.reduce((a, b) => a < b ? a : b);
+            if (avail * narrowest / 12 < widget.theme.columnBreakpoint) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final col in cols)
+                    _renderList(
                         (col['components'] as List?) ?? const [], parentPath),
+                ],
+              );
+            }
+            return Wrap(
+              crossAxisAlignment: WrapCrossAlignment.start,
+              children: [
+                for (var i = 0; i < cols.length; i++)
+                  SizedBox(
+                    width: (avail * units[i] / 12).floorToDouble(),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: _renderList(
+                          (cols[i]['components'] as List?) ?? const [],
+                          parentPath),
+                    ),
                   ),
-                ),
-          ],
+              ],
+            );
+          },
         );
       case 'table':
-        return Column(
-          children: [
-            for (final row in (raw['rows'] as List?) ?? const [])
-              if (row is List)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    for (final cell in row)
-                      if (cell is Map<String, dynamic>)
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: _renderList(
-                                (cell['components'] as List?) ?? const [],
-                                parentPath),
-                          ),
-                        ),
-                  ],
-                ),
-          ],
+        final rows = [
+          for (final row in (raw['rows'] as List?) ?? const [])
+            if (row is List) row,
+        ];
+        if (rows.isEmpty) return const SizedBox.shrink();
+        // Cells share the width equally. On narrow screens that crushes them, so
+        // linearize each row into a stack; keep the tabular Row when there's room.
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final widest =
+                rows.fold<int>(0, (m, r) => r.length > m ? r.length : m);
+            final stack = widest > 0 &&
+                constraints.maxWidth / widest < widget.theme.columnBreakpoint;
+            Widget cell(dynamic c) => Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: (c is Map<String, dynamic>)
+                      ? _renderList(
+                          (c['components'] as List?) ?? const [], parentPath)
+                      : const SizedBox.shrink(),
+                );
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final row in rows)
+                  if (stack)
+                    for (final c in row) cell(c)
+                  else
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (final c in row) Expanded(child: cell(c)),
+                      ],
+                    ),
+              ],
+            );
+          },
         );
       case 'panel':
       case 'well':
       case 'fieldset':
-        // Form.io puts the header in `title` (panels/wells) or `legend`
-        // (fieldsets); `label` is the default component name ("Panel"), not a
-        // header. Fall back across the three, then to a non-default label.
-        final rawLabel = raw['label'] as String?;
+        // A fieldset's header is documented as `legend`; a panel's/well's is
+        // `title`. Prefer whichever belongs to this type, then fall back — and
+        // finally to `label`, except when it is the builder's default component
+        // name rather than a real header.
+        final isFieldset = type == 'fieldset';
+        final rawLabel = _text(raw['label']);
         final header = <String?>[
-          raw['title'] as String?,
-          raw['legend'] as String?,
+          if (isFieldset) _text(raw['legend']),
+          _text(raw['title']),
+          if (!isFieldset) _text(raw['legend']),
           (rawLabel == 'Panel' || rawLabel == 'Field Set') ? null : rawLabel,
-        ].firstWhere((h) => h != null && h.isNotEmpty, orElse: () => null);
-        return Card(
-          margin: widget.theme.sectionMargin,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (header != null && raw['hideLabel'] != true)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(header,
-                        style: widget.theme.resolvedPanelTitleStyle(context)),
-                  ),
-                _renderList(
-                    (raw['components'] as List?) ?? const [], parentPath),
-              ],
-            ),
+        ].firstWhere((h) => h != null, orElse: () => null);
+        return cb.sectionCard(
+          widget.theme,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (header != null && raw['hideLabel'] != true)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(header,
+                      style: widget.theme.resolvedPanelTitleStyle(context)),
+                ),
+              _renderList((raw['components'] as List?) ?? const [], parentPath),
+            ],
           ),
         );
       case 'tabs':
-        return _renderList(
-          [
-            for (final t in (raw['components'] as List?) ?? const [])
-              if (t is Map<String, dynamic>) ...[
-                if ((t['label'] as String?)?.isNotEmpty == true)
-                  <String, dynamic>{
-                    'type': 'htmlelement',
-                    'input': false,
-                    'content': '<b>${t['label']}</b>',
-                  },
-                ...((t['components'] as List?) ?? const []),
-              ],
+        // Each entry of a `tabs` component is one tab: {label, key, components}.
+        final tabs = [
+          for (final t in (raw['components'] as List?) ?? const [])
+            if (t is Map<String, dynamic>)
+              // A tab is structural, so the engine hides it by key.
+              if (!_hiddenByKey(t['key']?.toString())) t,
+        ];
+        if (tabs.isEmpty) return const SizedBox.shrink();
+        return FormioTabsSection(
+          theme: widget.theme,
+          labels: [
+            for (final t in tabs) t['label']?.toString() ?? '',
           ],
-          parentPath,
+          hasError: [
+            for (final t in tabs) _subtreeHasVisibleError(t, parentPath),
+          ],
+          contentBuilder: (index) => _renderList(
+            (tabs[index]['components'] as List?) ?? const [],
+            parentPath,
+          ),
         );
       case 'button':
         return const SizedBox.shrink();
@@ -420,7 +609,12 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
   Widget _renderControl(Map<String, dynamic> raw, String path, String? type) {
     // Control components (delegated to stateless builders).
     switch (type) {
+      // Form.io's `resource` component *is* a select whose options come from a
+      // resource; it carries the same data/template/valueProperty keys. Without
+      // this it fell through to the unknown-component placeholder and its value
+      // never reached the submission.
       case 'select':
+      case 'resource':
         return cb.buildField(
             _scope, raw, path, cb.buildSelect(_scope, raw, path));
       case 'selectboxes':
@@ -444,8 +638,11 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
       return cb.buildField(
           _scope, raw, path, cb.buildTextLeaf(_scope, raw, path, type!));
     }
+    // `minLength`/`maxLength` fail against the grid's own path, so the grid needs
+    // the error chrome too — without it a "at least 2 rows" rule blocks submit
+    // with nothing on screen to explain why.
     if (_arrayTypes.contains(type)) {
-      return cb.buildDataGrid(_scope, raw, path);
+      return _wrapError(cb.buildDataGrid(_scope, raw, path), path);
     }
 
     // Stock / custom-registered components render their own label; show only
@@ -542,6 +739,10 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
       return const Center(child: CircularProgressIndicator());
     }
     _scope = _makeScope(context);
+    final submitStyle = widget.theme.resolvedSubmitButtonStyle(context);
+    final submitForeground =
+        submitStyle.foregroundColor?.resolve(const <WidgetState>{}) ??
+            widget.theme.resolvedOnAccentColor(context);
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -554,22 +755,32 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
         SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(12),
-            child: FilledButton(
+            child: ElevatedButton(
+              style: submitStyle,
               onPressed: _submitting ? null : _submit,
               child: _submitting
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Submit'),
+                      // The button's own foreground: a spinner left to default
+                      // paints in the ambient primary, which on a primary-filled
+                      // button is invisible.
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: submitForeground),
+                    )
+                  : Text(ComponentFactory.locale.submit),
             ),
           ),
         ),
       ],
     );
-    return widget.textDirection == null
+    final directed = widget.textDirection == null
         ? body
         : Directionality(textDirection: widget.textDirection!, child: body);
+    // Published so the stock component set — built through the static
+    // ComponentFactory, which takes no theme — can style its own labels and
+    // containers to match the built-in fields.
+    return FormioThemeScope(theme: widget.theme, child: directed);
   }
 
   // ---- utils ------------------------------------------------------------

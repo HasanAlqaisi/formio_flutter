@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:formio/formio.dart';
 
-import 'package:url_launcher/url_launcher.dart';
+import 'safe_link.dart';
 
 class ContentComponent extends StatelessWidget {
   /// The Form.io component definition.
@@ -20,11 +20,15 @@ class ContentComponent extends StatelessWidget {
   /// Whether to enable clicking on links.
   final bool enableLinks;
 
-  const ContentComponent({super.key, required this.component, this.formData, this.enableLinks = true});
+  const ContentComponent(
+      {super.key,
+      required this.component,
+      this.formData,
+      this.enableLinks = true});
 
   /// Extracts the raw HTML or text content from the component and performs interpolation.
   String get _content => InterpolationUtils.interpolate(
-        component.raw['html'] ?? '',
+        component.raw['html']?.toString() ?? '',
         formData,
       );
 
@@ -41,11 +45,12 @@ class ContentComponent extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Html(
         data: _content,
-        style: {'p': Style(fontSize: FontSize.medium), 'h2': Style(fontSize: FontSize.larger, fontWeight: FontWeight.w600)},
+        style: {
+          'p': Style(fontSize: FontSize.medium),
+          'h2': Style(fontSize: FontSize.larger, fontWeight: FontWeight.w600)
+        },
         onLinkTap: (url, _, __) {
-          if (enableLinks && url != null) {
-            launchUrl(Uri.parse(url));
-          }
+          if (enableLinks) openFormLink(url);
         },
       ),
     );

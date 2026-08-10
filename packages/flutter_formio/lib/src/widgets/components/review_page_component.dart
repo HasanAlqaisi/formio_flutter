@@ -57,7 +57,11 @@ class ReviewPageComponent extends StatelessWidget {
                   padding: const EdgeInsets.all(16),
                   child: Text(
                     ComponentFactory.locale.noDataToReview,
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
+                    style: TextStyle(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.6)),
                   ),
                 ),
               )
@@ -85,7 +89,10 @@ class ReviewPageComponent extends StatelessWidget {
             formattedKey,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.7),
                 ),
           ),
           const SizedBox(height: 4),
@@ -95,7 +102,8 @@ class ReviewPageComponent extends StatelessWidget {
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+              border: Border.all(
+                  color: Theme.of(context).colorScheme.outlineVariant),
             ),
             child: Text(
               formattedValue,
@@ -116,7 +124,8 @@ class ReviewPageComponent extends StatelessWidget {
         )
         .trim()
         .split(' ')
-        .map((word) => word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1))
+        .map((word) =>
+            word.isEmpty ? '' : word[0].toUpperCase() + word.substring(1))
         .join(' ');
   }
 
@@ -129,7 +138,8 @@ class ReviewPageComponent extends StatelessWidget {
       if (value.isEmpty) return ComponentFactory.locale.none;
       return value.join(', ');
     }
-    if (value is bool) return value ? ComponentFactory.locale.yes : ComponentFactory.locale.no;
+    if (value is bool)
+      return value ? ComponentFactory.locale.yes : ComponentFactory.locale.no;
     return value.toString();
   }
 }

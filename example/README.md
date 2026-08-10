@@ -22,7 +22,7 @@ console.
 | File | Purpose |
 | ---- | ------- |
 | `lib/main.dart` | App entry — loads a form from assets and renders it with `EngineFormRenderer`. |
-| `lib/custom_components.dart` | Host-provided custom components (`fmsfile`, `location`, `sites`) demonstrating the `customComponents` extension API — domain widgets live in the app, not the package. |
+| `lib/custom_components.dart` | Host-provided custom components (a file-upload field, `location`, `sites`) demonstrating the `customComponents` extension API — domain widgets live in the app, not the package. |
 | `assets/form-samples/` | Sample Form.io definitions (add your own `.json` here). |
 
 ## Key ideas

@@ -106,7 +106,8 @@ class SubmissionService {
   /// where all field values are at the root level.
   ///
   /// Throws [SubmissionException] on error.
-  Future<SubmissionModel> submit(String formPath, Map<String, dynamic> data) async {
+  Future<SubmissionModel> submit(
+      String formPath, Map<String, dynamic> data) async {
     try {
       final url = ApiEndpoints.postSubmission(formPath);
       // Flatten nested data and add required Form.io fields
@@ -129,7 +130,8 @@ class SubmissionService {
   /// (Optional) Fetches a submission by its ID under a form.
   ///
   /// Useful for edit/view workflows.
-  Future<SubmissionModel> fetchById(String formPath, String submissionId) async {
+  Future<SubmissionModel> fetchById(
+      String formPath, String submissionId) async {
     try {
       final url = ApiEndpoints.getSubmissionById(formPath, submissionId);
       final response = await client.dio.get(url);
@@ -169,7 +171,10 @@ class SubmissionService {
       );
 
       if (response.data is List) {
-        return (response.data as List).map((json) => SubmissionModel.fromJson(json as Map<String, dynamic>)).toList();
+        return (response.data as List)
+            .map((json) =>
+                SubmissionModel.fromJson(json as Map<String, dynamic>))
+            .toList();
       }
       return [];
     } catch (e) {

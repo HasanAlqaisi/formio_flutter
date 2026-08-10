@@ -73,13 +73,18 @@ class FileData {
   }
 
   @override
-  String toString() => 'FileData(name: $name, hasBytes: ${bytes != null}, path: $path, mimeType: $mimeType)';
+  String toString() =>
+      'FileData(name: $name, hasBytes: ${bytes != null}, path: $path, mimeType: $mimeType)';
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
 
-    return other is FileData && other.name == name && other.bytes == bytes && other.path == path && other.mimeType == mimeType;
+    return other is FileData &&
+        other.name == name &&
+        other.bytes == bytes &&
+        other.path == path &&
+        other.mimeType == mimeType;
   }
 
   @override

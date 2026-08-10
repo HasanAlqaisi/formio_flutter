@@ -33,7 +33,6 @@ export 'src/models/action.dart';
 export 'src/models/component.dart';
 export 'src/models/file_data.dart';
 export 'src/models/form.dart';
-export 'src/models/formio_locale_interface.dart';
 export 'src/models/role.dart';
 export 'src/models/submission.dart';
 export 'src/models/user.dart';
@@ -50,10 +49,10 @@ export 'src/services/user_service.dart';
 // Core Flutter-specific
 export 'src/core/flutter_js_evaluator.dart';
 export 'src/core/form_logic_engine.dart';
-export 'src/core/validators.dart';
 // Models - Flutter-specific
 export 'src/models/file_typedefs.dart';
 export 'src/models/formio_localizations.dart';
+export 'src/models/formio_validation_messages.dart';
 export 'src/models/formio_localizations_ar.dart';
 // Widgets
 export 'src/widgets/base_component.dart';
@@ -77,6 +76,11 @@ export 'src/widgets/components/dynamic_wizard_component.dart';
 export 'src/widgets/components/file_component.dart';
 export 'src/widgets/components/hidden_component.dart';
 export 'src/widgets/components/html_element_component.dart';
+export 'src/widgets/components/multi_select_field.dart';
+export 'src/widgets/components/option_picker.dart';
+export 'src/widgets/components/remote_select_options.dart';
+export 'src/widgets/components/select_options.dart';
+export 'src/widgets/components/select_picker_field.dart';
 export 'src/widgets/components/review_page_component.dart';
 export 'src/widgets/components/signature_component.dart';
 export 'src/widgets/components/sketchpad_component.dart';

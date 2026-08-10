@@ -75,7 +75,11 @@ class _AddressComponentState extends State<AddressComponent> {
           hintText: _getPlaceholder(key),
         ),
         onChanged: (val) => _updateField(key, val),
-        validator: required ? (val) => (val == null || val.isEmpty) ? ComponentFactory.locale.getRequiredMessage(label) : null : null,
+        validator: required
+            ? (val) => (val == null || val.isEmpty)
+                ? ComponentFactory.locale.getRequiredMessage(label)
+                : null
+            : null,
       ),
     );
   }
@@ -92,7 +96,7 @@ class _AddressComponentState extends State<AddressComponent> {
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
               widget.component.label,
-              style: Theme.of(context).textTheme.titleMedium,
+              style: FormioThemeScope.of(context).resolvedLabelStyle(context),
             ),
           ),
         _buildAddressField(

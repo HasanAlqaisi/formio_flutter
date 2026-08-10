@@ -4,7 +4,6 @@
 // ignore_for_file: avoid_print
 // ignore_for_file: depend_on_referenced_packages
 
-
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -92,7 +91,8 @@ void main() async {
         final firstForm = forms.first as Map<String, dynamic>;
         print('   First form: ${firstForm['title']} (${firstForm['path']})');
         print('   ID: ${firstForm['_id']}');
-        print('   Components: ${(firstForm['components'] as List?)?.length ?? 0}');
+        print(
+            '   Components: ${(firstForm['components'] as List?)?.length ?? 0}');
 
         // ========================================================================
         // TEST 3: Get Specific Form

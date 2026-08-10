@@ -23,7 +23,11 @@ class FormModel {
   final List<ComponentModel> components;
 
   /// Constructs a [FormModel] instance.
-  FormModel({required this.id, required this.path, required this.title, required this.components});
+  FormModel(
+      {required this.id,
+      required this.path,
+      required this.title,
+      required this.components});
 
   /// Factory constructor that creates a [FormModel] from a Form.io JSON response.
   ///
@@ -41,16 +45,24 @@ class FormModel {
       id: json['_id'] as String,
       path: json['path'] as String,
       title: json['title'] as String,
-      components: (json['components'] as List<dynamic>).map((c) => ComponentModel.fromJson(c as Map<String, dynamic>)).toList(),
+      components: (json['components'] as List<dynamic>)
+          .map((c) => ComponentModel.fromJson(c as Map<String, dynamic>))
+          .toList(),
     );
   }
 
   /// Converts the [FormModel] into a JSON-compatible map.
   Map<String, dynamic> toJson() {
-    return {'_id': id, 'path': path, 'title': title, 'components': components.map((c) => c.toJson()).toList()};
+    return {
+      '_id': id,
+      'path': path,
+      'title': title,
+      'components': components.map((c) => c.toJson()).toList()
+    };
   }
+
   @override
   String toString() {
-    return  '$runtimeType: ${toJson()}';
+    return '$runtimeType: ${toJson()}';
   }
 }

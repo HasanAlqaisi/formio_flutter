@@ -56,7 +56,8 @@ class JsEvaluationException implements Exception {
   const JsEvaluationException(this.message, [this.originalError]);
 
   @override
-  String toString() => 'JsEvaluationException: $message${originalError != null ? ' ($originalError)' : ''}';
+  String toString() =>
+      'JsEvaluationException: $message${originalError != null ? ' ($originalError)' : ''}';
 }
 
 /// A no-op JavaScript evaluator that always returns null.

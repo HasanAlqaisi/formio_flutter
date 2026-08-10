@@ -10,7 +10,6 @@ library;
 import 'package:flutter/material.dart';
 import 'package:formio/formio.dart';
 
-
 class DynamicWizardComponent extends StatefulWidget {
   /// The Form.io component definition.
   final ComponentModel component;
@@ -60,7 +59,9 @@ class _DynamicWizardComponentState extends State<DynamicWizardComponent> {
   List<ComponentModel> get _wizardSteps {
     final components = widget.component.raw['components'] as List?;
     if (components == null) return [];
-    return components.map((c) => ComponentModel.fromJson(c as Map<String, dynamic>)).toList();
+    return components
+        .map((c) => ComponentModel.fromJson(c as Map<String, dynamic>))
+        .toList();
   }
 
   void _startAddEntry() {
@@ -149,7 +150,11 @@ class _DynamicWizardComponentState extends State<DynamicWizardComponent> {
                           margin: const EdgeInsets.symmetric(horizontal: 2),
                           height: 4,
                           decoration: BoxDecoration(
-                            color: index <= _currentStep ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surfaceContainerHighest,
+                            color: index <= _currentStep
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -200,8 +205,12 @@ class _DynamicWizardComponentState extends State<DynamicWizardComponent> {
                           const SizedBox(width: 8),
                           ElevatedButton.icon(
                             onPressed: _nextStep,
-                            icon: Icon(_currentStep < _wizardSteps.length - 1 ? Icons.arrow_forward : Icons.check),
-                            label: Text(_currentStep < _wizardSteps.length - 1 ? ComponentFactory.locale.next : ComponentFactory.locale.complete),
+                            icon: Icon(_currentStep < _wizardSteps.length - 1
+                                ? Icons.arrow_forward
+                                : Icons.check),
+                            label: Text(_currentStep < _wizardSteps.length - 1
+                                ? ComponentFactory.locale.next
+                                : ComponentFactory.locale.complete),
                           ),
                         ],
                       ),
@@ -222,7 +231,11 @@ class _DynamicWizardComponentState extends State<DynamicWizardComponent> {
                 child: Center(
                   child: Text(
                     ComponentFactory.locale.noEntriesAdded,
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6)),
+                    style: TextStyle(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.6)),
                   ),
                 ),
               ),

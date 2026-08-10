@@ -29,7 +29,9 @@ class FormService {
       final response = await client.dio.get('/form');
       if (response.data is List<dynamic>) {
         final data = response.data as List<dynamic>;
-        return data.map((json) => FormModel.fromJson(json as Map<String, dynamic>)).toList();
+        return data
+            .map((json) => FormModel.fromJson(json as Map<String, dynamic>))
+            .toList();
       }
 
       // handle response

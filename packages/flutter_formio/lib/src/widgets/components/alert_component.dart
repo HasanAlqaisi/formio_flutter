@@ -21,7 +21,8 @@ class AlertComponent extends StatelessWidget {
   });
 
   /// Gets the alert type from component definition.
-  String get _alertType => component.raw['alertType']?.toString().toLowerCase() ?? 'info';
+  String get _alertType =>
+      component.raw['alertType']?.toString().toLowerCase() ?? 'info';
 
   /// Gets the alert content/message with interpolation support.
   String get _content => InterpolationUtils.interpolate(

@@ -25,7 +25,8 @@ class ComponentFactory {
   }
 
   /// Registers custom component builders (type → builder).
-  static void initialize(Map<String, FormioComponentBuilder> componentBuilders) {
+  static void initialize(
+      Map<String, FormioComponentBuilder> componentBuilders) {
     _customComponents.addAll(componentBuilders);
   }
 
@@ -82,25 +83,50 @@ class ComponentFactory {
     // EngineFormRenderer and never reach this switch.
     switch (component.type) {
       case 'button':
-        return ButtonComponent(component: component, onPressed: () {}, isDisabled: false);
+        return ButtonComponent(
+            component: component, onPressed: () {}, isDisabled: false);
       case 'day':
-        return DayComponent(component: component, value: value, onChanged: onChanged, formData: formData);
+        return DayComponent(
+            component: component,
+            value: value,
+            onChanged: onChanged,
+            formData: formData);
       case 'address':
-        return AddressComponent(component: component, value: value is Map<String, dynamic> ? value : {}, onChanged: onChanged);
+        return AddressComponent(
+            component: component,
+            value: value is Map<String, dynamic> ? value : {},
+            onChanged: onChanged);
       case 'tags':
-        return TagsComponent(component: component, value: value, onChanged: onChanged);
+        return TagsComponent(
+            component: component, value: value, onChanged: onChanged);
       case 'survey':
-        final surveyValue = value is Map ? Map<String, String>.fromEntries((value).entries.map((e) => MapEntry(e.key.toString(), e.value.toString()))) : <String, String>{};
-        return SurveyComponent(component: component, value: surveyValue, onChanged: onChanged);
+        final surveyValue = value is Map
+            ? Map<String, String>.fromEntries((value)
+                .entries
+                .map((e) => MapEntry(e.key.toString(), e.value.toString())))
+            : <String, String>{};
+        return SurveyComponent(
+            component: component, value: surveyValue, onChanged: onChanged);
       case 'signature':
-        return SignatureComponent(component: component, value: value, onChanged: onChanged);
+        return SignatureComponent(
+            component: component, value: value, onChanged: onChanged);
       case 'hidden':
-        return HiddenComponent(component: component, value: value, onChanged: onChanged);
+        return HiddenComponent(
+            component: component, value: value, onChanged: onChanged);
       case 'datasource':
-        return DataSourceComponent(component: component, value: value, onChanged: onChanged, formData: formData);
+        return DataSourceComponent(
+            component: component,
+            value: value,
+            onChanged: onChanged,
+            formData: formData);
       case 'datamap':
-        final dataMapValue = value is Map ? Map<String, String>.fromEntries((value).entries.map((e) => MapEntry(e.key.toString(), e.value.toString()))) : <String, String>{};
-        return DataMapComponent(component: component, value: dataMapValue, onChanged: onChanged);
+        final dataMapValue = value is Map
+            ? Map<String, String>.fromEntries((value)
+                .entries
+                .map((e) => MapEntry(e.key.toString(), e.value.toString())))
+            : <String, String>{};
+        return DataMapComponent(
+            component: component, value: dataMapValue, onChanged: onChanged);
       case 'dynamicwizard':
         return DynamicWizardComponent(
           component: component,
@@ -112,9 +138,11 @@ class ComponentFactory {
           onTimePick: onTimePick,
         );
       case 'htmlelement':
-        return HtmlElementComponent(component: component, formData: formData, enableLinks: enableLinks);
+        return HtmlElementComponent(
+            component: component, formData: formData, enableLinks: enableLinks);
       case 'content':
-        return ContentComponent(component: component, formData: formData, enableLinks: enableLinks);
+        return ContentComponent(
+            component: component, formData: formData, enableLinks: enableLinks);
       case 'alert':
         return AlertComponent(component: component, formData: formData);
       case 'file':
@@ -125,17 +153,31 @@ class ComponentFactory {
           onFilePick: onFilePick,
         );
       case 'captcha':
-        return CaptchaComponent(component: component, value: value, onChanged: onChanged);
+        return CaptchaComponent(
+            component: component, value: value, onChanged: onChanged);
       case 'tagpad':
-        return TagpadComponent(component: component, value: value is List ? value.cast<String>() : null, onChanged: onChanged);
+        return TagpadComponent(
+            component: component,
+            value: value is List ? value.cast<String>() : null,
+            onChanged: onChanged);
       case 'sketchpad':
-        return SketchpadComponent(component: component, value: value as String?, onChanged: onChanged);
+        return SketchpadComponent(
+            component: component,
+            value: value as String?,
+            onChanged: onChanged);
       case 'reviewpage':
-        return ReviewPageComponent(component: component, value: value is Map<String, dynamic> ? value : null, onChanged: onChanged);
+        return ReviewPageComponent(
+            component: component,
+            value: value is Map<String, dynamic> ? value : null,
+            onChanged: onChanged);
       case 'datatable':
-        return DataTableComponent(component: component, value: value is List ? value.cast<Map<String, dynamic>>() : null, onChanged: onChanged);
+        return DataTableComponent(
+            component: component,
+            value: value is List ? value.cast<Map<String, dynamic>>() : null,
+            onChanged: onChanged);
       case 'custom':
-        return CustomComponent(component: component, value: value, onChanged: onChanged);
+        return CustomComponent(
+            component: component, value: value, onChanged: onChanged);
       default:
         return UnknownComponent(component: component);
     }

@@ -8,29 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:formio/formio.dart';
 
-/// A canned engine: returns the data unchanged plus a fixed hidden map and
-/// error list, and records that the form was cached.
-class _FakeEngine implements FormEngine {
-  _FakeEngine({this.hidden = const {}, this.errors = const []});
-
-  final Map<String, dynamic> hidden;
-  final List<FormLogicError> errors;
-  Map<String, dynamic>? lastForm;
-
-  @override
-  void setForm(Map<String, dynamic> form) => lastForm = form;
-
-  @override
-  FormLogicResult processData(
-    Map<String, dynamic> submissionData, {
-    bool validate = true,
-  }) =>
-      FormLogicResult(
-        data: submissionData,
-        hidden: hidden,
-        errors: validate ? errors : const [],
-      );
-}
+import 'support/fake_engine.dart';
 
 Widget _host(Map<String, dynamic> form, FormEngine engine) => MaterialApp(
       home: Scaffold(body: EngineFormRenderer(form: form, engine: engine)),
@@ -45,7 +23,12 @@ final Map<String, dynamic> _form = {
       'key': 'hp',
       'title': 'Hidden Section',
       'components': [
-        {'type': 'textfield', 'key': 'inside', 'label': 'Inside', 'input': true},
+        {
+          'type': 'textfield',
+          'key': 'inside',
+          'label': 'Inside',
+          'input': true
+        },
       ],
     },
   ],
@@ -53,17 +36,19 @@ final Map<String, dynamic> _form = {
 
 void main() {
   testWidgets('caches the form and renders visible components', (tester) async {
-    final engine = _FakeEngine();
+    final engine = FakeEngine();
     await tester.pumpWidget(_host(_form, engine));
 
     expect(engine.lastForm, isNotNull); // setForm was called (form caching)
     expect(find.text('Visible'), findsOneWidget);
-    expect(find.text('Hidden Section'), findsOneWidget); // panel shown by default
+    expect(
+        find.text('Hidden Section'), findsOneWidget); // panel shown by default
     expect(find.text('Inside'), findsOneWidget);
   });
 
-  testWidgets('a panel the engine hides (by key) is not rendered', (tester) async {
-    await tester.pumpWidget(_host(_form, _FakeEngine(hidden: {'hp': true})));
+  testWidgets('a panel the engine hides (by key) is not rendered',
+      (tester) async {
+    await tester.pumpWidget(_host(_form, FakeEngine(hidden: {'hp': true})));
 
     expect(find.text('Visible'), findsOneWidget); // sibling still shows
     expect(find.text('Hidden Section'), findsNothing); // hidden panel gone…
@@ -75,7 +60,10 @@ void main() {
       'display': 'form',
       'components': [
         {
-          'type': 'textfield', 'key': 'name', 'label': 'Name', 'input': true,
+          'type': 'textfield',
+          'key': 'name',
+          'label': 'Name',
+          'input': true,
           'validate': {'required': true},
         },
       ],
@@ -84,7 +72,7 @@ void main() {
       home: Scaffold(
         body: EngineFormRenderer(
           form: form,
-          engine: _FakeEngine(),
+          engine: FakeEngine(),
           theme: const FormioTheme(requiredSuffix: ' (required)'),
         ),
       ),
@@ -92,7 +80,8 @@ void main() {
     expect(find.text('Name (required)'), findsOneWidget);
   });
 
-  testWidgets('a throwing component degrades to a placeholder, not a crash', (tester) async {
+  testWidgets('a throwing component degrades to a placeholder, not a crash',
+      (tester) async {
     final form = {
       'display': 'form',
       'components': [
@@ -104,7 +93,7 @@ void main() {
       home: Scaffold(
         body: EngineFormRenderer(
           form: form,
-          engine: _FakeEngine(),
+          engine: FakeEngine(),
           customComponents: {
             'boom': (ctx) => throw StateError('kaboom'),
           },
@@ -114,11 +103,12 @@ void main() {
 
     expect(tester.takeException(), isNull); // error was caught, not propagated
     expect(find.text('OK'), findsOneWidget); // sibling still renders
-    expect(find.textContaining('render error'), findsOneWidget); // placeholder shown
+    expect(find.textContaining('render error'),
+        findsOneWidget); // placeholder shown
   });
 
   testWidgets('validation error is gated until submit', (tester) async {
-    final engine = _FakeEngine(
+    final engine = FakeEngine(
       errors: const [FormLogicError(path: 'visible', rule: 'required')],
     );
     await tester.pumpWidget(_host(_form, engine));

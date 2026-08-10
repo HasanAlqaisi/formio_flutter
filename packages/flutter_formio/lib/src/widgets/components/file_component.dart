@@ -48,12 +48,17 @@ class FileComponent extends StatelessWidget {
   Future<void> _pickFiles(BuildContext context) async {
     if (onFilePick == null) {
       // _showConfigurationMessage(context);
-      throw Exception('File picker not configured. Please provide an onFilePick callback to FileComponent.');
+      throw Exception(
+          'File picker not configured. Please provide an onFilePick callback to FileComponent.');
     }
 
     final result = await onFilePick!(
       allowMultiple: _isMultiple,
-      allowedExtensions: _acceptedExtensions.isNotEmpty ? _acceptedExtensions.map((e) => e.replaceAll(RegExp(r'[^\w]'), '')).toList() : null,
+      allowedExtensions: _acceptedExtensions.isNotEmpty
+          ? _acceptedExtensions
+              .map((e) => e.replaceAll(RegExp(r'[^\w]'), ''))
+              .toList()
+          : null,
     );
 
     if (result != null) {
@@ -73,7 +78,8 @@ class FileComponent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(component.label, style: Theme.of(context).textTheme.labelLarge),
+        Text(component.label,
+            style: FormioThemeScope.of(context).resolvedLabelStyle(context)),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -87,6 +93,8 @@ class FileComponent extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         OutlinedButton.icon(
+          style: FormioThemeScope.of(context)
+              .resolvedSecondaryActionStyle(context),
           onPressed: () => _pickFiles(context),
           icon: const Icon(Icons.upload_file),
           label: Text(_isMultiple ? 'Upload Files' : 'Upload File'),

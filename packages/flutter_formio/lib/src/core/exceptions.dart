@@ -32,5 +32,6 @@ class AuthException extends ApiException {
 
 /// Raised when a specific component is malformed or unsupported.
 class ComponentFormatException extends ApiException {
-  ComponentFormatException(String message) : super('Component format error: $message');
+  ComponentFormatException(String message)
+      : super('Component format error: $message');
 }

@@ -21,10 +21,16 @@ class ButtonComponent extends StatelessWidget {
   /// Whether the button is currently disabled.
   final bool isDisabled;
 
-  const ButtonComponent({super.key, required this.component, required this.onPressed, this.isDisabled = false});
+  const ButtonComponent(
+      {super.key,
+      required this.component,
+      required this.onPressed,
+      this.isDisabled = false});
 
   /// Extracts the button label from the component definition.
-  String get _label => component.label.isNotEmpty ? component.label : (component.raw['label'] ?? ComponentFactory.locale.submit).toString();
+  String get _label => component.label.isNotEmpty
+      ? component.label
+      : (component.raw['label'] ?? ComponentFactory.locale.submit).toString();
 
   /// Determines the action type of the button.
   // ButtonAction get _action {
@@ -53,11 +59,17 @@ class ButtonComponent extends StatelessWidget {
       _ => Theme.of(context).colorScheme.primary,
     };
 
-    return ElevatedButton.styleFrom(backgroundColor: color, foregroundColor: Colors.white, textStyle: const TextStyle(fontWeight: FontWeight.bold));
+    return ElevatedButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+        textStyle: const TextStyle(fontWeight: FontWeight.bold));
   }
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(style: _style(context), onPressed: isDisabled ? null : onPressed, child: Text(_label));
+    return ElevatedButton(
+        style: _style(context),
+        onPressed: isDisabled ? null : onPressed,
+        child: Text(_label));
   }
 }

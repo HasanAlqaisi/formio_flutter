@@ -16,19 +16,19 @@ import vm from 'node:vm';
 
 // ---- load the shipped bundle into an isolated context -----------------------
 const HERE = dirname(fileURLToPath(import.meta.url));
-const BUNDLE = join(HERE, '../../../packages/flutter_formio/assets/formio/fms-formio-core.bundle.js');
+const BUNDLE = join(HERE, '../../../packages/flutter_formio/assets/formio/formio-core.bundle.js');
 const ctx = { console };
 ctx.globalThis = ctx;
 vm.createContext(ctx);
-vm.runInContext(readFileSync(BUNDLE, 'utf8') + '\nglobalThis.__FMS = FMS;', ctx);
-const FMS = ctx.__FMS;
+vm.runInContext(readFileSync(BUNDLE, 'utf8') + '\nglobalThis.__FormioCore = FormioCore;', ctx);
+const FIO = ctx.__FormioCore;
 
 /** Set the form then process data through the cached path (validation on by default). */
 function run(form, data = {}, validate = true) {
-  const set = JSON.parse(FMS.fmsSetForm(JSON.stringify(form)));
-  assert.equal(set.error, undefined, `fmsSetForm error: ${set.error}`);
-  const res = JSON.parse(FMS.fmsProcessData(JSON.stringify(data), validate));
-  assert.equal(res.error, undefined, `fmsProcessData error: ${res.error}`);
+  const set = JSON.parse(FIO.fioSetForm(JSON.stringify(form)));
+  assert.equal(set.error, undefined, `fioSetForm error: ${set.error}`);
+  const res = JSON.parse(FIO.fioProcessData(JSON.stringify(data), validate));
+  assert.equal(res.error, undefined, `fioProcessData error: ${res.error}`);
   return res;
 }
 
@@ -38,8 +38,8 @@ const num = (key, extra = {}) => ({ type: 'number', key, input: true, ...extra }
 // ---- exports API ------------------------------------------------------------
 test('bundle exposes the expected globals', () => {
   assert.deepEqual(
-    Object.keys(FMS).sort(),
-    ['fmsProcess', 'fmsProcessData', 'fmsSetForm'],
+    Object.keys(FIO).sort(),
+    ['fioProcess', 'fioProcessData', 'fioSetForm'],
   );
 });
 
@@ -112,6 +112,20 @@ test('custom JavaScript validation runs with the real eval context', () => {
   assert.equal(run(form, { x: 'ok' }).errors.length, 0);
 });
 
+test('limit validators report their setting for specific messages', () => {
+  const form = {
+    display: 'form',
+    components: [
+      field('a', { validate: { maxLength: 5 } }),
+      num('n', { validate: { min: 10 } }),
+    ],
+  };
+  const errs = run(form, { a: 'toolong', n: 3 }).errors;
+  const byRule = Object.fromEntries(errs.map((e) => [e.rule, e]));
+  assert.equal(byRule.maxLength.setting, '5');
+  assert.equal(byRule.min.setting, '10');
+});
+
 // ---- validation toggle (live-by-default; opt-in skip) -----------------------
 test('required validation runs by default and is skippable', () => {
   const form = { display: 'form', components: [field('r', { validate: { required: true } })] };
@@ -126,7 +140,7 @@ test('datagrid rows round-trip (added rows persist)', () => {
 });
 
 // ---- 2a: cached-form path is identical to the one-shot path ------------------
-test('fmsProcessData (cached form) === fmsProcess (one-shot payload)', () => {
+test('fioProcessData (cached form) === fioProcess (one-shot payload)', () => {
   const form = {
     display: 'form',
     components: [
@@ -136,8 +150,51 @@ test('fmsProcessData (cached form) === fmsProcess (one-shot payload)', () => {
     ],
   };
   const data = { toggle: 'go', a: 4, b: 6 };
-  FMS.fmsSetForm(JSON.stringify(form));
-  const cached = FMS.fmsProcessData(JSON.stringify(data), true);
-  const oneShot = FMS.fmsProcess(JSON.stringify({ form, submission: { data } }));
+  FIO.fioSetForm(JSON.stringify(form));
+  const cached = FIO.fioProcessData(JSON.stringify(data), true);
+  const oneShot = FIO.fioProcess(JSON.stringify({ form, submission: { data } }));
   assert.equal(cached, oneShot);
+});
+
+// ---- host component types (fmsfile and friends) -----------------------------
+// The renderer supports host-supplied types the engine has never heard of. Their
+// values must survive a recompute: if the engine dropped or reset them, an upload
+// would vanish from the submission with nothing to show why.
+test('an unknown component type keeps its array value through a recompute', () => {
+  const form = {
+    display: 'form',
+    components: [
+      { type: 'fmsfile', key: 'fileUploadTest', input: true, label: 'Upload', multiple: true },
+      field('note'),
+    ],
+  };
+  const stored = [
+    { storage: 'fms', name: 'a.pdf', url: '', size: 12, type: 'application/pdf', data: { fileId: 'F1' } },
+  ];
+
+  const res = run(form, { fileUploadTest: stored, note: 'hi' });
+  assert.deepEqual(res.data.fileUploadTest, stored);
+  assert.equal(res.data.note, 'hi');
+});
+
+test('an unknown required type with no value fails validation', () => {
+  const form = {
+    display: 'form',
+    components: [
+      { type: 'fmsfile', key: 'upload', input: true, validate: { required: true } },
+    ],
+  };
+  const rules = run(form, {}).errors.map((e) => e.rule);
+  assert.ok(rules.includes('required'), `expected required, got ${rules}`);
+});
+
+test('an unknown type is not cleared by clearOnHide while visible', () => {
+  const form = {
+    display: 'form',
+    components: [
+      { type: 'fmsfile', key: 'upload', input: true, clearOnHide: true },
+    ],
+  };
+  const stored = [{ storage: 'fms', name: 'a.pdf', data: { fileId: 'F1' } }];
+  assert.deepEqual(run(form, { upload: stored }).data.upload, stored);
 });

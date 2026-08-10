@@ -1,15 +1,15 @@
 // Headless Form.io logic engine for flutter_js (QuickJS/JavaScriptCore).
 //
 // Exposes:
-//   globalThis.fmsSetForm(formJson)               -> {ok} | {error}
+//   globalThis.fioSetForm(formJson)               -> {ok} | {error}
 //     Parses + strips the form ONCE and caches it. Call on form load.
-//   globalThis.fmsProcessData(dataJson, validate) -> resultJson
+//   globalThis.fioProcessData(dataJson, validate) -> resultJson
 //     Runs the pipeline against the cached form; only the (small) submission
 //     data crosses the Dart<->JS boundary. `validate=false` skips the validate
 //     processor (live/keystroke pass); blur/submit should pass true.
-//   globalThis.fmsProcess(payloadJson)            -> resultJson   (legacy)
+//   globalThis.fioProcess(payloadJson)            -> resultJson   (legacy)
 //     One-shot {form, submission} — re-parses the form every call. Kept for
-//     compatibility and A/B testing; prefer fmsSetForm + fmsProcessData.
+//     compatibility and A/B testing; prefer fioSetForm + fioProcessData.
 const { processSync, ProcessTargets, ProcessorMap, Utils } = require('@formio/core');
 
 // The `evaluator` preset seeds only customDefaultValue. Prepend the base
@@ -89,16 +89,19 @@ function runPipeline(form, data, validate) {
         rule: e.ruleName,
         messageKey: e.errorKeyOrMessage,
         level: e.level,
+        // The rule's limit/param (e.g. maxLength "5", min "10", pattern regex),
+        // so the client can build a specific message like "at most 5 characters".
+        setting: ctx.setting != null ? String(ctx.setting) : undefined,
       };
     }),
   };
 }
 
-// Cached, pre-stripped form (set once per form via fmsSetForm). Reused across
-// fmsProcessData calls so only the small data map crosses the FFI boundary.
+// Cached, pre-stripped form (set once per form via fioSetForm). Reused across
+// fioProcessData calls so only the small data map crosses the FFI boundary.
 var cachedForm = null;
 
-globalThis.fmsSetForm = function (formJson) {
+globalThis.fioSetForm = function (formJson) {
   try {
     var form = JSON.parse(formJson);
     stripDomScripts(form.components || []);
@@ -110,10 +113,10 @@ globalThis.fmsSetForm = function (formJson) {
   }
 };
 
-globalThis.fmsProcessData = function (dataJson, validate) {
+globalThis.fioProcessData = function (dataJson, validate) {
   try {
     if (!cachedForm) {
-      return JSON.stringify({ error: 'No form set — call fmsSetForm first.' });
+      return JSON.stringify({ error: 'No form set — call fioSetForm first.' });
     }
     var data = JSON.parse(dataJson) || {};
     return JSON.stringify(runPipeline(cachedForm, data, validate !== false));
@@ -123,7 +126,7 @@ globalThis.fmsProcessData = function (dataJson, validate) {
 };
 
 // Legacy one-shot API: full {form, submission} payload every call.
-globalThis.fmsProcess = function (payloadJson) {
+globalThis.fioProcess = function (payloadJson) {
   try {
     var input = JSON.parse(payloadJson);
     var form = input.form || {};
@@ -137,7 +140,7 @@ globalThis.fmsProcess = function (payloadJson) {
 };
 
 module.exports = {
-  fmsSetForm: globalThis.fmsSetForm,
-  fmsProcessData: globalThis.fmsProcessData,
-  fmsProcess: globalThis.fmsProcess,
+  fioSetForm: globalThis.fioSetForm,
+  fioProcessData: globalThis.fioProcessData,
+  fioProcess: globalThis.fioProcess,
 };

@@ -33,7 +33,7 @@ class UserService {
   ///
   /// [limit] maximum number of users to return.
   /// [skip] number of users to skip (for pagination).
-  ///  
+  ///
   /// Returns a list of [UserModel] objects.
   ///
   /// Throws [DioError] on failure.

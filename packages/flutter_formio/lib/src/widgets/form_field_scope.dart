@@ -6,6 +6,8 @@ library;
 import 'package:flutter/widgets.dart';
 
 import '../core/form_logic_engine.dart';
+import 'components/select_options.dart' show FormioResourceSource;
+import 'control_builders.dart';
 import 'form_theme.dart';
 
 class FieldScope {
@@ -19,6 +21,8 @@ class FieldScope {
     required this.controllerFor,
     required this.focusFor,
     required this.renderChild,
+    this.resourceSource,
+    this.controls = const FormioControlBuilders(),
   });
 
   final BuildContext context;
@@ -48,5 +52,14 @@ class FieldScope {
   final FocusNode Function(String path) focusFor;
 
   /// Render a child component under [parentPath] (recursion for containers).
-  final Widget Function(Map<String, dynamic> raw, String parentPath) renderChild;
+  final Widget Function(Map<String, dynamic> raw, String parentPath)
+      renderChild;
+
+  /// Where `dataSrc: "resource"` selects fetch from. Null means they cannot be
+  /// resolved, which surfaces as a data-source error.
+  final FormioResourceSource? resourceSource;
+
+  /// Host-supplied widgets for built-in controls. The package still resolves the
+  /// schema and owns the behaviour; these only change what is rendered.
+  final FormioControlBuilders controls;
 }

@@ -52,10 +52,13 @@ class _TagsComponentState extends State<TagsComponent> {
   String get _delimiter => widget.component.raw['delimeter']?.toString() ?? ',';
 
   /// Gets the storage type ('string' or 'array').
-  String get _storeAs => widget.component.raw['storeas']?.toString() ?? 'string';
+  String get _storeAs =>
+      widget.component.raw['storeas']?.toString() ?? 'string';
 
   /// Gets max tags limit (0 = unlimited).
-  int get _maxTags => widget.component.raw['maxTags'] is int ? widget.component.raw['maxTags'] as int : 0;
+  int get _maxTags => widget.component.raw['maxTags'] is int
+      ? widget.component.raw['maxTags'] as int
+      : 0;
 
   /// Placeholder text.
   String? get _placeholder => widget.component.raw['placeholder']?.toString();
@@ -69,7 +72,11 @@ class _TagsComponentState extends State<TagsComponent> {
     if (value is List) return value.map((e) => e.toString()).toList();
     if (value is String) {
       if (value.isEmpty) return [];
-      return value.split(_delimiter).map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+      return value
+          .split(_delimiter)
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
     }
     return [];
   }
@@ -133,7 +140,7 @@ class _TagsComponentState extends State<TagsComponent> {
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
               widget.component.label,
-              style: Theme.of(context).textTheme.titleSmall,
+              style: FormioThemeScope.of(context).resolvedLabelStyle(context),
             ),
           ),
         // Tags display
@@ -161,7 +168,9 @@ class _TagsComponentState extends State<TagsComponent> {
           enabled: !reachedMaxTags,
           decoration: InputDecoration(
             labelText: reachedMaxTags ? 'Maximum tags reached' : 'Add tag',
-            hintText: reachedMaxTags ? null : _placeholder ?? 'Type and press Enter or comma',
+            hintText: reachedMaxTags
+                ? null
+                : _placeholder ?? 'Type and press Enter or comma',
             suffixIcon: _controller.text.isNotEmpty
                 ? IconButton(
                     icon: const Icon(Icons.add),
@@ -187,7 +196,10 @@ class _TagsComponentState extends State<TagsComponent> {
             _addTag(value);
             _focusNode.requestFocus();
           },
-          validator: _isRequired && _tags.isEmpty ? (_) => ComponentFactory.locale.getRequiredMessage(widget.component.label) : null,
+          validator: _isRequired && _tags.isEmpty
+              ? (_) => ComponentFactory.locale
+                  .getRequiredMessage(widget.component.label)
+              : null,
         ),
         if (_maxTags > 0)
           Padding(

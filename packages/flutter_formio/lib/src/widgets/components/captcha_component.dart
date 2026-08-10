@@ -21,7 +21,11 @@ class CaptchaComponent extends StatelessWidget {
   /// Callback triggered when CAPTCHA token is updated.
   final ValueChanged<String?> onChanged;
 
-  const CaptchaComponent({super.key, required this.component, required this.value, required this.onChanged});
+  const CaptchaComponent(
+      {super.key,
+      required this.component,
+      required this.value,
+      required this.onChanged});
 
   /// CAPTCHA type (e.g., 'reCaptcha2' or 'reCaptcha3').
   String get _captchaType => component.raw['type'] ?? 'reCaptcha2';
@@ -40,21 +44,30 @@ class CaptchaComponent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(component.label, style: Theme.of(context).textTheme.labelLarge),
+        Text(component.label,
+            style: FormioThemeScope.of(context).resolvedLabelStyle(context)),
         const SizedBox(height: 8),
         Container(
           height: 100,
           width: double.infinity,
           alignment: Alignment.center,
-          decoration:
-              BoxDecoration(border: Border.all(color: Theme.of(context).colorScheme.outline), borderRadius: BorderRadius.circular(6), color: Theme.of(context).colorScheme.surfaceContainerHighest),
+          decoration: FormioThemeScope.of(context)
+              .resolvedContainerDecoration(context)
+              .copyWith(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [const Icon(Icons.privacy_tip, size: 32), Text('CAPTCHA ($_captchaType) integration required', textAlign: TextAlign.center)],
+            children: [
+              const Icon(Icons.privacy_tip, size: 32),
+              Text('CAPTCHA ($_captchaType) integration required',
+                  textAlign: TextAlign.center)
+            ],
           ),
         ),
         const SizedBox(height: 8),
         OutlinedButton.icon(
+          style: FormioThemeScope.of(context)
+              .resolvedSecondaryActionStyle(context),
           onPressed: () {
             // Simulate CAPTCHA token (for testing only)
             onChanged('mock-captcha-token');
@@ -65,7 +78,10 @@ class CaptchaComponent extends StatelessWidget {
         if (hasError)
           Padding(
             padding: const EdgeInsets.only(top: 6),
-            child: Text(ComponentFactory.locale.getRequiredMessage(component.label), style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12)),
+            child: Text(
+                ComponentFactory.locale.getRequiredMessage(component.label),
+                style:
+                    FormioThemeScope.of(context).resolvedErrorStyle(context)),
           ),
       ],
     );

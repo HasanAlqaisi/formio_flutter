@@ -6,6 +6,8 @@ library;
 
 import 'package:flutter/material.dart';
 
+import 'warning_card.dart';
+
 import 'package:formio/formio.dart';
 
 class UnknownComponent extends StatelessWidget {
@@ -23,28 +25,23 @@ class UnknownComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.orange.shade50,
-        border: Border.all(color: Colors.orange.shade300),
-        borderRadius: BorderRadius.circular(4),
-      ),
+    final colors = WarningColors.of(context);
+    return warningCard(
+      context,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.orange.shade700, size: 20),
+              Icon(Icons.warning_amber_rounded, color: colors.icon, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Unsupported Component Type',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Colors.orange.shade900,
+                    color: colors.title,
                   ),
                 ),
               ),
@@ -53,28 +50,32 @@ class UnknownComponent extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'Type: ${component.type}',
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+            style: TextStyle(fontSize: 12, color: colors.detail),
           ),
           Text(
             'Key: ${component.key}',
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+            style: TextStyle(fontSize: 12, color: colors.detail),
           ),
           if (component.label.isNotEmpty)
             Text(
               'Label: ${component.label}',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+              style: TextStyle(fontSize: 12, color: colors.detail),
             ),
           if (showDebugInfo) ...[
             const SizedBox(height: 8),
             const Divider(),
             Text(
               'Raw JSON:',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade800),
+              style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: colors.detail),
             ),
             const SizedBox(height: 4),
             Text(
               component.raw.toString(),
-              style: TextStyle(fontSize: 10, color: Colors.grey.shade600, fontFamily: 'monospace'),
+              style: TextStyle(
+                  fontSize: 10, color: colors.detail, fontFamily: 'monospace'),
               maxLines: 5,
               overflow: TextOverflow.ellipsis,
             ),
