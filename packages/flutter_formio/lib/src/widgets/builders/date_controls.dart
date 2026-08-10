@@ -40,6 +40,55 @@ String? _formattedDate(Object? format, DateTime dt, String? locale) {
   }
 }
 
+/// How a `time` component stores its value.
+///
+/// The engine strict-parses the stored value against this pattern, so a `time`
+/// field must be written in it — an ISO timestamp fails validation even though
+/// it carries the same instant. Form.io defaults it to `HH:mm:ss`.
+String _timeDataFormat(Map<String, dynamic> raw) {
+  final format = raw['dataFormat']?.toString();
+  return (format == null || format.isEmpty) ? _defaultTimeFormat : format;
+}
+
+const _defaultTimeFormat = 'HH:mm:ss';
+
+/// [dt]'s time of day in the schema's storage format.
+String _storedTime(DateTime dt, Map<String, dynamic> raw) {
+  try {
+    final text = DateFormat(_timeDataFormat(raw)).format(dt);
+    if (text.isNotEmpty) return text;
+  } catch (_) {
+    // Falls through: an unreadable pattern is no reason to store nothing.
+  }
+  return '${_two(dt.hour)}:${_two(dt.minute)}:${_two(dt.second)}';
+}
+
+/// Reads a stored value, which for a [timeOnly] component carries no date.
+///
+/// ISO is tried first regardless: a field that stored a full timestamp — a
+/// `datetime`, or a `time` written before this understood the difference — still
+/// has to render.
+DateTime? _parseStored(String? value, Map<String, dynamic> raw,
+    {required bool timeOnly}) {
+  if (value == null || value.isEmpty) return null;
+
+  final iso = DateTime.tryParse(value);
+  if (iso != null || !timeOnly) return iso;
+
+  for (final pattern in {
+    _timeDataFormat(raw),
+    _defaultTimeFormat,
+    'HH:mm',
+  }) {
+    try {
+      return DateFormat(pattern).parseStrict(value);
+    } catch (_) {
+      continue;
+    }
+  }
+  return null;
+}
+
 /// Presents an iOS-style wheel picker in a bottom sheet and resolves to the
 /// chosen [DateTime], or `null` if the sheet is dismissed without confirming.
 Future<DateTime?> _showCupertinoDateTime(
@@ -84,8 +133,11 @@ Widget buildDateTime(
       type == 'date' || (type == 'datetime' && raw['enableDate'] != false);
   final enableTime =
       type == 'time' || (type == 'datetime' && raw['enableTime'] == true);
+  // Only Form.io's `time` type stores a bare time of day; a `datetime` with its
+  // date input switched off still stores a timestamp.
+  final timeOnly = type == 'time';
   final current = s.getValue(path)?.toString();
-  final dt = current != null ? DateTime.tryParse(current) : null;
+  final dt = _parseStored(current, raw, timeOnly: timeOnly);
 
   String display() {
     if (dt == null) return raw['placeholder'] as String? ?? 'Select…';
@@ -143,7 +195,11 @@ Widget buildDateTime(
             DateTime(picked.year, picked.month, picked.day, t.hour, t.minute);
       }
     }
-    s.setValue(path, picked.toIso8601String(), immediate: true);
+    s.setValue(
+      path,
+      timeOnly ? _storedTime(picked, raw) : picked.toIso8601String(),
+      immediate: true,
+    );
   }
 
   return InkWell(

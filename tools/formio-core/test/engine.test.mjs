@@ -155,3 +155,46 @@ test('fioProcessData (cached form) === fioProcess (one-shot payload)', () => {
   const oneShot = FIO.fioProcess(JSON.stringify({ form, submission: { data } }));
   assert.equal(cached, oneShot);
 });
+
+// ---- host component types (fmsfile and friends) -----------------------------
+// The renderer supports host-supplied types the engine has never heard of. Their
+// values must survive a recompute: if the engine dropped or reset them, an upload
+// would vanish from the submission with nothing to show why.
+test('an unknown component type keeps its array value through a recompute', () => {
+  const form = {
+    display: 'form',
+    components: [
+      { type: 'fmsfile', key: 'fileUploadTest', input: true, label: 'Upload', multiple: true },
+      field('note'),
+    ],
+  };
+  const stored = [
+    { storage: 'fms', name: 'a.pdf', url: '', size: 12, type: 'application/pdf', data: { fileId: 'F1' } },
+  ];
+
+  const res = run(form, { fileUploadTest: stored, note: 'hi' });
+  assert.deepEqual(res.data.fileUploadTest, stored);
+  assert.equal(res.data.note, 'hi');
+});
+
+test('an unknown required type with no value fails validation', () => {
+  const form = {
+    display: 'form',
+    components: [
+      { type: 'fmsfile', key: 'upload', input: true, validate: { required: true } },
+    ],
+  };
+  const rules = run(form, {}).errors.map((e) => e.rule);
+  assert.ok(rules.includes('required'), `expected required, got ${rules}`);
+});
+
+test('an unknown type is not cleared by clearOnHide while visible', () => {
+  const form = {
+    display: 'form',
+    components: [
+      { type: 'fmsfile', key: 'upload', input: true, clearOnHide: true },
+    ],
+  };
+  const stored = [{ storage: 'fms', name: 'a.pdf', data: { fileId: 'F1' } }];
+  assert.deepEqual(run(form, { upload: stored }).data.upload, stored);
+});
