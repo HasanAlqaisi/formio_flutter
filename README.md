@@ -14,8 +14,8 @@ web renderer by construction, with **no WebView**. Flutter only draws the widget
 
 > **Upgrading from 2.x?** `FormRenderer`/`WizardRenderer` are replaced by
 > `EngineFormRenderer`, and the separate `formio_api` package is merged into
-> `formio`. See [CHANGELOG](packages/flutter_formio/CHANGELOG.md) and
-> [MIGRATION](packages/flutter_formio/MIGRATION.md).
+> `formio`. See the [CHANGELOG](packages/flutter_formio/CHANGELOG.md) for the
+> full list of breaking changes.
 
 ## How it works
 
@@ -94,6 +94,8 @@ final form = (tpl is String ? jsonDecode(tpl) : tpl) as Map<String, dynamic>;
 | `onSubmit` | Called with the data when the built-in Submit passes validation. |
 | `onChanged` | Called with the live data on every recompute. |
 | `customComponents` | Host builders for custom types / overrides (see below). |
+| `controls` | Host widgets for the *look* of built-in controls, behavior kept (see below). |
+| `resourceSource` | Project URL + headers for `dataSrc: "resource"` selects. |
 | `theme` | `FormioTheme` design tokens. |
 | `textDirection` | `TextDirection.rtl` for RTL forms (defaults to ambient). |
 | `debounce` | Text-input recompute debounce (default 450 ms). |
@@ -142,7 +144,61 @@ class MyFileField extends StatelessWidget {
 
 `FormioFieldContext` exposes: `value` / `setValue` / `read(path)` / `error` /
 `controller()` / `focusNode()` / `child()` / `builtin(type)` / `chrome()` /
-`theme` / `component`.
+`theme` / `component` / `path`.
+
+### Restyling a built-in control
+
+`customComponents` replaces a component outright — schema handling included. If
+you only want your own *widget* for a built-in control, use `controls`: the
+package still resolves the schema (`dataSrc`, `valueProperty`, `template`,
+remote loading, value coercion) and hands you the result.
+
+```dart
+EngineFormRenderer(
+  form: form,
+  engine: engine,
+  controls: FormioControlBuilders(
+    select: (context, spec) {
+      // delegate the cases you don't want to style:
+      if (spec.multiple) return FormioBuiltInSelect(spec: spec);
+      return MyDropdown(
+        options: spec.options,            // resolved, typed values
+        value: spec.selected?.value,
+        loading: spec.loading,            // remote fetch in flight
+        onChanged: spec.onChanged,
+      );
+    },
+  ),
+);
+```
+
+`FormioSelectSpec` carries `options` / `value` / `selected` / `selectedMany` /
+`onChanged` / `label` / `placeholder` / `enabled` / `multiple` / `required` /
+`searchable` / `loading` / `error` / `ensureOptions`. Return
+`FormioBuiltInSelect(spec: spec)` for any case you don't want to style.
+
+### Remote & resource selects
+
+Selects with `dataSrc: "url"` fetch their options directly (the engine never
+fetches — that only happens server-side in Form.io). Responses are cached per
+resolved URL, and `lazyLoad` components fetch on first open.
+
+`dataSrc: "resource"` (and the `resource` component type) carries only a form
+id, so the project it lives in is deployment config — pass it in:
+
+```dart
+EngineFormRenderer(
+  form: form,
+  engine: engine,
+  resourceSource: const FormioResourceSource(
+    projectUrl: 'https://myproject.form.io',
+    headers: {'x-jwt-token': '…'},
+  ),
+);
+```
+
+Leave it null if no form uses a resource source; those components then show a
+data-source error instead of an empty list that would never fill.
 
 ### A note on buttons
 
@@ -166,8 +222,22 @@ EngineFormRenderer(
 ```
 
 Every token defaults to the ambient Material theme, so `FormioTheme()` keeps the
-stock look. Layouts are **responsive**: `columns` and `table` sit side-by-side on
-wide screens and stack vertically on narrow ones (threshold = `columnBreakpoint`).
+stock look. Available tokens:
+
+| Group | Tokens |
+|-------|--------|
+| Text | `labelStyle`, `descriptionStyle`, `errorStyle`, `panelTitleStyle`, `affixStyle`, `inputTextStyle`, `hintStyle` |
+| Input | `inputFillColor`, `inputBorder`, `focusedInputBorder`, `errorInputBorder`, `inputContentPadding`, `isDense` |
+| Layout | `fieldPadding`, `sectionMargin`, `sectionPadding`, `sectionDecoration`, `columnBreakpoint` |
+| Misc | `requiredSuffix`, `submitButtonStyle`, `accentColor` |
+
+Inside a custom component, read the active tokens with `ctx.theme` — or
+`FormioThemeScope.of(context)` in a widget further down the tree.
+
+Layouts are **responsive**: `columns` and `table` sit side-by-side on wide
+screens and stack vertically on narrow ones (threshold = `columnBreakpoint`).
+Field label placement follows the schema's `labelPosition` (including
+left/right alignment).
 
 ## Validation
 
@@ -192,7 +262,11 @@ EngineFormRenderer(form: form, engine: engine, textDirection: TextDirection.rtl)
 packages/flutter_formio/   # the published `formio` package
 tools/formio-core/         # @formio/core bundle source (esbuild) + engine tests
 example/                   # runnable demo (flutter run)
+docs/                      # developer guide, status report, form-authoring rules
 ```
+
+Engineers: start with the [Developer Guide](docs/developer-guide.md). Form
+authors: [Form Authoring Guidelines](docs/form-authoring-guidelines.md).
 
 ### Rebuilding the engine bundle
 

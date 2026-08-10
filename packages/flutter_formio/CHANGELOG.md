@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.0.0] - 2026-07-14
+## [3.0.0] - 2026-08-10
 
 Major release. Form logic is now delegated to Form.io's own `@formio/core`
 running headless via `flutter_js`, replacing the hand-rolled Dart evaluators.
@@ -21,9 +21,28 @@ of drift bugs.
 - Custom-component extension API: `customComponents` map + `FormioFieldContext`
   (`value` / `setValue` / `read` / `error` / `controller` / `builtin` / `chrome`)
   + `FormioFieldBuilder`. Register new types or override built-ins.
-- `FormioTheme` design tokens via `EngineFormRenderer.theme`.
+- Control-presentation API: `EngineFormRenderer.controls`
+  (`FormioControlBuilders`, `FormioSelectSpec`, `FormioBuiltInSelect`) — swap the
+  widget for a built-in control while the package keeps the schema behaviour.
+- Remote select sources: `dataSrc: "url"` selects fetch their own options (cached
+  per resolved URL, `lazyLoad` deferred until first open); `dataSrc: "resource"`
+  and the `resource` component type via `EngineFormRenderer.resourceSource`
+  (`FormioResourceSource`), with an explicit data-source error when unreachable.
+- Searchable single/multi select picker for long option lists.
+- `FormioTheme` design tokens via `EngineFormRenderer.theme` — text, input
+  decoration, spacing, `sectionDecoration`, `submitButtonStyle`, `accentColor`,
+  `columnBreakpoint` — plus `FormioThemeScope.of(context)` for widgets below the
+  renderer.
+- Responsive `columns`/`table` (stack below `columnBreakpoint` per column) and
+  schema `labelPosition` support, including left/right label alignment.
+- Text input fidelity: `inputMask` formatting as you type, prefix/suffix addons,
+  numeric formatting for `number`/`currency` (integer-only, decimal precision).
+- Platform-styled date/time pickers, and dates rendered in the schema's `format`.
+- Reorderable `datagrid` rows (drag handles) and a swipeable `tabs` bar.
+- Safer form-authored HTML: tag validation, void elements, guarded link taps.
 - `EngineFormRenderer.textDirection` for right-to-left forms.
-- Localized validation errors via `ComponentFactory.setLocale`.
+- Localized validation errors via `ComponentFactory.setLocale`, including
+  limit-aware messages (e.g. "Must be at most 20 characters").
 - Built-in Arabic localization: `ArabicFormioLocalizations`.
 - Per-component error boundary: a throwing component degrades to a placeholder
   instead of taking down the whole form.
@@ -33,6 +52,8 @@ of drift bugs.
 - Conditionals, calculations, and validation now run in `@formio/core`, not Dart.
 - Discrete selections (dropdowns, chips, checkboxes) recompute immediately;
   text input stays debounced.
+- Data components are bound by path even when the schema omits `input: true`
+  (Form.io carries the flag in each class's own `defaultSchema`).
 
 ### Removed — BREAKING
 
@@ -49,6 +70,9 @@ of drift bugs.
   `time`, `columns`, `table`, `panel`, `well`, `fieldset`, `tabs`, `container`,
   `datagrid`, `editgrid`. `ComponentFactory` remains as the premium-type fallback
   (address, signature, file, survey, …) and the host-registration mechanism.
+- The pure-Dart `FormioLocale` interface (localization goes through
+  `FormioLocalizations` / `ComponentFactory.setLocale`) and the standalone Dart
+  validators the engine replaced.
 
 ### Fixed
 
@@ -149,10 +173,6 @@ of drift bugs.
 - **Flexibility**: Custom JS engines, locales, and validators
 - **Documentation**: Comprehensive README, migration guide, and API documentation
 
-### Migration
-
-See [MIGRATION.md](MIGRATION.md) for detailed upgrade instructions.
-
 ## [1.1.0] - 2026-01-12
 
 ### Added
@@ -182,6 +202,7 @@ See [MIGRATION.md](MIGRATION.md) for detailed upgrade instructions.
 
 ---
 
+[3.0.0]: https://github.com/mskayali/formio_flutter/compare/v2.0.4...v3.0.0
 [2.0.0]: https://github.com/mskayali/formio_flutter/compare/v1.1.0...v2.0.0
 [1.1.0]: https://github.com/mskayali/formio_flutter/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/mskayali/formio_flutter/releases/tag/v1.0.0
