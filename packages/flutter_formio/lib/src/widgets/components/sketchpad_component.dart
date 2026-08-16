@@ -208,7 +208,7 @@ class _SketchpadComponentState extends State<SketchpadComponent> {
               key: _globalKey,
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  void addPoint(Offset offset) {
+                  void addPoint(Offset offset, Duration? _) {
                     setState(() {
                       _points.add(DrawingPoint(
                         offset: offset,
@@ -224,7 +224,7 @@ class _SketchpadComponentState extends State<SketchpadComponent> {
                   return DrawingCanvasGestureDetector(
                     onPointDown: addPoint,
                     onPointMove: addPoint,
-                    onStrokeEnd: () {
+                    onStrokeEnd: (_, __) {
                       setState(() {
                         _points.add(DrawingPoint(offset: null));
                       });

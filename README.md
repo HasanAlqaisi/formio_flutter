@@ -229,7 +229,7 @@ stock look. Available tokens:
 | Text | `labelStyle`, `descriptionStyle`, `errorStyle`, `panelTitleStyle`, `affixStyle`, `inputTextStyle`, `hintStyle` |
 | Input | `inputFillColor`, `inputBorder`, `focusedInputBorder`, `errorInputBorder`, `inputContentPadding`, `isDense` |
 | Layout | `fieldPadding`, `sectionMargin`, `sectionPadding`, `sectionDecoration`, `columnBreakpoint` |
-| Misc | `requiredSuffix`, `submitButtonStyle`, `accentColor` |
+| Misc | `requiredSuffix`, `requiredSuffixColor`, `submitButtonStyle`, `accentColor` |
 
 Inside a custom component, read the active tokens with `ctx.theme` — or
 `FormioThemeScope.of(context)` in a widget further down the tree.

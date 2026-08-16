@@ -133,6 +133,30 @@ void main() {
     });
   });
 
+  group('focused input labels', () {
+    testWidgets('a day text input uses the form accent', (tester) async {
+      await pump(tester, {
+        'display': 'form',
+        'components': [
+          {
+            'key': 'date',
+            'type': 'day',
+            'label': 'Date',
+            'input': true,
+          },
+        ],
+      });
+
+      await tester.tap(find.byType(TextFormField).first);
+      await tester.pump();
+
+      final focusedInput = tester
+          .widgetList<InputDecorator>(find.byType(InputDecorator))
+          .firstWhere((input) => input.isFocused);
+      expect(focusedInput.decoration.floatingLabelStyle?.color, textAccent);
+    });
+  });
+
   group('repeated-row cards', () {
     testWidgets('use the input border colour, not the ambient divider',
         (tester) async {

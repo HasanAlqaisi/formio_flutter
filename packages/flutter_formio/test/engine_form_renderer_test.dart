@@ -80,6 +80,64 @@ void main() {
     expect(find.text('Name (required)'), findsOneWidget);
   });
 
+  testWidgets('the required marker is painted in the error colour',
+      (tester) async {
+    final form = {
+      'display': 'form',
+      'components': [
+        {
+          'type': 'textfield',
+          'key': 'name',
+          'label': 'Name',
+          'input': true,
+          'validate': {'required': true},
+        },
+      ],
+    };
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: EngineFormRenderer(form: form, engine: FakeEngine()),
+      ),
+    ));
+
+    final label = tester.widget<Text>(find.text('Name *'));
+    final marker = (label.textSpan! as TextSpan).children!.single as TextSpan;
+    expect(marker.text, ' *');
+    expect(
+      marker.style?.color,
+      ThemeData().colorScheme.error,
+    );
+  });
+
+  testWidgets('requiredSuffixColor overrides the marker colour',
+      (tester) async {
+    final form = {
+      'display': 'form',
+      'components': [
+        {
+          'type': 'textfield',
+          'key': 'name',
+          'label': 'Name',
+          'input': true,
+          'validate': {'required': true},
+        },
+      ],
+    };
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: EngineFormRenderer(
+          form: form,
+          engine: FakeEngine(),
+          theme: const FormioTheme(requiredSuffixColor: Colors.orange),
+        ),
+      ),
+    ));
+
+    final label = tester.widget<Text>(find.text('Name *'));
+    final marker = (label.textSpan! as TextSpan).children!.single as TextSpan;
+    expect(marker.style?.color, Colors.orange);
+  });
+
   testWidgets('a throwing component degrades to a placeholder, not a crash',
       (tester) async {
     final form = {

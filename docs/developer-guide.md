@@ -236,7 +236,8 @@ their 12-unit Bootstrap grid width). This is why forms are readable on phones.
 - **`FormioTheme`** (`form_theme.dart`) — design tokens (label/description/error/
   panel-title/affix/input/hint text styles, input fill + normal/focused/error
   borders, `inputContentPadding`, `isDense`, `fieldPadding`, `sectionMargin`,
-  `sectionPadding`, `sectionDecoration`, `requiredSuffix`, `columnBreakpoint`,
+  `sectionPadding`, `sectionDecoration`, `requiredSuffix`, `requiredSuffixColor`,
+  `columnBreakpoint`,
   `submitButtonStyle`, `accentColor`). Every token defaults to the ambient
   Material theme. `FormioThemeScope.of(context)` reads the active tokens from any
   widget below the renderer — that's how the stock `components/` widgets style
