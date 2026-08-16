@@ -147,7 +147,10 @@ Widget buildCheckbox(FieldScope s, Map<String, dynamic> raw, String path) {
     controlAffinity: ListTileControlAffinity.leading,
     visualDensity: VisualDensity.compact,
     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-    title: Text(labelText(raw, requiredSuffix: s.theme.requiredSuffix)),
+    title: labelWithRequired(raw['label'] as String? ?? '',
+        required: raw['validate']?['required'] == true,
+        theme: s.theme,
+        context: s.context),
     value: checked,
     onChanged: disabled
         ? null

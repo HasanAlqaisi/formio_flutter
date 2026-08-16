@@ -28,6 +28,7 @@ class FormioTheme {
     this.sectionPadding = const EdgeInsets.all(12),
     this.sectionDecoration,
     this.requiredSuffix = ' *',
+    this.requiredSuffixColor,
     this.columnBreakpoint = 170.0,
     this.submitButtonStyle,
     this.accentColor,
@@ -87,6 +88,10 @@ class FormioTheme {
   /// Suffix appended to required field labels.
   final String requiredSuffix;
 
+  /// Color of [requiredSuffix]. Defaults to the ambient error colour, so the
+  /// asterisk reads as red against the rest of the label.
+  final Color? requiredSuffixColor;
+
   /// Minimum width per column before layouts stack vertically.
   final double columnBreakpoint;
 
@@ -133,6 +138,9 @@ class FormioTheme {
         minimumSize: const Size.fromHeight(48),
         shape: RoundedRectangleBorder(borderRadius: resolvedInputRadius()),
       );
+
+  Color resolvedRequiredSuffixColor(BuildContext c) =>
+      requiredSuffixColor ?? Theme.of(c).colorScheme.error;
 
   Color resolvedAccentColor(BuildContext c) =>
       accentColor ?? Theme.of(c).colorScheme.primary;
@@ -254,6 +262,7 @@ class FormioTheme {
     EdgeInsetsGeometry? sectionPadding,
     BoxDecoration? sectionDecoration,
     String? requiredSuffix,
+    Color? requiredSuffixColor,
     double? columnBreakpoint,
   }) =>
       FormioTheme(
@@ -275,6 +284,7 @@ class FormioTheme {
         sectionPadding: sectionPadding ?? this.sectionPadding,
         sectionDecoration: sectionDecoration ?? this.sectionDecoration,
         requiredSuffix: requiredSuffix ?? this.requiredSuffix,
+        requiredSuffixColor: requiredSuffixColor ?? this.requiredSuffixColor,
         columnBreakpoint: columnBreakpoint ?? this.columnBreakpoint,
       );
 }

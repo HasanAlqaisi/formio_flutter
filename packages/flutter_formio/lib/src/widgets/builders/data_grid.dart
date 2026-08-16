@@ -102,7 +102,10 @@ Widget buildDataGrid(FieldScope s, Map<String, dynamic> raw, String path) {
         if (label.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(bottom: 4),
-            child: Text(labelText(raw, requiredSuffix: s.theme.requiredSuffix),
+            child: labelWithRequired(label,
+                required: raw['validate']?['required'] == true,
+                theme: s.theme,
+                context: ctx,
                 style: s.theme.resolvedPanelTitleStyle(ctx)),
           ),
         if (reorderable)

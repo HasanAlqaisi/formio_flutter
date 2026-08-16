@@ -8,6 +8,7 @@ import 'package:formio/formio.dart';
 import '../components/warning_card.dart';
 import '../form_field_scope.dart';
 import 'error_messages.dart';
+import 'schema_text.dart';
 
 // ---- field chrome (label position + description + inline error) ----------
 
@@ -31,7 +32,10 @@ Widget buildField(
 
   final labelWidget = label.isEmpty
       ? null
-      : Text(required ? '$label${s.theme.requiredSuffix}' : label,
+      : labelWithRequired(label,
+          required: required,
+          theme: s.theme,
+          context: ctx,
           // start/end rather than left/right so the alignment still means
           // "leading"/"trailing" under RTL.
           textAlign: labelAlign == 'right' ? TextAlign.end : TextAlign.start,
