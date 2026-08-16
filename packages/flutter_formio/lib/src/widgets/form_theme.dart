@@ -203,6 +203,7 @@ class FormioTheme {
   /// Whether any input-level token is set. Used to decide if the stock
   /// component set needs its ambient [InputDecorationTheme] overridden.
   bool get _stylesInputs =>
+      accentColor != null ||
       inputBorder != null ||
       focusedInputBorder != null ||
       errorInputBorder != null ||
@@ -228,6 +229,7 @@ class FormioTheme {
       focusedErrorBorder: errorInputBorder,
       contentPadding: inputContentPadding,
       hintStyle: hintStyle,
+      floatingLabelStyle: TextStyle(color: resolvedAccentColor(c)),
       fillColor: inputFillColor,
       filled: inputFillColor != null,
     );
