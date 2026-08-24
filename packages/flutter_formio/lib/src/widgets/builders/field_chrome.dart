@@ -89,7 +89,14 @@ Widget buildField(
 }
 
 Widget sectionCard(FormioTheme theme, Widget child) {
-  final padded = Padding(padding: theme.sectionPadding, child: child);
+  // A themed card fills its own background, which would otherwise sit between a
+  // tappable child — a checkbox or radio row — and the page's Material, where
+  // such a child paints its background and ink splash. This Material puts that
+  // surface back inside the card.
+  final padded = Material(
+    type: MaterialType.transparency,
+    child: Padding(padding: theme.sectionPadding, child: child),
+  );
   final decoration = theme.sectionDecoration;
   return decoration == null
       ? Card(margin: theme.sectionMargin, child: padded)
