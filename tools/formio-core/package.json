@@ -9,7 +9,7 @@
     "verify": "npm run build && npm test"
   },
   "dependencies": {
-    "@formio/core": "^2.4.0",
+    "@formio/core": "^2.5.4",
     "esbuild": "^0.28.1"
   }
 }
