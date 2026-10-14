@@ -162,21 +162,27 @@ Future<List<FormioOption>?> showOptionPicker({
             ),
           ),
           actions: [
-            TextButton(
-              style: theme.resolvedSecondaryActionStyle(context),
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text(loc.cancel),
+            Semantics(
+              identifier: 'formio_picker_cancel',
+              child: TextButton(
+                style: theme.resolvedSecondaryActionStyle(context),
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text(loc.cancel),
+              ),
             ),
             if (multiple)
-              FilledButton(
-                style: theme.resolvedPrimaryActionStyle(context),
-                onPressed: () => Navigator.pop(dialogContext, [
-                  // Preserve the source order rather than tick order, so the
-                  // chips read the same way the list did.
-                  for (final option in available)
-                    if (chosen.contains(option.key)) option,
-                ]),
-                child: Text(loc.save),
+              Semantics(
+                identifier: 'formio_picker_save',
+                child: FilledButton(
+                  style: theme.resolvedPrimaryActionStyle(context),
+                  onPressed: () => Navigator.pop(dialogContext, [
+                    // Preserve the source order rather than tick order, so the
+                    // chips read the same way the list did.
+                    for (final option in available)
+                      if (chosen.contains(option.key)) option,
+                  ]),
+                  child: Text(loc.save),
+                ),
               ),
           ],
         );
