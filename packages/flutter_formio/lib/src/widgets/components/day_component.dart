@@ -193,7 +193,13 @@ class _DayComponentState extends State<DayComponent> {
   /// `type` defaults to **`text`** per Form.io's Day docs, so only an explicit
   /// `select` gets a dropdown; `text`, `number` and an absent value are all text
   /// inputs.
-  Widget _buildPart(_DayPart part) {
+  Widget _buildPart(_DayPart part) => Semantics(
+        identifier: 'formio_${widget.component.key}_${part.name}',
+        container: true,
+        child: _buildPartField(part),
+      );
+
+  Widget _buildPartField(_DayPart part) {
     final cfg = _fieldConfig(part);
     // `hideInputLabels` suppresses the per-part labels; the placeholder then
     // carries the meaning.
