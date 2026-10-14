@@ -561,6 +561,7 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
         if (tabs.isEmpty) return const SizedBox.shrink();
         return FormioTabsSection(
           theme: widget.theme,
+          componentKey: raw['key']?.toString(),
           labels: [
             for (final t in tabs) t['label']?.toString() ?? '',
           ],
