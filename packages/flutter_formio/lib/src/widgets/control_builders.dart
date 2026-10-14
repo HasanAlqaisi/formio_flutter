@@ -157,6 +157,7 @@ class FormioBuiltInSelect extends StatelessWidget {
         enabled: spec.enabled,
         searchable: spec.searchable,
         loadOptions: spec.ensureOptions,
+        semanticsId: spec.semanticsId,
         // Each option's own value, so its schema type survives the round trip.
         onChanged: (chosen) =>
             spec.onChanged([for (final option in chosen) option.value]),
@@ -176,6 +177,7 @@ class FormioBuiltInSelect extends StatelessWidget {
         enabled: spec.enabled,
         searchable: spec.searchable,
         loadOptions: spec.ensureOptions,
+        semanticsId: spec.semanticsId,
         onChanged: (option) => spec.onChanged(option.value),
       );
     }
