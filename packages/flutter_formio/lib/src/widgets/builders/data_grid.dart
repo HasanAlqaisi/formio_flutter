@@ -62,13 +62,16 @@ Widget buildDataGrid(FieldScope s, Map<String, dynamic> raw, String path) {
                     ),
                   ),
                 if (!locked)
-                  IconButton(
-                    tooltip: affixText(raw, 'removeRow') ?? loc.removeRow,
-                    icon: const Icon(Icons.delete_outline, size: 20),
-                    onPressed: () {
-                      final next = [...rows]..removeAt(i);
-                      s.setValue(path, next, immediate: true);
-                    },
+                  Semantics(
+                    identifier: 'formio_$path[$i]_remove',
+                    child: IconButton(
+                      tooltip: affixText(raw, 'removeRow') ?? loc.removeRow,
+                      icon: const Icon(Icons.delete_outline, size: 20),
+                      onPressed: () {
+                        final next = [...rows]..removeAt(i);
+                        s.setValue(path, next, immediate: true);
+                      },
+                    ),
                   ),
               ],
             ),
@@ -124,15 +127,19 @@ Widget buildDataGrid(FieldScope s, Map<String, dynamic> raw, String path) {
         if (!locked)
           Align(
             alignment: AlignmentDirectional.centerStart,
-            child: TextButton.icon(
-              // Accent rather than the ambient primary, which is a fill colour
-              // and reads as too dark for text on a dark form.
-              style: TextButton.styleFrom(
-                  foregroundColor: s.theme.resolvedAccentColor(ctx)),
-              icon: const Icon(Icons.add),
-              label: Text(addLabel),
-              onPressed: () => s.setValue(path, [...rows, <String, dynamic>{}],
-                  immediate: true),
+            child: Semantics(
+              identifier: 'formio_${path}_add',
+              child: TextButton.icon(
+                // Accent rather than the ambient primary, which is a fill colour
+                // and reads as too dark for text on a dark form.
+                style: TextButton.styleFrom(
+                    foregroundColor: s.theme.resolvedAccentColor(ctx)),
+                icon: const Icon(Icons.add),
+                label: Text(addLabel),
+                onPressed: () => s.setValue(
+                    path, [...rows, <String, dynamic>{}],
+                    immediate: true),
+              ),
             ),
           ),
       ],
