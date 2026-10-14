@@ -171,47 +171,61 @@ class _DynamicWizardComponentState extends State<DynamicWizardComponent> {
                   const SizedBox(height: 16),
 
                   // Current step component
-                  ComponentFactory.build(
-                    component: _wizardSteps[_currentStep],
-                    value: _currentEntry[_wizardSteps[_currentStep].key],
-                    onChanged: (value) {
-                      setState(() {
-                        _currentEntry[_wizardSteps[_currentStep].key] = value;
-                      });
-                    },
-                    formData: widget.formData,
-                    onFilePick: widget.onFilePick,
-                    onDatePick: widget.onDatePick,
-                    onTimePick: widget.onTimePick,
-                  ),
+                  Semantics(
+                      identifier:
+                          'formio_${widget.component.key}_step_${_wizardSteps[_currentStep].key}',
+                      container: true,
+                      child: ComponentFactory.build(
+                        component: _wizardSteps[_currentStep],
+                        value: _currentEntry[_wizardSteps[_currentStep].key],
+                        onChanged: (value) {
+                          setState(() {
+                            _currentEntry[_wizardSteps[_currentStep].key] =
+                                value;
+                          });
+                        },
+                        formData: widget.formData,
+                        onFilePick: widget.onFilePick,
+                        onDatePick: widget.onDatePick,
+                        onTimePick: widget.onTimePick,
+                      )),
                   const SizedBox(height: 16),
 
                   // Navigation buttons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      TextButton(
-                        onPressed: _cancelEntry,
-                        child: Text(ComponentFactory.locale.cancel),
-                      ),
+                      Semantics(
+                          identifier: 'formio_${widget.component.key}_cancel',
+                          child: TextButton(
+                            onPressed: _cancelEntry,
+                            child: Text(ComponentFactory.locale.cancel),
+                          )),
                       Row(
                         children: [
                           if (_currentStep > 0)
-                            TextButton.icon(
-                              onPressed: _previousStep,
-                              icon: const Icon(Icons.arrow_back),
-                              label: Text(ComponentFactory.locale.previous),
-                            ),
+                            Semantics(
+                                identifier:
+                                    'formio_${widget.component.key}_previous',
+                                child: TextButton.icon(
+                                  onPressed: _previousStep,
+                                  icon: const Icon(Icons.arrow_back),
+                                  label: Text(ComponentFactory.locale.previous),
+                                )),
                           const SizedBox(width: 8),
-                          ElevatedButton.icon(
-                            onPressed: _nextStep,
-                            icon: Icon(_currentStep < _wizardSteps.length - 1
-                                ? Icons.arrow_forward
-                                : Icons.check),
-                            label: Text(_currentStep < _wizardSteps.length - 1
-                                ? ComponentFactory.locale.next
-                                : ComponentFactory.locale.complete),
-                          ),
+                          Semantics(
+                              identifier: 'formio_${widget.component.key}_next',
+                              child: ElevatedButton.icon(
+                                onPressed: _nextStep,
+                                icon: Icon(
+                                    _currentStep < _wizardSteps.length - 1
+                                        ? Icons.arrow_forward
+                                        : Icons.check),
+                                label: Text(
+                                    _currentStep < _wizardSteps.length - 1
+                                        ? ComponentFactory.locale.next
+                                        : ComponentFactory.locale.complete),
+                              )),
                         ],
                       ),
                     ],
@@ -279,11 +293,13 @@ class _DynamicWizardComponentState extends State<DynamicWizardComponent> {
           const SizedBox(height: 16),
 
           // Add entry button
-          ElevatedButton.icon(
-            onPressed: _startAddEntry,
-            icon: const Icon(Icons.add),
-            label: Text(ComponentFactory.locale.addEntry),
-          ),
+          Semantics(
+              identifier: 'formio_${widget.component.key}_add',
+              child: ElevatedButton.icon(
+                onPressed: _startAddEntry,
+                icon: const Icon(Icons.add),
+                label: Text(ComponentFactory.locale.addEntry),
+              )),
         ],
       ],
     );
