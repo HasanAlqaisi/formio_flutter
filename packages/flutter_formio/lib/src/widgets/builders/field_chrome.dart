@@ -8,6 +8,7 @@ import 'package:formio/formio.dart';
 import '../components/warning_card.dart';
 import '../form_field_scope.dart';
 import 'error_messages.dart';
+import 'schema_text.dart';
 
 // ---- field chrome (label position + description + inline error) ----------
 
@@ -31,7 +32,10 @@ Widget buildField(
 
   final labelWidget = label.isEmpty
       ? null
-      : Text(required ? '$label${s.theme.requiredSuffix}' : label,
+      : labelWithRequired(label,
+          required: required,
+          theme: s.theme,
+          context: ctx,
           // start/end rather than left/right so the alignment still means
           // "leading"/"trailing" under RTL.
           textAlign: labelAlign == 'right' ? TextAlign.end : TextAlign.start,
@@ -85,7 +89,14 @@ Widget buildField(
 }
 
 Widget sectionCard(FormioTheme theme, Widget child) {
-  final padded = Padding(padding: theme.sectionPadding, child: child);
+  // A themed card fills its own background, which would otherwise sit between a
+  // tappable child — a checkbox or radio row — and the page's Material, where
+  // such a child paints its background and ink splash. This Material puts that
+  // surface back inside the card.
+  final padded = Material(
+    type: MaterialType.transparency,
+    child: Padding(padding: theme.sectionPadding, child: child),
+  );
   final decoration = theme.sectionDecoration;
   return decoration == null
       ? Card(margin: theme.sectionMargin, child: padded)

@@ -77,6 +77,32 @@ test('nested field is hidden by its full data path', () => {
   assert.equal(run(form, { toggle: 'go' }).hidden['box.inner'], undefined);
 });
 
+test('a required child of a hidden panel is skipped even when its own conditional shows it', () => {
+  // The child's conditional reads a field outside the panel; resolving that
+  // value must not clear the panel's hidden scope before the child validates.
+  const form = {
+    display: 'form',
+    components: [
+      field('status'),
+      field('reason'),
+      {
+        type: 'panel', key: 'donePanel', input: false,
+        conditional: { show: true, when: 'status', eq: 'done' },
+        components: [
+          {
+            type: 'selectboxes', key: 'steps', input: true, validate: { required: true },
+            values: [{ label: 'A', value: 'a' }],
+            conditional: { show: true, when: 'reason', eq: 'new' },
+          },
+        ],
+      },
+    ],
+  };
+  const res = run(form, { status: 'failed', reason: 'new' });
+  assert.equal(res.hidden.donePanel, true);
+  assert.deepEqual(res.errors, []);
+});
+
 test('clearHidden wipes the value of a hidden field', () => {
   const form = {
     display: 'form',

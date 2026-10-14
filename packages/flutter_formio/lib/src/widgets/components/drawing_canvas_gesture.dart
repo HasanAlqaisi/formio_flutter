@@ -31,20 +31,30 @@ class _EagerPanGestureRecognizer extends PanGestureRecognizer {
   String get debugDescription => 'eager pan (drawing canvas)';
 }
 
+/// A stroke sample: where the pointer was, and when the *device* reported it.
+///
+/// The timestamp is the pointer event's own, not the time we got round to
+/// handling it, so a canvas can derive pen speed without a dropped frame
+/// showing up as a burst of speed. It is null when the platform did not supply
+/// one (some synthesized events).
+typedef DrawingPointCallback = void Function(
+    Offset offset, Duration? timeStamp);
+
 /// Wraps a drawing surface so pan gestures always reach [onPointDown] /
 /// [onPointMove] / [onStrokeEnd], never the surrounding scroll view.
 ///
 /// Offsets handed to the callbacks are local to this widget, matching the
 /// `details.localPosition` the callers previously read from [GestureDetector].
-class DrawingCanvasGestureDetector extends StatelessWidget {
+class DrawingCanvasGestureDetector extends StatefulWidget {
   /// A pointer touched down at [Offset]; begin a stroke.
-  final ValueChanged<Offset> onPointDown;
+  final DrawingPointCallback onPointDown;
 
   /// The pointer moved to [Offset]; extend the current stroke.
-  final ValueChanged<Offset> onPointMove;
+  final DrawingPointCallback onPointMove;
 
-  /// The pointer lifted; finish the stroke.
-  final VoidCallback onStrokeEnd;
+  /// The pointer lifted or was cancelled; finish the stroke at its final
+  /// reported position.
+  final DrawingPointCallback onStrokeEnd;
 
   /// The canvas to draw on.
   final Widget child;
@@ -58,31 +68,48 @@ class DrawingCanvasGestureDetector extends StatelessWidget {
   });
 
   @override
+  State<DrawingCanvasGestureDetector> createState() =>
+      _DrawingCanvasGestureDetectorState();
+}
+
+class _DrawingCanvasGestureDetectorState
+    extends State<DrawingCanvasGestureDetector> {
+  int? _activePointer;
+
+  void _finishStroke(PointerEvent event) {
+    if (event.pointer != _activePointer) return;
+    _activePointer = null;
+    widget.onStrokeEnd(event.localPosition, event.timeStamp);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return RawGestureDetector(
-      behavior: HitTestBehavior.opaque,
-      gestures: {
-        _EagerPanGestureRecognizer:
-            GestureRecognizerFactoryWithHandlers<_EagerPanGestureRecognizer>(
-          () => _EagerPanGestureRecognizer(debugOwner: this),
-          (recognizer) {
-            recognizer
-              ..onStart = (details) {
-                onPointDown(details.localPosition);
-              }
-              ..onUpdate = (details) {
-                onPointMove(details.localPosition);
-              }
-              ..onEnd = (_) {
-                onStrokeEnd();
-              }
-              // Fires when the gesture is interrupted (e.g. a system overlay);
-              // close the stroke so it does not join the next one.
-              ..onCancel = onStrokeEnd;
-          },
-        ),
-      },
-      child: child,
+    return Listener(
+      onPointerDown: (event) => _activePointer ??= event.pointer,
+      onPointerUp: _finishStroke,
+      // Close interrupted strokes so the next pointer cannot join them.
+      onPointerCancel: _finishStroke,
+      child: RawGestureDetector(
+        behavior: HitTestBehavior.opaque,
+        gestures: {
+          _EagerPanGestureRecognizer:
+              GestureRecognizerFactoryWithHandlers<_EagerPanGestureRecognizer>(
+            () => _EagerPanGestureRecognizer(debugOwner: widget),
+            (recognizer) {
+              recognizer
+                ..onStart = (details) {
+                  widget.onPointDown(
+                      details.localPosition, details.sourceTimeStamp);
+                }
+                ..onUpdate = (details) {
+                  widget.onPointMove(
+                      details.localPosition, details.sourceTimeStamp);
+                };
+            },
+          ),
+        },
+        child: widget.child,
+      ),
     );
   }
 }

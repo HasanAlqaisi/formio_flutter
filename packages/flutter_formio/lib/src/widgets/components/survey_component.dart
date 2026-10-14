@@ -230,11 +230,15 @@ class _SurveyComponentState extends State<SurveyComponent> {
                                 onChanged: (value) {
                                   if (value != null) _update(rowKey, value);
                                 },
-                                child: Radio<String>(
-                                  value: colValue,
-                                  materialTapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                  visualDensity: VisualDensity.compact,
+                                child: Semantics(
+                                  identifier:
+                                      'formio_${widget.component.key}_${rowKey}_$colValue',
+                                  child: Radio<String>(
+                                    value: colValue,
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    visualDensity: VisualDensity.compact,
+                                  ),
                                 ),
                               ),
                             ),

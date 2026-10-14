@@ -67,19 +67,22 @@ class _AddressComponentState extends State<AddressComponent> {
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
-      child: TextFormField(
-        key: ValueKey('${widget.component.key}_$key'),
-        initialValue: _addressData[key]?.toString() ?? '',
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: _getPlaceholder(key),
+      child: Semantics(
+        identifier: 'formio_${widget.component.key}_$key',
+        child: TextFormField(
+          key: ValueKey('${widget.component.key}_$key'),
+          initialValue: _addressData[key]?.toString() ?? '',
+          decoration: InputDecoration(
+            labelText: label,
+            hintText: _getPlaceholder(key),
+          ),
+          onChanged: (val) => _updateField(key, val),
+          validator: required
+              ? (val) => (val == null || val.isEmpty)
+                    ? ComponentFactory.locale.getRequiredMessage(label)
+                    : null
+              : null,
         ),
-        onChanged: (val) => _updateField(key, val),
-        validator: required
-            ? (val) => (val == null || val.isEmpty)
-                ? ComponentFactory.locale.getRequiredMessage(label)
-                : null
-            : null,
       ),
     );
   }
@@ -104,10 +107,7 @@ class _AddressComponentState extends State<AddressComponent> {
           label: 'Address Line 1',
           required: isRequired,
         ),
-        _buildAddressField(
-          key: 'address2',
-          label: 'Address Line 2',
-        ),
+        _buildAddressField(key: 'address2', label: 'Address Line 2'),
         Row(
           children: [
             Expanded(

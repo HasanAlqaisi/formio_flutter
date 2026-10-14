@@ -71,6 +71,9 @@ Widget optionPlaceholder(BuildContext context, String? hint) {
 /// [loadOptions] is awaited *before* the dialog is shown and its result is what
 /// gets rendered: the dialog sits on its own route, so options arriving later
 /// would never reach it. That is how `lazyLoad` is honoured.
+///
+/// With [semanticsId] set, each row gets the test id
+/// `<semanticsId>_option_<value>`.
 Future<List<FormioOption>?> showOptionPicker({
   required BuildContext context,
   required List<FormioOption> options,
@@ -79,6 +82,7 @@ Future<List<FormioOption>?> showOptionPicker({
   required bool searchable,
   String? title,
   Future<List<FormioOption>> Function()? loadOptions,
+  String? semanticsId,
 }) async {
   final available = await loadOptions?.call() ?? options;
   if (!context.mounted) return null;
@@ -130,30 +134,42 @@ Future<List<FormioOption>?> showOptionPicker({
                           itemBuilder: (_, i) {
                             final option = visible[i];
                             final isSelected = chosen.contains(option.key);
+                            final rowId = semanticsId == null
+                                ? null
+                                : '${semanticsId}_option_${option.key}';
                             if (!multiple) {
-                              return ListTile(
-                                dense: true,
-                                selected: isSelected,
-                                // Without this the selected row takes
-                                // `colorScheme.primary`, a fill colour that is
-                                // unreadable as text on a dark sheet.
-                                selectedColor:
-                                    theme.resolvedAccentColor(context),
-                                title: Text(option.label),
-                                trailing:
-                                    isSelected ? const Icon(Icons.check) : null,
-                                onTap: () =>
-                                    Navigator.pop(dialogContext, [option]),
+                              return Semantics(
+                                container: true,
+                                identifier: rowId,
+                                child: ListTile(
+                                  dense: true,
+                                  selected: isSelected,
+                                  // Without this the selected row takes
+                                  // `colorScheme.primary`, a fill colour that is
+                                  // unreadable as text on a dark sheet.
+                                  selectedColor:
+                                      theme.resolvedAccentColor(context),
+                                  title: Text(option.label),
+                                  trailing: isSelected
+                                      ? const Icon(Icons.check)
+                                      : null,
+                                  onTap: () =>
+                                      Navigator.pop(dialogContext, [option]),
+                                ),
                               );
                             }
-                            return CheckboxListTile(
-                              dense: true,
-                              value: isSelected,
-                              title: Text(option.label),
-                              onChanged: (ticked) => setState(() =>
-                                  ticked == true
-                                      ? chosen.add(option.key)
-                                      : chosen.remove(option.key)),
+                            return Semantics(
+                              container: true,
+                              identifier: rowId,
+                              child: CheckboxListTile(
+                                dense: true,
+                                value: isSelected,
+                                title: Text(option.label),
+                                onChanged: (ticked) => setState(() =>
+                                    ticked == true
+                                        ? chosen.add(option.key)
+                                        : chosen.remove(option.key)),
+                              ),
                             );
                           },
                         ),
@@ -162,21 +178,27 @@ Future<List<FormioOption>?> showOptionPicker({
             ),
           ),
           actions: [
-            TextButton(
-              style: theme.resolvedSecondaryActionStyle(context),
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text(loc.cancel),
+            Semantics(
+              identifier: 'formio_picker_cancel',
+              child: TextButton(
+                style: theme.resolvedSecondaryActionStyle(context),
+                onPressed: () => Navigator.pop(dialogContext),
+                child: Text(loc.cancel),
+              ),
             ),
             if (multiple)
-              FilledButton(
-                style: theme.resolvedPrimaryActionStyle(context),
-                onPressed: () => Navigator.pop(dialogContext, [
-                  // Preserve the source order rather than tick order, so the
-                  // chips read the same way the list did.
-                  for (final option in available)
-                    if (chosen.contains(option.key)) option,
-                ]),
-                child: Text(loc.save),
+              Semantics(
+                identifier: 'formio_picker_save',
+                child: FilledButton(
+                  style: theme.resolvedPrimaryActionStyle(context),
+                  onPressed: () => Navigator.pop(dialogContext, [
+                    // Preserve the source order rather than tick order, so the
+                    // chips read the same way the list did.
+                    for (final option in available)
+                      if (chosen.contains(option.key)) option,
+                  ]),
+                  child: Text(loc.save),
+                ),
               ),
           ],
         );

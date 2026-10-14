@@ -92,12 +92,15 @@ class FileComponent extends StatelessWidget {
           }).toList(),
         ),
         const SizedBox(height: 8),
-        OutlinedButton.icon(
-          style: FormioThemeScope.of(context)
-              .resolvedSecondaryActionStyle(context),
-          onPressed: () => _pickFiles(context),
-          icon: const Icon(Icons.upload_file),
-          label: Text(_isMultiple ? 'Upload Files' : 'Upload File'),
+        Semantics(
+          identifier: 'formio_${component.key}_upload',
+          child: OutlinedButton.icon(
+            style: FormioThemeScope.of(context)
+                .resolvedSecondaryActionStyle(context),
+            onPressed: () => _pickFiles(context),
+            icon: const Icon(Icons.upload_file),
+            label: Text(_isMultiple ? 'Upload Files' : 'Upload File'),
+          ),
         ),
         if (hasError)
           Padding(
