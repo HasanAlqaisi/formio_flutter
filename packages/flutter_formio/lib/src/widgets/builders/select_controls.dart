@@ -74,6 +74,7 @@ Widget _selectControl(
   final disabled = raw['disabled'] == true;
   final spec = FormioSelectSpec(
     component: raw,
+    path: path,
     options: typedOptions(options),
     value: s.getValue(path),
     onChanged: (value) => s.setValue(path, value, immediate: true),
