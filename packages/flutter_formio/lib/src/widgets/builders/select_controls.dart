@@ -116,22 +116,26 @@ Widget buildSelectBoxes(FieldScope s, Map<String, dynamic> raw, String path) {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       for (final o in options)
-        CheckboxListTile(
-          dense: true,
-          contentPadding: EdgeInsets.zero,
-          visualDensity: VisualDensity.compact,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          controlAffinity: ListTileControlAffinity.leading,
-          title: Text(o['label']?.toString() ?? ''),
-          value: selected[o['value']?.toString()] ?? false,
-          onChanged: disabled
-              ? null
-              : (v) {
-                  final key = o['value']?.toString();
-                  if (key == null) return;
-                  s.setValue(path, {...selected, key: v ?? false},
-                      immediate: true);
-                },
+        Semantics(
+          container: true,
+          identifier: 'formio_${raw['key']}_option_${o['value']}',
+          child: CheckboxListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            controlAffinity: ListTileControlAffinity.leading,
+            title: Text(o['label']?.toString() ?? ''),
+            value: selected[o['value']?.toString()] ?? false,
+            onChanged: disabled
+                ? null
+                : (v) {
+                    final key = o['value']?.toString();
+                    if (key == null) return;
+                    s.setValue(path, {...selected, key: v ?? false},
+                        immediate: true);
+                  },
+          ),
         ),
     ],
   ));
@@ -170,14 +174,18 @@ Widget buildRadio(FieldScope s, Map<String, dynamic> raw, String path) {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (final o in options)
-          RadioListTile<String>(
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-            visualDensity: VisualDensity.compact,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            controlAffinity: ListTileControlAffinity.leading,
-            title: Text(o['label']?.toString() ?? ''),
-            value: o['value']?.toString() ?? '',
+          Semantics(
+            container: true,
+            identifier: 'formio_${raw['key']}_option_${o['value']}',
+            child: RadioListTile<String>(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: Text(o['label']?.toString() ?? ''),
+              value: o['value']?.toString() ?? '',
+            ),
           ),
       ],
     )),
