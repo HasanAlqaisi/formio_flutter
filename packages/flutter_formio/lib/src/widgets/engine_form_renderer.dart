@@ -755,20 +755,23 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
         SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(12),
-            child: ElevatedButton(
-              style: submitStyle,
-              onPressed: _submitting ? null : _submit,
-              child: _submitting
-                  ? SizedBox(
-                      width: 18,
-                      height: 18,
-                      // The button's own foreground: a spinner left to default
-                      // paints in the ambient primary, which on a primary-filled
-                      // button is invisible.
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: submitForeground),
-                    )
-                  : Text(ComponentFactory.locale.submit),
+            child: Semantics(
+              identifier: 'formio_submit',
+              child: ElevatedButton(
+                style: submitStyle,
+                onPressed: _submitting ? null : _submit,
+                child: _submitting
+                    ? SizedBox(
+                        width: 18,
+                        height: 18,
+                        // The button's own foreground: a spinner left to default
+                        // paints in the ambient primary, which on a primary-filled
+                        // button is invisible.
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: submitForeground),
+                      )
+                    : Text(ComponentFactory.locale.submit),
+              ),
             ),
           ),
         ),
