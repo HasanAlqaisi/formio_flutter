@@ -63,7 +63,7 @@ Widget buildDataGrid(FieldScope s, Map<String, dynamic> raw, String path) {
                   ),
                 if (!locked)
                   Semantics(
-                    identifier: 'formio_$path[$i]_remove',
+                    identifier: '${formioSemanticsId('$path[$i]')}_remove',
                     child: IconButton(
                       tooltip: affixText(raw, 'removeRow') ?? loc.removeRow,
                       icon: const Icon(Icons.delete_outline, size: 20),
@@ -128,7 +128,7 @@ Widget buildDataGrid(FieldScope s, Map<String, dynamic> raw, String path) {
           Align(
             alignment: AlignmentDirectional.centerStart,
             child: Semantics(
-              identifier: 'formio_${path}_add',
+              identifier: '${formioSemanticsId(path)}_add',
               child: TextButton.icon(
                 // Accent rather than the ambient primary, which is a fill colour
                 // and reads as too dark for text on a dark form.

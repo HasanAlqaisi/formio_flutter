@@ -119,7 +119,7 @@ Widget buildSelectBoxes(FieldScope s, Map<String, dynamic> raw, String path) {
       for (final o in options)
         Semantics(
           container: true,
-          identifier: 'formio_${raw['key']}_option_${o['value']}',
+          identifier: '${formioSemanticsId(path)}_option_${o['value']}',
           child: CheckboxListTile(
             dense: true,
             contentPadding: EdgeInsets.zero,
@@ -177,7 +177,7 @@ Widget buildRadio(FieldScope s, Map<String, dynamic> raw, String path) {
         for (final o in options)
           Semantics(
             container: true,
-            identifier: 'formio_${raw['key']}_option_${o['value']}',
+            identifier: '${formioSemanticsId(path)}_option_${o['value']}',
             child: RadioListTile<String>(
               dense: true,
               contentPadding: EdgeInsets.zero,

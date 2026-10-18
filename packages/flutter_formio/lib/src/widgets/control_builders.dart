@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'components/multi_select_field.dart';
 import 'components/select_options.dart';
 import 'components/select_picker_field.dart';
+import 'form_field_scope.dart';
 
 // `FormioOption` moved to select_options.dart, next to the resolvers that build
 // it. Re-exported so `FormioSelectSpec`'s own library still supplies it.
@@ -49,7 +50,7 @@ class FormioSelectSpec {
   final String? path;
 
   /// The test id prefix for this control: `formio_<path>`, or `formio_<key>`.
-  String get semanticsId => 'formio_${path ?? component['key']}';
+  String get semanticsId => formioSemanticsId(path ?? '${component['key']}');
 
   /// Options from `values`, `data.json`, or a completed fetch.
   final List<FormioOption> options;
