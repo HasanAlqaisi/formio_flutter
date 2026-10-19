@@ -4,10 +4,11 @@
 /// A host app registers builders on the renderer via its `customComponents`
 /// map. Each builder receives a [FormioFieldContext] — a small, stable surface
 /// over the renderer's internal state — and returns a widget. The context lets
-/// the builder read/write its own value, read any other path, show its
+/// the builder read/write its own value, read or write any other path, show its
 /// validation error, obtain a persistent controller/focus node, render child
-/// components, delegate to a built-in builder, or wrap itself in the standard
-/// label/description/error chrome.
+/// components, delegate to a built-in builder, wrap itself in the standard
+/// label/description/error chrome, or replace the form's Submit button with
+/// its own actions.
 ///
 /// This is the seam that keeps domain-specific widgets (file uploads, maps,
 /// signature pads, …) OUT of the package: the package renders standard Form.io
@@ -47,6 +48,7 @@ class FormioFieldContext {
     required this.theme,
     required this.component,
     required this.path,
+    required Map<String, dynamic> Function() data,
     required dynamic Function(String path) read,
     required void Function(String path, dynamic value, {bool immediate}) write,
     required FormLogicError? Function(String path) errorFor,
@@ -55,14 +57,19 @@ class FormioFieldContext {
     required Widget Function(Map<String, dynamic> raw) renderChild,
     required Widget Function(String type) builtin,
     required Widget Function(Widget control, {bool showLabel}) chrome,
-  })  : _read = read,
+    required void Function(WidgetBuilder? actions) setActions,
+    required void Function(WidgetBuilder actions) releaseActions,
+  })  : _data = data,
+        _read = read,
         _write = write,
         _errorFor = errorFor,
         _controllerFor = controllerFor,
         _focusFor = focusFor,
         _renderChild = renderChild,
         _builtin = builtin,
-        _chrome = chrome;
+        _chrome = chrome,
+        _setActions = setActions,
+        _releaseActions = releaseActions;
 
   /// The build context of the renderer.
   final BuildContext context;
@@ -78,6 +85,7 @@ class FormioFieldContext {
   /// nowhere in particular — paths are absolute within the submission.
   final String path;
 
+  final Map<String, dynamic> Function() _data;
   final dynamic Function(String path) _read;
   final void Function(String path, dynamic value, {bool immediate}) _write;
   final FormLogicError? Function(String path) _errorFor;
@@ -86,6 +94,8 @@ class FormioFieldContext {
   final Widget Function(Map<String, dynamic> raw) _renderChild;
   final Widget Function(String type) _builtin;
   final Widget Function(Widget control, {bool showLabel}) _chrome;
+  final void Function(WidgetBuilder? actions) _setActions;
+  final void Function(WidgetBuilder actions) _releaseActions;
 
   /// This field's current value in the (post-engine) submission data.
   dynamic get value => _read(path);
@@ -99,6 +109,16 @@ class FormioFieldContext {
   /// Read the value at any other absolute [otherPath] in the submission
   /// (list indices supported, e.g. `grid[0].amount`).
   dynamic read(String otherPath) => _read(otherPath);
+
+  /// The whole current submission, for a component that persists the form
+  /// itself. Read-only: change values through [setValue] or [write].
+  Map<String, dynamic> get data => Map.unmodifiable(_data());
+
+  /// Write [value] at any other absolute [otherPath] in the submission, for a
+  /// component that also owns values outside its own key. Behaves like
+  /// [setValue] for that path.
+  void write(String otherPath, dynamic value, {bool immediate = false}) =>
+      _write(otherPath, value, immediate: immediate);
 
   /// The validation error to display for this field, or null. Already gated by
   /// the renderer's touched/submitted policy, so you can render it directly.
@@ -126,4 +146,19 @@ class FormioFieldContext {
   /// by default and call this only if they want the stock look.
   Widget chrome(Widget control, {bool showLabel = true}) =>
       _chrome(control, showLabel: showLabel);
+
+  /// Shows [actions] in place of the form's Submit button, for a component
+  /// that drives the form itself, such as a wizard with its own Next button.
+  /// Pass null to give the button back, and call [releaseActions] when the
+  /// component is disposed: the renderer cannot tell a component that left
+  /// from one that is merely off screen. When several components claim the bar, the last
+  /// one wins. [actions] is built in the renderer's context, outside the
+  /// component's own subtree.
+  void setActions(WidgetBuilder? actions) => _setActions(actions);
+
+  /// Gives the Submit button back if [actions] still holds the bar. Call it
+  /// from `dispose` with the builder passed to [setActions]: a component
+  /// remounted at the same path claims the bar before the old one is
+  /// disposed, and a plain `setActions(null)` would take the new claim away.
+  void releaseActions(WidgetBuilder actions) => _releaseActions(actions);
 }
