@@ -50,13 +50,20 @@ Widget buildFallback(
       formData: s.data,
     );
     final decorationTheme = s.theme.resolvedInputDecorationTheme(s.context);
-    return decorationTheme == null
+    final themed = decorationTheme == null
         ? built
         : Theme(
             data: Theme.of(s.context)
                 .copyWith(inputDecorationTheme: decorationTheme),
             child: built,
           );
+    // A stock component only knows its schema key, which repeats in every row
+    // of a grid and under every container that scopes it. The path does not, so
+    // the ids it builds hang off this instead.
+    return FormioSemanticsScope(
+      prefix: formioSemanticsId(path),
+      child: themed,
+    );
   } catch (e) {
     return placeholderCard(s.context,
         '${type ?? '?'} "${raw['label'] ?? raw['key']}" — render error: $e');

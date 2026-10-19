@@ -24,6 +24,7 @@ class MultiSelectField extends StatelessWidget {
     this.enabled = true,
     this.searchable = true,
     this.loadOptions,
+    this.semanticsId,
   });
 
   final List<FormioOption> options;
@@ -46,6 +47,9 @@ class MultiSelectField extends StatelessWidget {
   /// Loads the options as the checklist opens, for a `lazyLoad` source.
   final Future<List<FormioOption>> Function()? loadOptions;
 
+  /// Test id prefix; each chooser row gets `<semanticsId>_option_<value>`.
+  final String? semanticsId;
+
   Future<void> _open(BuildContext context) async {
     final result = await showOptionPicker(
       context: context,
@@ -55,6 +59,7 @@ class MultiSelectField extends StatelessWidget {
       searchable: searchable,
       title: hint,
       loadOptions: loadOptions,
+      semanticsId: semanticsId,
     );
     if (result != null) onChanged(result);
   }

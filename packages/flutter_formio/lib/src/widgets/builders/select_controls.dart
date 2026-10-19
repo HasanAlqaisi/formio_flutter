@@ -74,6 +74,7 @@ Widget _selectControl(
   final disabled = raw['disabled'] == true;
   final spec = FormioSelectSpec(
     component: raw,
+    path: path,
     options: typedOptions(options),
     value: s.getValue(path),
     onChanged: (value) => s.setValue(path, value, immediate: true),
@@ -116,22 +117,27 @@ Widget buildSelectBoxes(FieldScope s, Map<String, dynamic> raw, String path) {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       for (final o in options)
-        CheckboxListTile(
-          dense: true,
-          contentPadding: EdgeInsets.zero,
-          visualDensity: VisualDensity.compact,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          controlAffinity: ListTileControlAffinity.leading,
-          title: Text(o['label']?.toString() ?? ''),
-          value: selected[o['value']?.toString()] ?? false,
-          onChanged: disabled
-              ? null
-              : (v) {
-                  final key = o['value']?.toString();
-                  if (key == null) return;
-                  s.setValue(path, {...selected, key: v ?? false},
-                      immediate: true);
-                },
+        Semantics(
+          container: true,
+          identifier: '${formioSemanticsId(path)}'
+              '_option_${formioIdSegment(o['value'])}',
+          child: CheckboxListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            controlAffinity: ListTileControlAffinity.leading,
+            title: Text(o['label']?.toString() ?? ''),
+            value: selected[o['value']?.toString()] ?? false,
+            onChanged: disabled
+                ? null
+                : (v) {
+                    final key = o['value']?.toString();
+                    if (key == null) return;
+                    s.setValue(path, {...selected, key: v ?? false},
+                        immediate: true);
+                  },
+          ),
         ),
     ],
   ));
@@ -147,7 +153,10 @@ Widget buildCheckbox(FieldScope s, Map<String, dynamic> raw, String path) {
     controlAffinity: ListTileControlAffinity.leading,
     visualDensity: VisualDensity.compact,
     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-    title: Text(labelText(raw, requiredSuffix: s.theme.requiredSuffix)),
+    title: labelWithRequired(raw['label'] as String? ?? '',
+        required: raw['validate']?['required'] == true,
+        theme: s.theme,
+        context: s.context),
     value: checked,
     onChanged: disabled
         ? null
@@ -167,14 +176,19 @@ Widget buildRadio(FieldScope s, Map<String, dynamic> raw, String path) {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (final o in options)
-          RadioListTile<String>(
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-            visualDensity: VisualDensity.compact,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            controlAffinity: ListTileControlAffinity.leading,
-            title: Text(o['label']?.toString() ?? ''),
-            value: o['value']?.toString() ?? '',
+          Semantics(
+            container: true,
+            identifier: '${formioSemanticsId(path)}'
+                '_option_${formioIdSegment(o['value'])}',
+            child: RadioListTile<String>(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: Text(o['label']?.toString() ?? ''),
+              value: o['value']?.toString() ?? '',
+            ),
           ),
       ],
     )),

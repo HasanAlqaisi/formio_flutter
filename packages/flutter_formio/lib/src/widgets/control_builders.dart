@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'components/multi_select_field.dart';
 import 'components/select_options.dart';
 import 'components/select_picker_field.dart';
+import 'semantics_ids.dart';
 
 // `FormioOption` moved to select_options.dart, next to the resolvers that build
 // it. Re-exported so `FormioSelectSpec`'s own library still supplies it.
@@ -39,10 +40,17 @@ class FormioSelectSpec {
     this.loading = false,
     this.error,
     this.ensureOptions,
+    this.path,
   });
 
   /// The raw schema, for anything not surfaced here.
   final Map<String, dynamic> component;
+
+  /// The value's data path, used in test ids. Null falls back to the key.
+  final String? path;
+
+  /// The test id prefix for this control: `formio_<path>`, or `formio_<key>`.
+  String get semanticsId => formioSemanticsId(path ?? '${component['key']}');
 
   /// Options from `values`, `data.json`, or a completed fetch.
   final List<FormioOption> options;
@@ -150,6 +158,7 @@ class FormioBuiltInSelect extends StatelessWidget {
         enabled: spec.enabled,
         searchable: spec.searchable,
         loadOptions: spec.ensureOptions,
+        semanticsId: spec.semanticsId,
         // Each option's own value, so its schema type survives the round trip.
         onChanged: (chosen) =>
             spec.onChanged([for (final option in chosen) option.value]),
@@ -169,6 +178,7 @@ class FormioBuiltInSelect extends StatelessWidget {
         enabled: spec.enabled,
         searchable: spec.searchable,
         loadOptions: spec.ensureOptions,
+        semanticsId: spec.semanticsId,
         onChanged: (option) => spec.onChanged(option.value),
       );
     }
@@ -182,7 +192,14 @@ class FormioBuiltInSelect extends StatelessWidget {
       hint: Text(spec.placeholder ?? 'Select…'),
       items: [
         for (final o in spec.options)
-          DropdownMenuItem(value: o.key, child: Text(o.label)),
+          DropdownMenuItem(
+            value: o.key,
+            child: Semantics(
+              identifier:
+                  '${spec.semanticsId}_option_${formioIdSegment(o.key)}',
+              child: Text(o.label),
+            ),
+          ),
       ],
       onChanged: spec.enabled
           ? (key) {

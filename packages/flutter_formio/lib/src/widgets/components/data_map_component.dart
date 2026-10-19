@@ -78,6 +78,8 @@ class _DataMapComponentState extends State<DataMapComponent> {
     super.dispose();
   }
 
+  String get _ids => FormioSemanticsScope.of(context, widget.component.key);
+
   @override
   Widget build(BuildContext context) {
     final hasError = _isRequired && _entries.isEmpty;
@@ -91,15 +93,23 @@ class _DataMapComponentState extends State<DataMapComponent> {
         Row(
           children: [
             Expanded(
-                child: TextField(
-                    controller: _newKeyController,
-                    decoration: const InputDecoration(labelText: 'Key'))),
+                child: Semantics(
+                    identifier: '${_ids}_key',
+                    child: TextField(
+                        controller: _newKeyController,
+                        decoration: const InputDecoration(labelText: 'Key')))),
             const SizedBox(width: 8),
             Expanded(
-                child: TextField(
-                    controller: _newValueController,
-                    decoration: const InputDecoration(labelText: 'Value'))),
-            IconButton(icon: const Icon(Icons.add), onPressed: _addEntry),
+                child: Semantics(
+                    identifier: '${_ids}_value',
+                    child: TextField(
+                        controller: _newValueController,
+                        decoration:
+                            const InputDecoration(labelText: 'Value')))),
+            Semantics(
+                identifier: '${_ids}_add',
+                child: IconButton(
+                    icon: const Icon(Icons.add), onPressed: _addEntry)),
           ],
         ),
         const SizedBox(height: 12),

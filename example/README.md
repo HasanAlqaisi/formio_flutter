@@ -23,12 +23,14 @@ console.
 | ---- | ------- |
 | `lib/main.dart` | App entry — loads a form from assets and renders it with `EngineFormRenderer`. |
 | `lib/custom_components.dart` | Host-provided custom components (a file-upload field, `location`, `sites`) demonstrating the `customComponents` extension API — domain widgets live in the app, not the package. |
+| `lib/main_engine_test.dart` | Alternate entrypoint that exercises the headless engine on-device against real templates and reports timings: `flutter run -t lib/main_engine_test.dart`. |
 | `assets/form-samples/` | Sample Form.io definitions (add your own `.json` here). |
 
 ## Key ideas
 
 - **`EngineFormRenderer(form:, engine:, customComponents:, onSubmit:)`** is the
-  whole integration surface.
+  whole integration surface — plus `controls:` (restyle a built-in control),
+  `resourceSource:` (resource-backed selects), `theme:` and `textDirection:`.
 - **`FormLogicEngine`** wraps `@formio/core`; call `init()` once, then hand it to
   the renderer.
 - **Custom components** are registered by the host app via a

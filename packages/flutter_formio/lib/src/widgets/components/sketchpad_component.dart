@@ -96,6 +96,8 @@ class _SketchpadComponentState extends State<SketchpadComponent> {
     }
   }
 
+  String get _ids => FormioSemanticsScope.of(context, widget.component.key);
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -208,7 +210,7 @@ class _SketchpadComponentState extends State<SketchpadComponent> {
               key: _globalKey,
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  void addPoint(Offset offset) {
+                  void addPoint(Offset offset, Duration? _) {
                     setState(() {
                       _points.add(DrawingPoint(
                         offset: offset,
@@ -221,20 +223,25 @@ class _SketchpadComponentState extends State<SketchpadComponent> {
                     });
                   }
 
-                  return DrawingCanvasGestureDetector(
-                    onPointDown: addPoint,
-                    onPointMove: addPoint,
-                    onStrokeEnd: () {
-                      setState(() {
-                        _points.add(DrawingPoint(offset: null));
-                      });
-                      _saveSketch();
-                    },
-                    child: Container(
-                      color: Colors.transparent,
-                      child: CustomPaint(
-                        painter: _SketchPainter(_points),
-                        size: Size(constraints.maxWidth, constraints.maxHeight),
+                  return Semantics(
+                    identifier: '${_ids}_pad',
+                    container: true,
+                    child: DrawingCanvasGestureDetector(
+                      onPointDown: addPoint,
+                      onPointMove: addPoint,
+                      onStrokeEnd: (_, __) {
+                        setState(() {
+                          _points.add(DrawingPoint(offset: null));
+                        });
+                        _saveSketch();
+                      },
+                      child: Container(
+                        color: Colors.transparent,
+                        child: CustomPaint(
+                          painter: _SketchPainter(_points),
+                          size:
+                              Size(constraints.maxWidth, constraints.maxHeight),
+                        ),
                       ),
                     ),
                   );
@@ -249,16 +256,22 @@ class _SketchpadComponentState extends State<SketchpadComponent> {
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            TextButton.icon(
-              onPressed: _points.isEmpty ? null : _undo,
-              icon: const Icon(Icons.undo),
-              label: Text(ComponentFactory.locale.undo),
+            Semantics(
+              identifier: '${_ids}_undo',
+              child: TextButton.icon(
+                onPressed: _points.isEmpty ? null : _undo,
+                icon: const Icon(Icons.undo),
+                label: Text(ComponentFactory.locale.undo),
+              ),
             ),
             const SizedBox(width: 8),
-            TextButton.icon(
-              onPressed: _points.isEmpty ? null : _clear,
-              icon: const Icon(Icons.clear),
-              label: Text(ComponentFactory.locale.clear),
+            Semantics(
+              identifier: '${_ids}_clear',
+              child: TextButton.icon(
+                onPressed: _points.isEmpty ? null : _clear,
+                icon: const Icon(Icons.clear),
+                label: Text(ComponentFactory.locale.clear),
+              ),
             ),
           ],
         ),

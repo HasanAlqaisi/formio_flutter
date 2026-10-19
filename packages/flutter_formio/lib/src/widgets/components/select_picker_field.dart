@@ -26,6 +26,7 @@ class SelectPickerField extends StatelessWidget {
     this.enabled = true,
     this.searchable = true,
     this.loadOptions,
+    this.semanticsId,
   });
 
   final List<FormioOption> options;
@@ -50,6 +51,9 @@ class SelectPickerField extends StatelessWidget {
   /// Loads the options as the chooser opens, for a `lazyLoad` source.
   final Future<List<FormioOption>> Function()? loadOptions;
 
+  /// Test id prefix; each chooser row gets `<semanticsId>_option_<value>`.
+  final String? semanticsId;
+
   Future<void> _open(BuildContext context) async {
     final result = await showOptionPicker(
       context: context,
@@ -59,6 +63,7 @@ class SelectPickerField extends StatelessWidget {
       searchable: searchable,
       title: hint,
       loadOptions: loadOptions,
+      semanticsId: semanticsId,
     );
     if (result != null && result.isNotEmpty) onChanged(result.first);
   }

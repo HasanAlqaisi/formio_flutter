@@ -24,6 +24,7 @@ import 'components/tabs_section.dart';
 import 'form_field_context.dart';
 import 'form_field_scope.dart';
 import 'form_theme.dart';
+import 'semantics_ids.dart';
 
 export 'form_field_context.dart' show FormioFieldContext, FormioFieldBuilder;
 export 'control_builders.dart';
@@ -561,6 +562,11 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
         if (tabs.isEmpty) return const SizedBox.shrink();
         return FormioTabsSection(
           theme: widget.theme,
+          // Tabs are structural, so `path` is the parent's; key it
+          // explicitly so two tab bars under one parent differ.
+          semanticsId: key == null
+              ? null
+              : formioSemanticsId(_childPath(parentPath, key)),
           labels: [
             for (final t in tabs) t['label']?.toString() ?? '',
           ],
@@ -755,20 +761,23 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
         SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(12),
-            child: ElevatedButton(
-              style: submitStyle,
-              onPressed: _submitting ? null : _submit,
-              child: _submitting
-                  ? SizedBox(
-                      width: 18,
-                      height: 18,
-                      // The button's own foreground: a spinner left to default
-                      // paints in the ambient primary, which on a primary-filled
-                      // button is invisible.
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: submitForeground),
-                    )
-                  : Text(ComponentFactory.locale.submit),
+            child: Semantics(
+              identifier: 'formio_submit',
+              child: ElevatedButton(
+                style: submitStyle,
+                onPressed: _submitting ? null : _submit,
+                child: _submitting
+                    ? SizedBox(
+                        width: 18,
+                        height: 18,
+                        // The button's own foreground: a spinner left to default
+                        // paints in the ambient primary, which on a primary-filled
+                        // button is invisible.
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: submitForeground),
+                      )
+                    : Text(ComponentFactory.locale.submit),
+              ),
             ),
           ),
         ),

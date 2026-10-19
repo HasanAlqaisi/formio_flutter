@@ -18,8 +18,9 @@ Form JSON ─► EngineFormRenderer ──(on every change)──► FormLogicEn
                     └────────── { data, hidden, errors } ◄──┘
 ```
 
-`EngineFormRenderer` owns the nested submission and, on every change, hands the
-form + data to the engine and repaints from the result. It renders basic inputs
+`EngineFormRenderer` owns the nested submission. The form is cached inside the
+engine once; on every change only the submission crosses over, and the renderer
+repaints from `{ data, hidden, errors }`. It renders basic inputs
 and layout natively; premium/less-common types fall back to `ComponentFactory`.
 
 ## Install
@@ -108,7 +109,48 @@ class MyFileField extends StatelessWidget {
 
 `FormioFieldContext` exposes: `value` / `setValue` / `read(path)` / `error` /
 `controller()` / `focusNode()` / `child()` / `builtin(type)` / `chrome()` /
-`theme`.
+`theme` / `component` / `path`.
+
+## Restyling a built-in control
+
+`customComponents` replaces a component outright, schema handling included. When
+only the *look* differs, use `controls` instead — the package keeps resolving
+`dataSrc`, `valueProperty`, `template`, remote loading and value coercion, and
+hands you the result:
+
+```dart
+EngineFormRenderer(
+  form: form,
+  engine: engine,
+  controls: FormioControlBuilders(
+    select: (context, spec) => spec.multiple
+        ? FormioBuiltInSelect(spec: spec) // delegate what you don't style
+        : MyDropdown(
+            options: spec.options,
+            value: spec.selected?.value,
+            loading: spec.loading,
+            onChanged: spec.onChanged,
+          ),
+  ),
+);
+```
+
+## Remote & resource selects
+
+`dataSrc: "url"` selects fetch their own options (cached per resolved URL;
+`lazyLoad` defers until first open). `dataSrc: "resource"` and the `resource`
+type need the project they live in, which is deployment config, not schema:
+
+```dart
+EngineFormRenderer(
+  form: form,
+  engine: engine,
+  resourceSource: const FormioResourceSource(
+    projectUrl: 'https://myproject.form.io',
+    headers: {'x-jwt-token': '…'},
+  ),
+);
+```
 
 ## Theming
 
@@ -120,12 +162,22 @@ EngineFormRenderer(
     labelStyle: TextStyle(fontWeight: FontWeight.w600),
     inputBorder: OutlineInputBorder(),
     requiredSuffix: ' *',
+    columnBreakpoint: 170, // px below which columns/tables stack
   ),
 );
 ```
 
+Tokens cover text styles (`labelStyle`, `descriptionStyle`, `errorStyle`,
+`panelTitleStyle`, `affixStyle`, `inputTextStyle`, `hintStyle`), input decoration
+(`inputFillColor`, `inputBorder`, `focusedInputBorder`, `errorInputBorder`,
+`inputContentPadding`, `isDense`), spacing (`fieldPadding`, `sectionMargin`,
+`sectionPadding`, `sectionDecoration`, `columnBreakpoint`), plus
+`requiredSuffix`, `submitButtonStyle` and `accentColor`.
+
 Every token defaults to the ambient Material theme, so `FormioTheme()` keeps the
-stock look.
+stock look. Inside a widget below the renderer, read them with
+`FormioThemeScope.of(context)`. `columns`/`table` layouts are responsive — they
+stack below `columnBreakpoint` px per column.
 
 ## Right-to-left
 
