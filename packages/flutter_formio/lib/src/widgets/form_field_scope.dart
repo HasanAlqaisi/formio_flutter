@@ -63,7 +63,3 @@ class FieldScope {
   /// schema and owns the behaviour; these only change what is rendered.
   final FormioControlBuilders controls;
 }
-
-/// Test id for a data path: `formio_<path>`, with each row index `[i]`
-/// written as `_row<i>` so Maestro's regex `id:` matches it literally.
-String formioSemanticsId(String path) => 'formio_${path.replaceAllMapped(RegExp(r'\[(\d+)\]'), (m) => '_row${m[1]}')}';

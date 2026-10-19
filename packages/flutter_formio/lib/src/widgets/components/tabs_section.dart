@@ -28,7 +28,7 @@ class FormioTabsSection extends StatefulWidget {
     required this.contentBuilder,
     required this.theme,
     this.hasError = const [],
-    this.componentKey,
+    this.semanticsId,
   });
 
   /// One label per tab, in order.
@@ -44,9 +44,9 @@ class FormioTabsSection extends StatefulWidget {
 
   final FormioTheme theme;
 
-  /// The tabs component's key. Each tab gets the test id
-  /// `formio_<key>_tab_<index>`; null leaves the tabs without ids.
-  final String? componentKey;
+  /// Test-id prefix for this tab bar. Each tab gets
+  /// `<semanticsId>_tab_<index>`; null leaves the tabs without ids.
+  final String? semanticsId;
 
   @override
   State<FormioTabsSection> createState() => _FormioTabsSectionState();
@@ -185,9 +185,9 @@ class _FormioTabsSectionState extends State<FormioTabsSection>
               Tab(
                 // Inside the Tab, so TabBar still sees a Tab for its height.
                 child: Semantics(
-                  identifier: widget.componentKey == null
+                  identifier: widget.semanticsId == null
                       ? null
-                      : 'formio_${widget.componentKey}_tab_$i',
+                      : '${widget.semanticsId}_tab_$i',
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [

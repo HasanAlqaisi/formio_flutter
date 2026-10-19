@@ -17,7 +17,7 @@ import 'package:flutter/material.dart';
 import 'components/multi_select_field.dart';
 import 'components/select_options.dart';
 import 'components/select_picker_field.dart';
-import 'form_field_scope.dart';
+import 'semantics_ids.dart';
 
 // `FormioOption` moved to select_options.dart, next to the resolvers that build
 // it. Re-exported so `FormioSelectSpec`'s own library still supplies it.
@@ -195,7 +195,8 @@ class FormioBuiltInSelect extends StatelessWidget {
           DropdownMenuItem(
             value: o.key,
             child: Semantics(
-              identifier: '${spec.semanticsId}_option_${o.key}',
+              identifier:
+                  '${spec.semanticsId}_option_${formioIdSegment(o.key)}',
               child: Text(o.label),
             ),
           ),

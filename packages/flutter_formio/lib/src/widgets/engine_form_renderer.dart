@@ -24,6 +24,7 @@ import 'components/tabs_section.dart';
 import 'form_field_context.dart';
 import 'form_field_scope.dart';
 import 'form_theme.dart';
+import 'semantics_ids.dart';
 
 export 'form_field_context.dart' show FormioFieldContext, FormioFieldBuilder;
 export 'control_builders.dart';
@@ -561,7 +562,11 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
         if (tabs.isEmpty) return const SizedBox.shrink();
         return FormioTabsSection(
           theme: widget.theme,
-          componentKey: raw['key']?.toString(),
+          // Tabs are structural, so `path` is the parent's; key it
+          // explicitly so two tab bars under one parent differ.
+          semanticsId: key == null
+              ? null
+              : formioSemanticsId(_childPath(parentPath, key)),
           labels: [
             for (final t in tabs) t['label']?.toString() ?? '',
           ],

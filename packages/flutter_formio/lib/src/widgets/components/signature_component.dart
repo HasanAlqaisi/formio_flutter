@@ -252,6 +252,8 @@ class _SignatureComponentState extends State<SignatureComponent> {
     }
   }
 
+  String get _ids => FormioSemanticsScope.of(context, widget.component.key);
+
   @override
   Widget build(BuildContext context) {
     final theme = FormioThemeScope.of(context);
@@ -281,7 +283,7 @@ class _SignatureComponentState extends State<SignatureComponent> {
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             Semantics(
-              identifier: 'formio_${widget.component.key}_clear',
+              identifier: '${_ids}_clear',
               child: TextButton.icon(
                 style: theme.resolvedSecondaryActionStyle(context),
                 onPressed: _isEmpty ? null : _clear,
@@ -320,7 +322,7 @@ class _SignatureComponentState extends State<SignatureComponent> {
         );
 
     return Semantics(
-      identifier: 'formio_${widget.component.key}_pad',
+      identifier: '${_ids}_pad',
       container: true,
       child: Container(
         height: _padHeight,

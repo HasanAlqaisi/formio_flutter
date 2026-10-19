@@ -93,7 +93,8 @@ class FileComponent extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Semantics(
-          identifier: 'formio_${component.key}_upload',
+          identifier:
+              '${FormioSemanticsScope.of(context, component.key)}_upload',
           child: OutlinedButton.icon(
             style: FormioThemeScope.of(context)
                 .resolvedSecondaryActionStyle(context),

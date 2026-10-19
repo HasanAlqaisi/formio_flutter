@@ -68,7 +68,7 @@ class _AddressComponentState extends State<AddressComponent> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Semantics(
-        identifier: 'formio_${widget.component.key}_$key',
+        identifier: '${_ids}_${formioIdSegment(key)}',
         child: TextFormField(
           key: ValueKey('${widget.component.key}_$key'),
           initialValue: _addressData[key]?.toString() ?? '',
@@ -86,6 +86,8 @@ class _AddressComponentState extends State<AddressComponent> {
       ),
     );
   }
+
+  String get _ids => FormioSemanticsScope.of(context, widget.component.key);
 
   @override
   Widget build(BuildContext context) {

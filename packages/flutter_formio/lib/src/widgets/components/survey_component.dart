@@ -100,6 +100,8 @@ class _SurveyComponentState extends State<SurveyComponent> {
     widget.onChanged(updated);
   }
 
+  String get _ids => FormioSemanticsScope.of(context, widget.component.key);
+
   @override
   Widget build(BuildContext context) {
     final error = _validator();
@@ -232,7 +234,8 @@ class _SurveyComponentState extends State<SurveyComponent> {
                                 },
                                 child: Semantics(
                                   identifier:
-                                      'formio_${widget.component.key}_${rowKey}_$colValue',
+                                      '${_ids}_${formioIdSegment(rowKey)}'
+                                      '_${formioIdSegment(colValue)}',
                                   child: Radio<String>(
                                     value: colValue,
                                     materialTapTargetSize:

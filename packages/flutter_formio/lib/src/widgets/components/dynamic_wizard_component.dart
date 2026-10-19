@@ -111,6 +111,8 @@ class _DynamicWizardComponentState extends State<DynamicWizardComponent> {
     widget.onChanged(_entries);
   }
 
+  String get _ids => FormioSemanticsScope.of(context, widget.component.key);
+
   @override
   Widget build(BuildContext context) {
     if (_wizardSteps.isEmpty) {
@@ -172,22 +174,28 @@ class _DynamicWizardComponentState extends State<DynamicWizardComponent> {
 
                   // Current step component
                   Semantics(
-                      identifier:
-                          'formio_${widget.component.key}_step_${_wizardSteps[_currentStep].key}',
+                      identifier: '${_ids}_step_'
+                          '${formioIdSegment(_wizardSteps[_currentStep].key)}',
                       container: true,
-                      child: ComponentFactory.build(
-                        component: _wizardSteps[_currentStep],
-                        value: _currentEntry[_wizardSteps[_currentStep].key],
-                        onChanged: (value) {
-                          setState(() {
-                            _currentEntry[_wizardSteps[_currentStep].key] =
-                                value;
-                          });
-                        },
-                        formData: widget.formData,
-                        onFilePick: widget.onFilePick,
-                        onDatePick: widget.onDatePick,
-                        onTimePick: widget.onTimePick,
+                      // The step's own component builds its ids from this, not
+                      // from its schema key, which repeats across entries.
+                      child: FormioSemanticsScope(
+                        prefix: '${_ids}_step_'
+                            '${formioIdSegment(_wizardSteps[_currentStep].key)}',
+                        child: ComponentFactory.build(
+                          component: _wizardSteps[_currentStep],
+                          value: _currentEntry[_wizardSteps[_currentStep].key],
+                          onChanged: (value) {
+                            setState(() {
+                              _currentEntry[_wizardSteps[_currentStep].key] =
+                                  value;
+                            });
+                          },
+                          formData: widget.formData,
+                          onFilePick: widget.onFilePick,
+                          onDatePick: widget.onDatePick,
+                          onTimePick: widget.onTimePick,
+                        ),
                       )),
                   const SizedBox(height: 16),
 
@@ -196,7 +204,7 @@ class _DynamicWizardComponentState extends State<DynamicWizardComponent> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Semantics(
-                          identifier: 'formio_${widget.component.key}_cancel',
+                          identifier: '${_ids}_cancel',
                           child: TextButton(
                             onPressed: _cancelEntry,
                             child: Text(ComponentFactory.locale.cancel),
@@ -205,8 +213,7 @@ class _DynamicWizardComponentState extends State<DynamicWizardComponent> {
                         children: [
                           if (_currentStep > 0)
                             Semantics(
-                                identifier:
-                                    'formio_${widget.component.key}_previous',
+                                identifier: '${_ids}_previous',
                                 child: TextButton.icon(
                                   onPressed: _previousStep,
                                   icon: const Icon(Icons.arrow_back),
@@ -214,7 +221,7 @@ class _DynamicWizardComponentState extends State<DynamicWizardComponent> {
                                 )),
                           const SizedBox(width: 8),
                           Semantics(
-                              identifier: 'formio_${widget.component.key}_next',
+                              identifier: '${_ids}_next',
                               child: ElevatedButton.icon(
                                 onPressed: _nextStep,
                                 icon: Icon(
@@ -294,7 +301,7 @@ class _DynamicWizardComponentState extends State<DynamicWizardComponent> {
 
           // Add entry button
           Semantics(
-              identifier: 'formio_${widget.component.key}_add',
+              identifier: '${_ids}_add',
               child: ElevatedButton.icon(
                 onPressed: _startAddEntry,
                 icon: const Icon(Icons.add),

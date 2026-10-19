@@ -194,7 +194,7 @@ class _DayComponentState extends State<DayComponent> {
   /// `select` gets a dropdown; `text`, `number` and an absent value are all text
   /// inputs.
   Widget _buildPart(_DayPart part) => Semantics(
-        identifier: 'formio_${widget.component.key}_${part.name}',
+        identifier: '${_ids}_${part.name}',
         container: true,
         child: _buildPartField(part),
       );
@@ -249,6 +249,8 @@ class _DayComponentState extends State<DayComponent> {
       onChanged: (val) => _setPart(part, val),
     );
   }
+
+  String get _ids => FormioSemanticsScope.of(context, widget.component.key);
 
   @override
   Widget build(BuildContext context) {

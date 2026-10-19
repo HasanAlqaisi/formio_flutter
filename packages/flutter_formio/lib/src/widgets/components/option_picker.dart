@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 
 import '../component_factory.dart' show ComponentFactory;
 import '../form_theme.dart';
+import '../semantics_ids.dart';
 import 'select_options.dart' show FormioOption;
 
 /// The closed control: a tappable box wearing the form's input decoration.
@@ -136,7 +137,8 @@ Future<List<FormioOption>?> showOptionPicker({
                             final isSelected = chosen.contains(option.key);
                             final rowId = semanticsId == null
                                 ? null
-                                : '${semanticsId}_option_${option.key}';
+                                : '${semanticsId}_option_'
+                                    '${formioIdSegment(option.key)}';
                             if (!multiple) {
                               return Semantics(
                                 container: true,

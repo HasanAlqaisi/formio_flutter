@@ -109,6 +109,8 @@ class _DataTableComponentState extends State<DataTableComponent> {
     widget.onChanged(selected);
   }
 
+  String get _ids => FormioSemanticsScope.of(context, widget.component.key);
+
   @override
   Widget build(BuildContext context) {
     if (_dataValues.isEmpty || _columns.isEmpty) {
@@ -183,7 +185,7 @@ class _DataTableComponentState extends State<DataTableComponent> {
                         i == 0
                             ? Semantics(
                                 identifier:
-                                    'formio_${widget.component.key}_row_$actualIndex',
+                                    '${_ids}_row_$actualIndex',
                                 child: Text(row[col]?.toString() ?? ''),
                               )
                             : Text(row[col]?.toString() ?? ''),

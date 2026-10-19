@@ -96,6 +96,8 @@ class _SketchpadComponentState extends State<SketchpadComponent> {
     }
   }
 
+  String get _ids => FormioSemanticsScope.of(context, widget.component.key);
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -222,7 +224,7 @@ class _SketchpadComponentState extends State<SketchpadComponent> {
                   }
 
                   return Semantics(
-                    identifier: 'formio_${widget.component.key}_pad',
+                    identifier: '${_ids}_pad',
                     container: true,
                     child: DrawingCanvasGestureDetector(
                       onPointDown: addPoint,
@@ -255,7 +257,7 @@ class _SketchpadComponentState extends State<SketchpadComponent> {
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             Semantics(
-              identifier: 'formio_${widget.component.key}_undo',
+              identifier: '${_ids}_undo',
               child: TextButton.icon(
                 onPressed: _points.isEmpty ? null : _undo,
                 icon: const Icon(Icons.undo),
@@ -264,7 +266,7 @@ class _SketchpadComponentState extends State<SketchpadComponent> {
             ),
             const SizedBox(width: 8),
             Semantics(
-              identifier: 'formio_${widget.component.key}_clear',
+              identifier: '${_ids}_clear',
               child: TextButton.icon(
                 onPressed: _points.isEmpty ? null : _clear,
                 icon: const Icon(Icons.clear),
