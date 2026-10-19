@@ -16,7 +16,8 @@ void main() {
   /// upload uses.
   Widget appender(FormioFieldContext ctx) => TextButton(
         onPressed: () {
-          final current = ctx.value is List ? [...ctx.value as List] : <dynamic>[];
+          final current =
+              ctx.value is List ? [...ctx.value as List] : <dynamic>[];
           ctx.setValue([
             ...current,
             {'name': 'file${current.length + 1}.pdf', 'storage': 'fms'},
@@ -99,5 +100,103 @@ void main() {
 
     expect(data['ghost'], isNull,
         reason: 'no `input: true`, so there is no path to write to');
+  });
+
+  group('a component that owns values outside its key', () {
+    testWidgets('writes another path into the submission', (tester) async {
+      final data = await pumpForm(
+        tester,
+        customComponents: {
+          'stepper': (ctx) => TextButton(
+                onPressed: () =>
+                    ctx.write('task.submitted', true, immediate: true),
+                child: const Text('FLAG'),
+              ),
+        },
+        initialData: {
+          'task': {'taskId': 't-1'},
+        },
+        form: formOf([field('stepper', 'stepper', label: 'Stepper')]),
+      );
+
+      await tester.tap(find.text('FLAG'));
+      await tester.pumpAndSettle();
+
+      expect(data['task'], {'taskId': 't-1', 'submitted': true});
+    });
+
+    testWidgets('reads the whole submission, including other fields',
+        (tester) async {
+      Map<String, dynamic>? seen;
+      await pumpForm(
+        tester,
+        customComponents: {
+          'stepper': (ctx) => TextButton(
+                onPressed: () => seen = ctx.data,
+                child: const Text('READ'),
+              ),
+        },
+        initialData: {
+          'notes': 'gate code 12',
+          'stepper': {'step': 3},
+        },
+        form: formOf([
+          field('textfield', 'notes', label: 'Notes'),
+          field('stepper', 'stepper', label: 'Stepper'),
+        ]),
+      );
+
+      await tester.tap(find.text('READ'));
+      await tester.pumpAndSettle();
+
+      expect(seen?['notes'], 'gate code 12');
+      expect(seen?['stepper'], {'step': 3});
+    });
+
+    testWidgets('sees a write made since it was built', (tester) async {
+      Map<String, dynamic>? seen;
+      await pumpForm(
+        tester,
+        customComponents: {
+          'stepper': (ctx) => Column(
+                children: [
+                  TextButton(
+                    onPressed: () => ctx.setValue({'step': 4}, immediate: true),
+                    child: const Text('NEXT'),
+                  ),
+                  TextButton(
+                    onPressed: () => seen = ctx.data,
+                    child: const Text('READ'),
+                  ),
+                ],
+              ),
+        },
+        form: formOf([field('stepper', 'stepper', label: 'Stepper')]),
+      );
+
+      await tester.tap(find.text('NEXT'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('READ'));
+      await tester.pumpAndSettle();
+
+      expect(seen?['stepper'], {'step': 4});
+    });
+
+    testWidgets('cannot change the submission through the snapshot',
+        (tester) async {
+      late FormioFieldContext context;
+      await pumpForm(
+        tester,
+        customComponents: {
+          'stepper': (ctx) {
+            context = ctx;
+            return const SizedBox();
+          },
+        },
+        form: formOf([field('stepper', 'stepper', label: 'Stepper')]),
+      );
+
+      expect(() => context.data['stepper'] = 1, throwsUnsupportedError);
+    });
   });
 }

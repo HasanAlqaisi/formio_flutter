@@ -130,6 +130,9 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
   final Map<String, TextEditingController> _controllers = {};
   final Map<String, FocusNode> _focusNodes = {};
 
+  /// Actions components put in place of the Submit button, by their path.
+  final Map<String, WidgetBuilder> _actions = {};
+
   bool _ready = false;
   bool _submitting = false;
   bool _formSet = false;
@@ -181,6 +184,9 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
   }
 
   void _recompute() {
+    // A custom component may still write while finishing work it started
+    // before the form was closed.
+    if (!mounted) return;
     try {
       _ensureFormSet();
       final result = widget.engine.processData(_data);
@@ -658,6 +664,7 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
         theme: widget.theme,
         component: raw,
         path: path,
+        data: () => _data,
         read: _scope.getValue,
         write: _scope.setValue,
         errorFor: _scope.errorFor,
@@ -667,7 +674,29 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
         builtin: (t) => _renderControl({...raw, 'type': t}, path, t),
         chrome: (control, {bool showLabel = true}) =>
             cb.buildField(_scope, raw, path, control, showLabel: showLabel),
+        setActions: (actions) => _setActions(path, actions),
+        releaseActions: (actions) => _setActions(path, null, only: actions),
       );
+
+  /// Components claim the bar while they build or are disposed, when this
+  /// state cannot rebuild, so the change lands after the frame.
+  ///
+  /// With [only], the bar is given back only while [only] still holds it: a
+  /// component remounted at the same path claims it before the old one is
+  /// disposed.
+  void _setActions(
+    String path,
+    WidgetBuilder? actions, {
+    WidgetBuilder? only,
+  }) =>
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (only != null && _actions[path] != only) return;
+        setState(() {
+          _actions.remove(path);
+          if (actions != null) _actions[path] = actions;
+        });
+      });
 
   Widget _wrapError(Widget field, String path) {
     final error =
@@ -752,26 +781,29 @@ class _EngineFormRendererState extends State<EngineFormRenderer> {
             child: _renderList(_components, ''),
           ),
         ),
-        SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: ElevatedButton(
-              style: submitStyle,
-              onPressed: _submitting ? null : _submit,
-              child: _submitting
-                  ? SizedBox(
-                      width: 18,
-                      height: 18,
-                      // The button's own foreground: a spinner left to default
-                      // paints in the ambient primary, which on a primary-filled
-                      // button is invisible.
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: submitForeground),
-                    )
-                  : Text(ComponentFactory.locale.submit),
+        if (_actions.isNotEmpty)
+          SafeArea(child: Builder(builder: _actions.values.last))
+        else
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: ElevatedButton(
+                style: submitStyle,
+                onPressed: _submitting ? null : _submit,
+                child: _submitting
+                    ? SizedBox(
+                        width: 18,
+                        height: 18,
+                        // The button's own foreground: a spinner left to default
+                        // paints in the ambient primary, which on a primary-filled
+                        // button is invisible.
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: submitForeground),
+                      )
+                    : Text(ComponentFactory.locale.submit),
+              ),
             ),
           ),
-        ),
       ],
     );
     final directed = widget.textDirection == null
