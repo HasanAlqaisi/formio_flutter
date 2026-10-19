@@ -63,6 +63,15 @@ void main() {
 
     expect(find.text('NEXT'), findsOneWidget);
     expect(submit, findsNothing);
+    // The test id belongs to the default button, so it goes with it.
+    expect(find.bySemanticsIdentifier('formio_submit'), findsNothing);
+  });
+
+  testWidgets('the default Submit button keeps its test id', (tester) async {
+    await pumpForm(tester, form: formOf([field('textfield', 'notes')]));
+
+    expect(submit, findsOneWidget);
+    expect(find.bySemanticsIdentifier('formio_submit'), findsOneWidget);
   });
 
   testWidgets('gives the Submit button back when released', (tester) async {

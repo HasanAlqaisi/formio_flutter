@@ -58,6 +58,7 @@ export 'src/models/formio_localizations_ar.dart';
 export 'src/widgets/base_component.dart';
 export 'src/widgets/component_factory.dart';
 export 'src/widgets/engine_form_renderer.dart';
+export 'src/widgets/semantics_ids.dart';
 
 // Stock components used by the ComponentFactory fallback for premium /
 // less-common types. Basic inputs and layout are rendered natively by

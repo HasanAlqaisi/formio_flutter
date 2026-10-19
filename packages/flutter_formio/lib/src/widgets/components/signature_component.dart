@@ -252,6 +252,8 @@ class _SignatureComponentState extends State<SignatureComponent> {
     }
   }
 
+  String get _ids => FormioSemanticsScope.of(context, widget.component.key);
+
   @override
   Widget build(BuildContext context) {
     final theme = FormioThemeScope.of(context);
@@ -280,11 +282,14 @@ class _SignatureComponentState extends State<SignatureComponent> {
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            TextButton.icon(
-              style: theme.resolvedSecondaryActionStyle(context),
-              onPressed: _isEmpty ? null : _clear,
-              icon: const Icon(Icons.clear),
-              label: Text(ComponentFactory.locale.clear),
+            Semantics(
+              identifier: '${_ids}_clear',
+              child: TextButton.icon(
+                style: theme.resolvedSecondaryActionStyle(context),
+                onPressed: _isEmpty ? null : _clear,
+                icon: const Icon(Icons.clear),
+                label: Text(ComponentFactory.locale.clear),
+              ),
             ),
           ],
         ),
@@ -316,35 +321,39 @@ class _SignatureComponentState extends State<SignatureComponent> {
               Theme.of(context).colorScheme.surfaceContainerHighest,
         );
 
-    return Container(
-      height: _padHeight,
-      width: _padWidth ?? double.infinity,
-      decoration: decoration,
-      child: ClipRRect(
-        borderRadius: (decoration.borderRadius as BorderRadius?) ??
-            BorderRadius.circular(8),
-        child: RepaintBoundary(
-          key: _padKey,
-          child: DrawingCanvasGestureDetector(
-            onPointDown: _startStroke,
-            onPointMove: _addPoint,
-            onStrokeEnd: _endStroke,
-            // StackFit.expand hands both children the pad's full size, so the
-            // painter needs no explicit `size`.
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                CustomPaint(
-                  painter: _SignaturePainter(_points, inkColor, _inkRevision),
-                ),
-                if (_displayImage != null)
-                  Image.memory(
-                    _displayImage!,
-                    fit: BoxFit.fill,
-                    gaplessPlayback: true,
-                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+    return Semantics(
+      identifier: '${_ids}_pad',
+      container: true,
+      child: Container(
+        height: _padHeight,
+        width: _padWidth ?? double.infinity,
+        decoration: decoration,
+        child: ClipRRect(
+          borderRadius: (decoration.borderRadius as BorderRadius?) ??
+              BorderRadius.circular(8),
+          child: RepaintBoundary(
+            key: _padKey,
+            child: DrawingCanvasGestureDetector(
+              onPointDown: _startStroke,
+              onPointMove: _addPoint,
+              onStrokeEnd: _endStroke,
+              // StackFit.expand hands both children the pad's full size, so the
+              // painter needs no explicit `size`.
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  CustomPaint(
+                    painter: _SignaturePainter(_points, inkColor, _inkRevision),
                   ),
-              ],
+                  if (_displayImage != null)
+                    Image.memory(
+                      _displayImage!,
+                      fit: BoxFit.fill,
+                      gaplessPlayback: true,
+                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                    ),
+                ],
+              ),
             ),
           ),
         ),

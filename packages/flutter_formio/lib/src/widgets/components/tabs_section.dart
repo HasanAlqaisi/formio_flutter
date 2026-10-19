@@ -28,6 +28,7 @@ class FormioTabsSection extends StatefulWidget {
     required this.contentBuilder,
     required this.theme,
     this.hasError = const [],
+    this.semanticsId,
   });
 
   /// One label per tab, in order.
@@ -42,6 +43,10 @@ class FormioTabsSection extends StatefulWidget {
   final List<bool> hasError;
 
   final FormioTheme theme;
+
+  /// Test-id prefix for this tab bar. Each tab gets
+  /// `<semanticsId>_tab_<index>`; null leaves the tabs without ids.
+  final String? semanticsId;
 
   @override
   State<FormioTabsSection> createState() => _FormioTabsSectionState();
@@ -178,20 +183,26 @@ class _FormioTabsSectionState extends State<FormioTabsSection>
           tabs: [
             for (var i = 0; i < widget.labels.length; i++)
               Tab(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        widget.labels[i],
-                        overflow: TextOverflow.ellipsis,
+                // Inside the Tab, so TabBar still sees a Tab for its height.
+                child: Semantics(
+                  identifier: widget.semanticsId == null
+                      ? null
+                      : '${widget.semanticsId}_tab_$i',
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          widget.labels[i],
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                    if (_errorAt(i)) ...[
-                      const SizedBox(width: 6),
-                      Icon(Icons.error_outline, size: 14, color: errorColor),
+                      if (_errorAt(i)) ...[
+                        const SizedBox(width: 6),
+                        Icon(Icons.error_outline, size: 14, color: errorColor),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
           ],

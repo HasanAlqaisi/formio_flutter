@@ -109,6 +109,8 @@ class _DataTableComponentState extends State<DataTableComponent> {
     widget.onChanged(selected);
   }
 
+  String get _ids => FormioSemanticsScope.of(context, widget.component.key);
+
   @override
   Widget build(BuildContext context) {
     if (_dataValues.isEmpty || _columns.isEmpty) {
@@ -175,10 +177,20 @@ class _DataTableComponentState extends State<DataTableComponent> {
                 return DataRow(
                   selected: _selectedRows.contains(actualIndex),
                   onSelectChanged: (_) => _toggleRow(actualIndex),
-                  cells: _columns.map((col) {
-                    final value = row[col];
-                    return DataCell(Text(value?.toString() ?? ''));
-                  }).toList(),
+                  // DataRow is not a widget, so the row id sits on its first
+                  // cell; tapping any cell toggles the row.
+                  cells: [
+                    for (final (i, col) in _columns.indexed)
+                      DataCell(
+                        i == 0
+                            ? Semantics(
+                                identifier:
+                                    '${_ids}_row_$actualIndex',
+                                child: Text(row[col]?.toString() ?? ''),
+                              )
+                            : Text(row[col]?.toString() ?? ''),
+                      ),
+                  ],
                 );
               }).toList(),
             ),
